@@ -1,9 +1,10 @@
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+let $VIM = "/root/.vim/"
 set nocompatible
-source $VIMRUNTIME/vimrc_example.vim
-source $VIMRUNTIME/mswin.vim
-behave mswin
-
+set fileencodings=utf-8,gb2312,gbk,gb18030  
+set termencoding=utf-8  
+set encoding=utf-8 
+syntax on
 set diffexpr=MyDiff()
 function MyDiff()
   let opt = '-a --binary '
@@ -94,7 +95,8 @@ endfunction
 
 """""""""""""""""""""""""""""""""""""""""""""""vundle"""""""""""""""""""""""""""""""""""""""""""""""""
 filetype off        " required!
-set rtp+=$HOME/.vim/bundle/vundle/
+set rtp+=~/.vim/bundle/vundle/
+"set rtp+=$HOME/.vim/bundle/vundle/
 call vundle#rc()
 
 " let Vundle manage Vundle
@@ -109,18 +111,28 @@ Bundle 'FuzzyFinder'
 Bundle 'The-NERD-tree'
 "the buf_it.vim under e:/program files/vim/plugin is used, it is specially customized, we igore the git buf_it here
 "Bundle 'buf_it'
-
-
+Bundle 'taglist.vim'
+Bundle 'SuperTab'
+Bundle 'EasyGrep'
+Bundle 'matchit.zip'
+Bundle 'YankRing.vim'
 filetype plugin indent on
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 """"""""""""""""""""""""""""""""""""""""""""""miscellaneous"""""""""""""""""""""""""""""""""""""""""""
+set guitablabel=%N\ %f
 "set encoding=utf-8
-"for windows gui
-set guifont=Microsoft_YaHei_Mono:h11:cGB2312
-color solarized
-set bg=light
+" for windows vim {
+"set guifont=Microsoft_YaHei_Mono:h11:cGB2312
+"source $VIMRUNTIME/vimrc_example.vim
+"source $VIMRUNTIME/mswin.vim
+"behave mswin
+"}
 
+"color solarized
+color molokai
+"set bg=light
+set bg=dark
 set tabstop=4
 set shiftwidth=4
 set softtabstop=4
@@ -133,11 +145,12 @@ set hidden
 set wildmenu
 set wildmode=list:longest
 "set visualbell
-set cursorline
+"set cursorline
 set ttyfast
 set ruler
 set backspace=indent,eol,start
 set laststatus=2
+set statusline=\ %F%m%r\ \ \ %{getcwd()}%h\ \ \ Line:\ %l/%L:%c
 set relativenumber
 set undofile
 
@@ -157,7 +170,7 @@ vnoremap <tab> %
 set wrap
 set textwidth=79
 set formatoptions=qrn1
-"set colorcolumn=85
+set colorcolumn=138
 
 nnoremap <up> <nop>
 nnoremap <down> <nop>
@@ -172,8 +185,27 @@ nnoremap k gk
 
 nnoremap ; :
 
+"设置快捷键将选中文本块复制至系统剪贴板
+vnoremap<Leader>y "+y
+
+"设置快捷键将系统剪贴板内容粘贴至vim
+nmap<Leader>p "+p
+
+"Y copy one line triming the spaces begin and end, you can use :di to see the
+"register contents and Ctrl+r+<num> to copy the according register in insert mode
+"note: ctrl+r+' " ' would insert the lastest register, 
+"note: ctrl+r+' * ' would insert the clipboard
+nmap Y ^y$
+
+"D means delete forever(note, use the visual mode to select the texts you want
+"to delete firstly, that is why vnoremap is used), not found in the lastest register, use c for cut
+vnoremap D "_d
+",cd change to current open files directory
+nnoremap <Leader>cd :lcd %:p:h<CR> 
 au FocusLost * :wa
 
+"F2 to toggle the paste mode
+set pastetoggle=<F2>
 nnoremap <leader>ev <C-w><C-v><C-l>:e $MYVIMRC<cr>
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
@@ -196,7 +228,43 @@ nnoremap <Leader>w  :w<CR>
 nnoremap <leader>n   :NERDTree<cr>
 nnoremap <leader>nb  :Bookmark 
 nnoremap <leader>nob :OpenBookmark 
+nnoremap <leader>N   :NERDTreeClose<cr>         
 let NERDTreeWinPos ="left"                      "将NERDTree的窗口设置在gvim窗口的左边
 let NERDTreeShowBookmarks=1                     "当打开NERDTree窗口时，自动显示Bookmarks
 let NERDTreeChDirMode=2                         "打开书签时，自动将Vim的pwd设为打开的目录，如果你的项目有tags文件，你会发现这个命令很有帮助
+"}
+"The taglist settings = {
+let Tlist_Use_Right_Window=1
+nmap<Leader>t :TlistToggle<cr>
+"}
+
+"The supertab settings = {
+filetype plugin indent on
+set completeopt=longest,menu
+"supertab
+let g:SuperTabRetainCompletionType=2
+let g:SuperTabDefaultCompletionType="<C-X><C-O>"
+"easy motion
+"let g:EasyMotion_leader_key = '<,>'
+"}
+
+
+"The FuzzyFinder settings = {
+nnoremap <Leader>ff  :FufFile<cr>
+nnoremap <Leader>fd  :FufDir<cr>
+nnoremap <Leader>fb  :FufBuffer<cr>
+"};
+"
+"The quickfix settings = {
+nmap <silent> F6 :QFix<CR>
+command -bang -nargs=? QFix call QFixToggle(<bang>0)
+function! QFixToggle(forced)
+  if exists("g:qfix_win") && a:forced == 0
+    cclose
+    unlet g:qfix_win
+  else
+    copen 10
+    let g:qfix_win = bufnr("$")
+  endif
+endfunction
 "}
