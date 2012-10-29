@@ -1,5 +1,5 @@
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-let $VIM = "/root/.vim/"
+let $MYVIMRC='~/.vim/_vimrc'
 set nocompatible
 set fileencodings=utf-8,gb2312,gbk,gb18030  
 set termencoding=utf-8  
@@ -104,6 +104,8 @@ Bundle 'gmarik/vundle'
 
 " githubÉÏµÄÓÃ»§Ð´µÄ²å¼þ£¬Ê¹ÓÃÕâÖÖÓÃ»§Ãû+repoÃû³ÆµÄ·½Ê½
 Bundle 'Lokaltog/vim-easymotion'
+Bundle  'scrooloose/nerdcommenter'
+Bundle 'nelson/cscope_maps'
 
 "¸ñÊ½2£ºvim-scriptsÀïÃæµÄ²Ö¿â£¬Ö±½Ó´ò²Ö¿âÃû¼´¿É¡£
 Bundle 'L9'
@@ -116,6 +118,10 @@ Bundle 'SuperTab'
 Bundle 'EasyGrep'
 Bundle 'matchit.zip'
 Bundle 'YankRing.vim'
+Bundle 'Mark'
+Bundle 'Conque-Shell'
+Bundle 'FencView.vim'
+Bundle 'Gundo'
 filetype plugin indent on
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
@@ -129,8 +135,8 @@ set guitablabel=%N\ %f
 "behave mswin
 "}
 
-"color solarized
-color molokai
+color solarized
+"color molokai
 "set bg=light
 set bg=dark
 set tabstop=4
@@ -147,10 +153,9 @@ set wildmode=list:longest
 "set visualbell
 "set cursorline
 set ttyfast
-set ruler
+"set ruler
+set noruler
 set backspace=indent,eol,start
-set laststatus=2
-set statusline=\ %F%m%r\ \ \ %{getcwd()}%h\ \ \ Line:\ %l/%L:%c
 set relativenumber
 set undofile
 
@@ -163,6 +168,11 @@ set gdefault
 set incsearch
 set showmatch
 set hlsearch
+set statusline =%F%m%r%h%w\ [FORMAT=%{&ff}]\ [TYPE=%Y]\ [ASCII=\%03.3b]\ [HEX=\%02.2B]\ [POS=%04l,%04v][%p%%]\ [LEN=%L]
+set laststatus=2
+"Set to auto read when a file is changed from the outside
+set autoread
+
 nnoremap <leader><space> :noh<cr>
 nnoremap <tab> %
 vnoremap <tab> %
@@ -176,13 +186,14 @@ nnoremap <up> <nop>
 nnoremap <down> <nop>
 nnoremap <left> <nop>
 nnoremap <right> <nop>
-inoremap <up> <nop>
-inoremap <down> <nop>
-inoremap <left> <nop>
-inoremap <right> <nop>
+"inoremap <up> <nop>
+"inoremap <down> <nop>
+"inoremap <left> <nop>
+"inoremap <right> <nop>
 nnoremap j gj
 nnoremap k gk
-
+",re manually refresh the buffer
+nnoremap <leader>re :bufdo e<CR>
 nnoremap ; :
 
 "ÉèÖÃ¿ì½Ý¼ü½«Ñ¡ÖÐÎÄ±¾¿é¸´ÖÆÖÁÏµÍ³¼ôÌù°å
@@ -201,7 +212,30 @@ nmap Y ^y$
 "to delete firstly, that is why vnoremap is used), not found in the lastest register, use c for cut
 vnoremap D "_d
 ",cd change to current open files directory
-nnoremap <Leader>cd :lcd %:p:h<CR> 
+"" Switch CWD to the directory of the open buffer
+map <leader>cd :cd %:p:h<cr>:pwd<cr>
+"nnoremap <Leader>cd :lcd %:p:h<CR> 
+
+
+" Move a line of text using ALT+[jk] or Comamnd+[jk] on mac
+" to map ALT-j, you have to use set <m-j> =ctrl-v + alt-j
+set <m-j> =j
+nmap <m-j> mz:m+<cr>`z
+set <m-k> =k
+nmap <m-k> mz:m-2<cr>`z
+vmap <M-j> :m'>+<cr>`<my`>mzgv`yo`z
+vmap <M-k> :m'<-2<cr>`>my`<mzgv`yo`z
+" ALT-a means select all
+set <m-a> =a 
+map <m-a> ggVG
+
+""""""""""""""""""""""""""""""
+" => Visual mode related
+""""""""""""""""""""""""""""""
+" Visual mode pressing * or # searches for the current selection
+" Super useful! From an idea by Michael Naumann
+vnoremap <silent> * :call VisualSelection('f')<CR>
+vnoremap <silent> # :call VisualSelection('b')<CR>
 au FocusLost * :wa
 
 "F2 to toggle the paste mode
@@ -210,8 +244,8 @@ nnoremap <leader>ev <C-w><C-v><C-l>:e $MYVIMRC<cr>
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 """"""""""""""""""""""""""""""""""""""""""""""""plugin customized"""""""""""""""""""""""""""""""""""""
-
 "buf_it settings = {
+
 "ctrl+h ctrl+l
 nmap  <C-h>      :call BufPrevPart()<cr>
 nmap  <C-l>      :call BufNextPart()<cr>
@@ -253,10 +287,40 @@ let g:SuperTabDefaultCompletionType="<C-X><C-O>"
 nnoremap <Leader>ff  :FufFile<cr>
 nnoremap <Leader>fd  :FufDir<cr>
 nnoremap <Leader>fb  :FufBuffer<cr>
+" ctrl+shift+F would open the all files under the current dir to search
+map <C-S-F> :FufFileRecursive<CR>
 "};
 "
 "The quickfix settings = {
-nmap <silent> F6 :QFix<CR>
+function! GetBufferList()
+  redir =>buflist
+  silent! ls
+  redir END
+  return buflist
+endfunction
+
+function! ToggleList(bufname, pfx)
+  let buflist = GetBufferList()
+  for bufnum in map(filter(split(buflist, '\n'), 'v:val =~ "'.a:bufname.'"'), 'str2nr(matchstr(v:val, "\\d\\+"))')
+    if bufwinnr(bufnum) != -1
+      exec(a:pfx.'close')
+      return
+    endif
+  endfor
+  if a:pfx == 'l' && len(getloclist(0)) == 0
+      echohl ErrorMsg
+      echo "Location List is Empty."
+      return
+  endif
+  let winnr = winnr()
+  exec(a:pfx.'open')
+  if winnr() != winnr
+    wincmd p
+  endif
+endfunction
+
+"nmap <silent> <leader>l :call ToggleList("Location List", 'l')<CR>
+"nmap <silent> <leader>e :call ToggleList("Quickfix List", 'c')<CR>
 command -bang -nargs=? QFix call QFixToggle(<bang>0)
 function! QFixToggle(forced)
   if exists("g:qfix_win") && a:forced == 0
@@ -267,4 +331,55 @@ function! QFixToggle(forced)
     let g:qfix_win = bufnr("$")
   endif
 endfunction
+" ,f toggle the quickfix window
+nmap <silent> <Leader>f :QFix<CR>
 "}
+
+
+"The Mark settings = {
+nmap <silent> ,hl <Plug>MarkSet
+vmap <silent> ,hl <Plug>MarkSet
+nmap <silent> ,hh <Plug>MarkClear
+vmap <silent> ,hh <Plug>MarkClear
+nmap <silent> ,hr <Plug>MarkRegex
+vmap <silent> ,hr <Plug>MarkRegex
+"}
+
+"The EasyGrep settings = {
+"<leader>vv- Grep for the word under the cursor
+"<leader>va - Like vv, but add to existing list
+"<leader>vo - Select the files to search in and set grep options
+":Grep SearchString
+map f/ <esc>:Grep
+"}
+
+
+"The gundo settings = {
+nnoremap <F11> :GundoToggle<CR>
+nnoremap <F12> :earlier 100000<CR>
+
+"
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" => Helper functions
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+function! VisualSelection(direction) range
+    let l:saved_reg = @"
+    execute "normal! vgvy"
+
+    let l:pattern = escape(@", '\\/.*$^~[]')
+    let l:pattern = substitute(l:pattern, "\n$", "", "")
+
+    if a:direction == 'b'
+        execute "normal ?" . l:pattern . "^M"
+    elseif a:direction == 'gv'
+        call CmdLine("vimgrep " . '/'. l:pattern . '/' . ' **/*.')
+    elseif a:direction == 'replace'
+        call CmdLine("%s" . '/'. l:pattern . '/')
+    elseif a:direction == 'f'
+        execute "normal /" . l:pattern . "^M"
+    endif
+
+    let @/ = l:pattern
+    let @" = l:saved_reg
+endfunction
+
