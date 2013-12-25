@@ -1,83 +1,121 @@
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+"===================================================================="
+"====><<Windows or Linux, terminal or gvim>>
+"===================================================================="
+if(has("win32") || has("win64") || has("win95") || has("win16"))
+    let g:iswindows = 1
+else
+    let g:iswindows = 0
+endif
+
+if has("gui_running")
+    let g:isGUI = 1
+else
+    let g:isGUI = 0
+endif
+"===================================================================="
+"===================================================================="
+
+
+
+"===================================================================="
+"====> Windows platform>{
+"===================================================================="
+if(g:iswindows && g:isGUI)
+
+endif
+"}
+"===================================================================="
+"===================================================================="
+
+
+
+"===================================================================="
+"====><Linux platform> {
+"===================================================================="
+if !g:iswindows
+	if g:isGUI
+	"Source a global configuration file if available
+        if filereadable("/etc/vim/gvimrc.local")
+            source /etc/vim/gvimrc.local
+        endif
+
+	else
+		set mouse=a				"enable mouse
+		set t_Co=256     		"enable 256 colors in terminal
+		set backspace=2			"enable backspace
+
+		if filereadable("/etc/vim/vimrc.local")
+			source /etc/vim/vimrc.local
+		endif
+	endif
+endif
+"}
+"===================================================================="
+"===================================================================="
+
+
+
+
+
 let $MYVIMRC='~/.vim/_vimrc'
 set nocompatible
 set fileencodings=utf-8,gb2312,gbk,gb18030  
 set termencoding=utf-8  
 set encoding=utf-8 
 syntax on
-set diffexpr=MyDiff()
-function MyDiff()
-  let opt = '-a --binary '
-  if &diffopt =~ 'icase' | let opt = opt . '-i ' | endif
-  if &diffopt =~ 'iwhite' | let opt = opt . '-b ' | endif
-  let arg1 = v:fname_in
-  if arg1 =~ ' ' | let arg1 = '"' . arg1 . '"' | endif
-  let arg2 = v:fname_new
-  if arg2 =~ ' ' | let arg2 = '"' . arg2 . '"' | endif
-  let arg3 = v:fname_out
-  if arg3 =~ ' ' | let arg3 = '"' . arg3 . '"' | endif
-  let eq = ''
-  if $VIMRUNTIME =~ ' '
-    if &sh =~ '\<cmd'
-      let cmd = '""' . $VIMRUNTIME . '\diff"'
-      let eq = '"'
-    else
-      let cmd = substitute($VIMRUNTIME, ' ', '" ', '') . '\diff"'
-    endif
-  else
-    let cmd = $VIMRUNTIME . '\diff'
-  endif
-  silent execute '!' . cmd . ' ' . opt . arg1 . ' ' . arg2 . ' > ' . arg3 . eq
-endfunction
-
-"customized
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+filetype off				"disable filetype detection
 
 
 
-"""""""""""""""""""""""""""""""""""""""""""""""help"""""""""""""""""""""""""""""""""""""""""""""""""""
-" vundle {
-"set rtp+=~/.vim/bundle/vundle/
-" Èç¹ûÔÚwindowsÏÂÊ¹ÓÃµÄ»°£¬ÉèÖÃÎª 
-" set rtp+=$HOME/.vim/bundle/vundle/
-"call vundle#rc()
-" }
-"
-" let Vundle manage Vundle
-" required! 
-"Bundle 'gmarik/vundle'
- 
+
+
+"===================================================================="
+"====>Vundle configuration{
+"===================================================================="
+if !g:iswindows
+	set rtp+=~/.vim/bundle/vundle/
+	call vundle#rc()
+else
+	set rtp+=$VIM/vimfiles/bundle/vundle/
+	call vundle#rc('$VIM/vimfiles/bundle/')
+endif
+
+Bundle 'gmarik/vundle'
+
 " My Bundles here:
-"
+"Bundle 'Lokaltog/vim-easymotion'
+"Bundle 'scrooloose/nerdcommenter'
+"Bundle 'nelson/cscope_maps'
+"Bundle 'kien/ctrlp.vim'
+"Bundle 'tpope/vim-repeat'
+""¸ñÊ½2£ºvim-scriptsÀïÃæµÄ²Ö¿â£¬Ö±½Ó´ò²Ö¿âÃû¼´¿É¡£
+"Bundle 'L9'
+"Bundle 'FuzzyFinder'
+"Bundle 'The-NERD-tree'
+""the buf_it.vim under e:/program files/vim/plugin is used, it is specially customized, we igore the git buf_it here
+""Bundle 'buf_it'
+"Bundle 'taglist.vim'
+"Bundle 'SuperTab'
+"Bundle 'EasyGrep'
+"Bundle 'matchit.zip'
+Bundle 'Mark'
+"Bundle 'Conque-Shell'
+"Bundle 'FencView.vim'
+"Bundle 'Gundo'
+"Bundle 'CmdlineComplete'
+"filetype plugin indent on
+
 " original repos on github
 " githubÉÏµÄÓÃ»§Ð´µÄ²å¼þ£¬Ê¹ÓÃÕâÖÖÓÃ»§Ãû+repoÃû³ÆµÄ·½Ê½
 " Bundle 'tpope/vim-fugitive'
-" Bundle 'Lokaltog/vim-easymotion'
-" Bundle 'rstacruz/sparkup', {'rtp': 'vim/'}
-" Bundle 'tpope/vim-rails.git'
 " vim-scripts repos
 " vimscriptsµÄrepoÊ¹ÓÃÏÂÃæµÄ¸ñÊ½£¬Ö±½ÓÊÇ²å¼þÃû³Æ
 "Bundle 'taglist.vim'
-"Bundle 'SuperTab'
-"Bundle 'vimwiki'
-"Bundle 'winmanager'
-"Bundle 'bufexplorer.zip'
-"Bundle 'The-NERD-tree'
-"Bundle 'matrix.vim--Yang'
-"Bundle 'FencView.vim'
-"Bundle 'Conque-Shell'
-"Bundle 'Vimpress'
-"Bundle 'Markdown'
-"Bundle 'LaTeX-Suite-aka-Vim-LaTeX'
-"Bundle 'c.vim'
-"Bundle 'snipMate'
- 
 " non github reposo
 " ·ÇgithubµÄ²å¼þ£¬¿ÉÒÔÖ±½ÓÊ¹ÓÃÆägitµØÖ·
 " Bundle 'git://git.wincent.com/command-t.git'
-" ...
- 
-"
+
 " Brief help
 " :BundleList          - list configured bundles
 " :BundleInstall(!)    - install(update) bundles
@@ -88,56 +126,29 @@ endfunction
 " °²×°ÍêÖ®ºó£¬ÔÚvimrcÖÐ£¬Ìí¼ÓBundle 'XXX'£¬Ê¹µÃbundleÄÜ¹»¼ÓÔØ£¬Õâ¸ö²å¼þ£¬Í¬Ê±Èç¹û
 " ÐèÒªÅäÖÃÕâ¸ö²å¼þ£¬Ò²ÊÇÔÚvimrcÖÐÉèÖÃ¼´¿É
 " see :h vundle for more details or wiki for FAQ
-"" NOTE: comments after Bundle command are not allowed..
+"}
+"===================================================================="
+"===================================================================="
 
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 
-"""""""""""""""""""""""""""""""""""""""""""""""vundle"""""""""""""""""""""""""""""""""""""""""""""""""
-filetype off        " required!
-set rtp+=~/.vim/bundle/vundle/
-"set rtp+=$HOME/.vim/bundle/vundle/
-call vundle#rc()
 
-" let Vundle manage Vundle
-Bundle 'gmarik/vundle'
-
-" githubÉÏµÄÓÃ»§Ð´µÄ²å¼þ£¬Ê¹ÓÃÕâÖÖÓÃ»§Ãû+repoÃû³ÆµÄ·½Ê½
-Bundle 'Lokaltog/vim-easymotion'
-Bundle  'scrooloose/nerdcommenter'
-Bundle 'nelson/cscope_maps'
-
-"¸ñÊ½2£ºvim-scriptsÀïÃæµÄ²Ö¿â£¬Ö±½Ó´ò²Ö¿âÃû¼´¿É¡£
-Bundle 'L9'
-Bundle 'FuzzyFinder'
-Bundle 'The-NERD-tree'
-"the buf_it.vim under e:/program files/vim/plugin is used, it is specially customized, we igore the git buf_it here
-"Bundle 'buf_it'
-Bundle 'taglist.vim'
-Bundle 'SuperTab'
-Bundle 'EasyGrep'
-Bundle 'matchit.zip'
-Bundle 'YankRing.vim'
-Bundle 'Mark'
-Bundle 'Conque-Shell'
-Bundle 'FencView.vim'
-Bundle 'Gundo'
-filetype plugin indent on
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
-""""""""""""""""""""""""""""""""""""""""""""""miscellaneous"""""""""""""""""""""""""""""""""""""""""""
+"===================================================================="
+"====> general settings> {
+"===================================================================="
 set guitablabel=%N\ %f
 "set encoding=utf-8
 " for windows vim {
-"set guifont=Microsoft_YaHei_Mono:h11:cGB2312
+set guifont=Microsoft_YaHei_Mono:h11:cGB2312
+set guifont=Consolas:h11:cANSI
 "source $VIMRUNTIME/vimrc_example.vim
 "source $VIMRUNTIME/mswin.vim
 "behave mswin
 "}
+"let g:solarized_termcolors=256
+"let g:solarized_termtrans = 1
+color desert
 
-color solarized
-"color molokai
-"set bg=light
 set bg=dark
 set tabstop=4
 set shiftwidth=4
@@ -156,7 +167,8 @@ set ttyfast
 "set ruler
 set noruler
 set backspace=indent,eol,start
-set relativenumber
+"set relativenumber
+set nu
 set undofile
 
 let mapleader = ","
@@ -173,28 +185,32 @@ set laststatus=2
 "Set to auto read when a file is changed from the outside
 set autoread
 
+"means line end, line ahead
+nmap la 0
+nmap le $
 nnoremap <leader><space> :noh<cr>
 nnoremap <tab> %
 vnoremap <tab> %
 
-set wrap
-set textwidth=79
-set formatoptions=qrn1
-set colorcolumn=138
+set nowrap
+"set textwidth=79
+"set formatoptions=qrn1
+"set colorcolumn=138
 
-nnoremap <up> <nop>
-nnoremap <down> <nop>
-nnoremap <left> <nop>
-nnoremap <right> <nop>
-"inoremap <up> <nop>
-"inoremap <down> <nop>
-"inoremap <left> <nop>
-"inoremap <right> <nop>
+
 nnoremap j gj
 nnoremap k gk
+"insert mode movement
+imap <c-k> <up>
+imap <c-j> <down>
+imap <c-h> <left>
+imap <c-l> <right>
+
 ",re manually refresh the buffer
 nnoremap <leader>re :bufdo e<CR>
-nnoremap ; :
+"When use (f,F,t,T) to locate a character in a line, ; can be a repeation
+"character, so Don't remap this to :
+"nnoremap ; :
 
 "ÉèÖÃ¿ì½Ý¼ü½«Ñ¡ÖÐÎÄ±¾¿é¸´ÖÆÖÁÏµÍ³¼ôÌù°å
 vnoremap<Leader>y "+y
@@ -216,127 +232,96 @@ vnoremap D "_d
 map <leader>cd :cd %:p:h<cr>:pwd<cr>
 "nnoremap <Leader>cd :lcd %:p:h<CR> 
 
-
 " Move a line of text using ALT+[jk] or Comamnd+[jk] on mac
 " to map ALT-j, you have to use set <m-j> =ctrl-v + alt-j
 set <m-j> =j
-nmap <m-j> mz:m+<cr>`z
+"nmap <m-j> mz:m+<cr>`z
 set <m-k> =k
-nmap <m-k> mz:m-2<cr>`z
+"nmap <m-k> mz:m-2<cr>`z
 vmap <M-j> :m'>+<cr>`<my`>mzgv`yo`z
 vmap <M-k> :m'<-2<cr>`>my`<mzgv`yo`z
 " ALT-a means select all
-set <m-a> =a 
+set <m-a> =a
 map <m-a> ggVG
 
-""""""""""""""""""""""""""""""
 " => Visual mode related
-""""""""""""""""""""""""""""""
 " Visual mode pressing * or # searches for the current selection
 " Super useful! From an idea by Michael Naumann
 vnoremap <silent> * :call VisualSelection('f')<CR>
 vnoremap <silent> # :call VisualSelection('b')<CR>
-au FocusLost * :wa
 
+" => vimgrep searching and cope displaying
+" When you press gv you vimgrep after the selected text
+vnoremap <silent> gv :call VisualSelection('gv')<CR>
+" When you press <leader>r you can search and replace the selected text
+vnoremap <silent> <leader>r :call VisualSelection('replace')<CR>
+
+"au FocusLost * :wa
 "F2 to toggle the paste mode
 set pastetoggle=<F2>
 nnoremap <leader>ev <C-w><C-v><C-l>:e $MYVIMRC<cr>
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"===================================================================="
+"===================================================================="
 
-""""""""""""""""""""""""""""""""""""""""""""""""plugin customized"""""""""""""""""""""""""""""""""""""
-"buf_it settings = {
 
-"ctrl+h ctrl+l
-nmap  <C-h>      :call BufPrevPart()<cr>
-nmap  <C-l>      :call BufNextPart()<cr>
-"close the current buf
-nnoremap <Leader>q  :call BufClose()<CR> 
-"save and close the current buf
-nnoremap <Leader>wq :w<CR><Esc>:call BufClose()<CR> 
-"save the current buf
-nnoremap <Leader>w  :w<CR> 
+
+"===================================================================="
+"====>plugin configuration
+"===================================================================="
+"==>buf_it settings = {
+"=>ctrl+h ctrl+l
+"nmap  <C-h>      :call BufPrevPart()<cr>
+"nmap  <C-l>      :call BufNextPart()<cr>
+"=>close the current buf
+"nnoremap <Leader>q  :call BufClose()<CR> 
+"=>save and close the current buf
+"nnoremap <Leader>wq :w<CR><Esc>:call BufClose()<CR> 
+"=>save the current buf
+"nnoremap <Leader>w  :w<CR> 
 "}
 
 
-"The NERD-Tree settings = {
-nnoremap <leader>n   :NERDTree<cr>
-nnoremap <leader>nb  :Bookmark 
-nnoremap <leader>nob :OpenBookmark 
-nnoremap <leader>N   :NERDTreeClose<cr>         
-let NERDTreeWinPos ="left"                      "½«NERDTreeµÄ´°¿ÚÉèÖÃÔÚgvim´°¿ÚµÄ×ó±ß
-let NERDTreeShowBookmarks=1                     "µ±´ò¿ªNERDTree´°¿ÚÊ±£¬×Ô¶¯ÏÔÊ¾Bookmarks
-let NERDTreeChDirMode=2                         "´ò¿ªÊéÇ©Ê±£¬×Ô¶¯½«VimµÄpwdÉèÎª´ò¿ªµÄÄ¿Â¼£¬Èç¹ûÄãµÄÏîÄ¿ÓÐtagsÎÄ¼þ£¬Äã»á·¢ÏÖÕâ¸öÃüÁîºÜÓÐ°ïÖú
-"}
-"The taglist settings = {
-let Tlist_Use_Right_Window=1
-nmap<Leader>t :TlistToggle<cr>
+"==>The NERD-Tree settings = {
+"nnoremap <leader>n   :NERDTree<cr>
+"nnoremap <leader>nb  :Bookmark 
+"nnoremap <leader>nob :OpenBookmark 
+"nnoremap <leader>N   :NERDTreeClose<cr>         
+"let NERDTreeWinPos ="left"                      "½«NERDTreeµÄ´°¿ÚÉèÖÃÔÚgvim´°¿ÚµÄ×ó±ß
+"let NERDTreeShowBookmarks=1                     "µ±´ò¿ªNERDTree´°¿ÚÊ±£¬×Ô¶¯ÏÔÊ¾Bookmarks
+"let NERDTreeChDirMode=2                         "´ò¿ªÊéÇ©Ê±£¬×Ô¶¯½«VimµÄpwdÉèÎª´ò¿ªµÄÄ¿Â¼£¬Èç¹ûÄãµÄÏîÄ¿ÓÐtagsÎÄ¼þ£¬Äã»á·¢ÏÖÕâ¸öÃüÁîºÜÓÐ°ïÖú
 "}
 
-"The supertab settings = {
-filetype plugin indent on
-set completeopt=longest,menu
-"supertab
-let g:SuperTabRetainCompletionType=2
-let g:SuperTabDefaultCompletionType="<C-X><C-O>"
-"easy motion
+
+"==>The taglist settings = {
+"let Tlist_Use_Right_Window=1
+"nmap<Leader>t :TlistToggle<cr>
+"}
+
+
+
+"==>The supertab settings = {
+"filetype plugin indent on
+"set completeopt=longest,menu
+"let g:SuperTabRetainCompletionType=2
+"let g:SuperTabDefaultCompletionType="<C-X><C-O>"
+"}
+
+
+"==>easy motion settings = {
 "let g:EasyMotion_leader_key = '<,>'
 "}
 
 
-"The FuzzyFinder settings = {
-nnoremap <Leader>ff  :FufFile<cr>
-nnoremap <Leader>fd  :FufDir<cr>
-nnoremap <Leader>fb  :FufBuffer<cr>
-" ctrl+shift+F would open the all files under the current dir to search
-map <C-S-F> :FufFileRecursive<CR>
+"==>The FuzzyFinder settings = {
+"nnoremap <Leader>ff  :FufFile<cr>
+"nnoremap <Leader>fd  :FufDir<cr>
+"nnoremap <Leader>fb  :FufBuffer<cr>
+"=>ctrl+shift+F would open the all files under the current dir to search
+"map <C-S-F> :FufFileRecursive<CR>
 "};
-"
-"The quickfix settings = {
-function! GetBufferList()
-  redir =>buflist
-  silent! ls
-  redir END
-  return buflist
-endfunction
-
-function! ToggleList(bufname, pfx)
-  let buflist = GetBufferList()
-  for bufnum in map(filter(split(buflist, '\n'), 'v:val =~ "'.a:bufname.'"'), 'str2nr(matchstr(v:val, "\\d\\+"))')
-    if bufwinnr(bufnum) != -1
-      exec(a:pfx.'close')
-      return
-    endif
-  endfor
-  if a:pfx == 'l' && len(getloclist(0)) == 0
-      echohl ErrorMsg
-      echo "Location List is Empty."
-      return
-  endif
-  let winnr = winnr()
-  exec(a:pfx.'open')
-  if winnr() != winnr
-    wincmd p
-  endif
-endfunction
-
-"nmap <silent> <leader>l :call ToggleList("Location List", 'l')<CR>
-"nmap <silent> <leader>e :call ToggleList("Quickfix List", 'c')<CR>
-command -bang -nargs=? QFix call QFixToggle(<bang>0)
-function! QFixToggle(forced)
-  if exists("g:qfix_win") && a:forced == 0
-    cclose
-    unlet g:qfix_win
-  else
-    copen 10
-    let g:qfix_win = bufnr("$")
-  endif
-endfunction
-" ,f toggle the quickfix window
-nmap <silent> <Leader>f :QFix<CR>
-"}
 
 
-"The Mark settings = {
+"==>The Mark settings = {
 nmap <silent> ,hl <Plug>MarkSet
 vmap <silent> ,hl <Plug>MarkSet
 nmap <silent> ,hh <Plug>MarkClear
@@ -345,23 +330,41 @@ nmap <silent> ,hr <Plug>MarkRegex
 vmap <silent> ,hr <Plug>MarkRegex
 "}
 
-"The EasyGrep settings = {
+"==>The EasyGrep settings = {
 "<leader>vv- Grep for the word under the cursor
 "<leader>va - Like vv, but add to existing list
 "<leader>vo - Select the files to search in and set grep options
 ":Grep SearchString
-map f/ <esc>:Grep
+"map f/ <esc>:Grep
 "}
 
 
-"The gundo settings = {
-nnoremap <F11> :GundoToggle<CR>
-nnoremap <F12> :earlier 100000<CR>
-
+"==>The gundo settings = {
+"nnoremap <F11> :GundoToggle<CR>
+"nnoremap <F12> :earlier 100000<CR>
 "
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" => Helper functions
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+"==>Ctags settings {
+"=>This will look in the current directory for 'tags', and work up the tree towards root until one is found.
+"set tags=./tags;/,$HOME/vimtags
+"map <C-\> :tab split<CR>:exec("tag ".expand("<cword>"))<CR> " C-\ - Open the definition in a new tab
+"map <A-]> :vsp <CR>:exec("tag ".expand("<cword>"))<CR>      " A-] - Open the definition in a vertical split
+" }
+"===================================================================="
+"===================================================================="
+
+
+
+
+"===================================================================="
+"====> Helper functions
+"===================================================================="
+function! CmdLine(str)
+    exe "menu Foo.Bar :" . a:str
+    emenu Foo.Bar
+    unmenu Foo
+endfunction
+
 function! VisualSelection(direction) range
     let l:saved_reg = @"
     execute "normal! vgvy"
@@ -382,4 +385,5 @@ function! VisualSelection(direction) range
     let @/ = l:pattern
     let @" = l:saved_reg
 endfunction
-
+"===================================================================="
+"===================================================================="
