@@ -8,6 +8,17 @@ else
     let g:iswindows = 0
 endif
 
+if has("unix")
+    let s:uname = system("uname -s")
+    if s:uname == "Darwin\n"
+        let g:ismac = 1
+    else
+        let g:islinux = 1
+    endif
+elseif (has("win32") || has("win64") || has("win95") || has("win16"))
+    let g:iswindows = 1
+endif
+
 if has("gui_running")
     let g:isGUI = 1
 else
@@ -58,13 +69,12 @@ endif
 
 
 
-let $MYVIMRC='~/.vim/_vimrc'
+syntax on                   "coloful vim
 set nocompatible
 set fileencodings=utf-8,gb2312,gbk,gb18030  
 set termencoding=utf-8  
 set encoding=utf-8 
-syntax on
-filetype off				"disable filetype detection
+"filetype off				"disable filetype detection
 
 
 
