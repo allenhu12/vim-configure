@@ -2,11 +2,10 @@
 "===================================================================="
 "====><<Windows or Linux, terminal or gvim>>
 "===================================================================="
-if(has("win32") || has("win64") || has("win95") || has("win16"))
-    let g:iswindows = 1
-else
-    let g:iswindows = 0
-endif
+let g:iswindows = 0
+let g:ismac = 0
+let g:islinux = 0
+let g:isGUI = 0
 
 if has("unix")
     let s:uname = system("uname -s")
@@ -50,12 +49,13 @@ if !g:iswindows
         if filereadable("/etc/vim/gvimrc.local")
             source /etc/vim/gvimrc.local
         endif
+        set nowrap
 
 	else
 		set mouse=a				"enable mouse
 		set t_Co=256     		"enable 256 colors in terminal
 		set backspace=2			"enable backspace
-
+        set wrap                "enable it under non-gui
 		if filereadable("/etc/vim/vimrc.local")
 			source /etc/vim/vimrc.local
 		endif
