@@ -118,6 +118,7 @@ Bundle 'Mark'
 
 " original repos on github
 " github上的用户写的插件，使用这种用户名+repo名称的方式
+Bundle 'jlanzarotta/bufexplorer'
 " Bundle 'tpope/vim-fugitive'
 " vim-scripts repos
 " vimscripts的repo使用下面的格式，直接是插件名称
@@ -180,6 +181,9 @@ set backspace=indent,eol,start
 "set relativenumber
 set nu
 set undofile
+"=>undo dir, all the un~ files will be saved there
+set undodir=$VIMRUNTIME/undo
+set undolevels=1000
 
 let mapleader = ","
 "nnoremap / /\v
