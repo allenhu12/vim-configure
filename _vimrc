@@ -217,6 +217,7 @@ nnoremap k gk
 "insert mode movement
 imap <c-k> <up>
 imap <c-j> <down>
+"=> if this make backspace invalid, please check the securecrt or xshell keymap setting
 imap <c-h> <left>
 imap <c-l> <right>
 
