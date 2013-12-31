@@ -200,8 +200,8 @@ set laststatus=2
 set autoread
 
 "means line end, line ahead
-nmap la 0
-nmap le $
+"nmap la 0
+"nmap le $
 nnoremap <leader><space> :noh<cr>
 nnoremap <tab> %
 vnoremap <tab> %
@@ -224,7 +224,7 @@ imap <c-l> <right>
 nnoremap <leader>re :bufdo e<CR>
 "When use (f,F,t,T) to locate a character in a line, ; can be a repeation
 "character, so Don't remap this to :
-"nnoremap ; :
+nnoremap ; :
 
 "设置快捷键将选中文本块复制至系统剪贴板
 vnoremap<Leader>y "+y
