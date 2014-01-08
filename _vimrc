@@ -95,9 +95,9 @@ Bundle 'gmarik/vundle'
 
 " My Bundles here:
 "Bundle 'Lokaltog/vim-easymotion'
-"Bundle 'scrooloose/nerdcommenter'
-"Bundle 'nelson/cscope_maps'
-"Bundle 'kien/ctrlp.vim'
+Bundle 'scrooloose/nerdcommenter'
+Bundle 'nelson/cscope_maps'
+Bundle 'kien/ctrlp.vim'
 "Bundle 'tpope/vim-repeat'
 ""格式2：vim-scripts里面的仓库，直接打仓库名即可。
 "Bundle 'L9'
@@ -107,7 +107,7 @@ Bundle 'gmarik/vundle'
 ""Bundle 'buf_it'
 "Bundle 'taglist.vim'
 "Bundle 'SuperTab'
-"Bundle 'EasyGrep'
+Bundle 'EasyGrep'
 "Bundle 'matchit.zip'
 Bundle 'Mark'
 "Bundle 'Conque-Shell'
@@ -182,7 +182,18 @@ set backspace=indent,eol,start
 set nu
 set undofile
 "=>undo dir, all the un~ files will be saved there
-set undodir=$VIMRUNTIME/undo
+if (g:iswindows)
+    let s:undodir="$VIMRUNTIME/undo"
+    set undodir=$VIMRUNTIME/undo
+else
+    let s:undodir="/home/allen.hu/.vim/undo"
+    set undodir=~/.vim/undo
+endif
+
+if !isdirectory(s:undodir)
+call mkdir(s:undodir, "p")
+endif
+
 set undolevels=1000
 
 let mapleader = ","
@@ -361,7 +372,7 @@ vmap <silent> ,hr <Plug>MarkRegex
 
 "==>Ctags settings {
 "=>This will look in the current directory for 'tags', and work up the tree towards root until one is found.
-"set tags=./tags;/,$HOME/vimtags
+set tags=./tags;/,$HOME/vimtags
 "map <C-\> :tab split<CR>:exec("tag ".expand("<cword>"))<CR> " C-\ - Open the definition in a new tab
 "map <A-]> :vsp <CR>:exec("tag ".expand("<cword>"))<CR>      " A-] - Open the definition in a vertical split
 " }
