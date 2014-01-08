@@ -119,6 +119,7 @@ Bundle 'Mark'
 " original repos on github
 " github上的用户写的插件，使用这种用户名+repo名称的方式
 Bundle 'jlanzarotta/bufexplorer'
+Bundle 'tomasr/molokai'
 " Bundle 'tpope/vim-fugitive'
 " vim-scripts repos
 " vimscripts的repo使用下面的格式，直接是插件名称
@@ -159,6 +160,7 @@ set guifont=Consolas:h11:cANSI
 "let g:solarized_termcolors=256
 "let g:solarized_termtrans = 1
 color desert
+color molokai
 
 set bg=dark
 set tabstop=4
@@ -185,8 +187,11 @@ set undofile
 if (g:iswindows)
     let s:undodir="$VIMRUNTIME/undo"
     set undodir=$VIMRUNTIME/undo
-else
-    let s:undodir="/home/allen.hu/.vim/undo"
+elseif (g:ismac)
+    let s:undodir="/Users/Hubo/.vim/undo"
+    set undodir=/Users/Hubo/.vim/undo
+elseif (g:islinux)
+    let s:undodir="~/.vim/undo"
     set undodir=~/.vim/undo
 endif
 
