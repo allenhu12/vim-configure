@@ -100,6 +100,7 @@ Bundle 'nelson/cscope_maps'
 Bundle 'kien/ctrlp.vim'
 "Bundle 'tpope/vim-repeat'
 ""格式2：vim-scripts里面的仓库，直接打仓库名即可。
+"Bundle 'CSApprox'
 "Bundle 'L9'
 "Bundle 'FuzzyFinder'
 "Bundle 'The-NERD-tree'
@@ -119,7 +120,9 @@ Bundle 'Mark'
 " original repos on github
 " github上的用户写的插件，使用这种用户名+repo名称的方式
 Bundle 'jlanzarotta/bufexplorer'
-Bundle 'tomasr/molokai'
+Bundle 'milkypostman/vim-togglelist'
+Bundle 'yegappan/mru'
+"Bundle 'tomasr/molokai'
 " Bundle 'tpope/vim-fugitive'
 " vim-scripts repos
 " vimscripts的repo使用下面的格式，直接是插件名称
@@ -160,7 +163,6 @@ set guifont=Consolas:h11:cANSI
 "let g:solarized_termcolors=256
 "let g:solarized_termtrans = 1
 color desert
-color molokai
 
 set bg=dark
 set tabstop=4
@@ -191,7 +193,7 @@ elseif (g:ismac)
     let s:undodir="/Users/Hubo/.vim/undo"
     set undodir=/Users/Hubo/.vim/undo
 elseif (g:islinux)
-    let s:undodir="~/.vim/undo"
+    let s:undodir="/home/allen.hu/.vim/undo"
     set undodir=~/.vim/undo
 endif
 
@@ -219,8 +221,9 @@ set autoread
 "nmap la 0
 "nmap le $
 nnoremap <leader><space> :noh<cr>
-nnoremap <tab> %
-vnoremap <tab> %
+"don't map the tab, because tab equals to ctrl+I
+"nnoremap <tab> %
+"vnoremap <tab> %
 
 set nowrap
 "set textwidth=79
@@ -366,7 +369,8 @@ vmap <silent> ,hr <Plug>MarkRegex
 "<leader>va - Like vv, but add to existing list
 "<leader>vo - Select the files to search in and set grep options
 ":Grep SearchString
-"map f/ <esc>:Grep
+":Grep string\C for case sensitive
+map f/ <esc>:Grep 
 "}
 
 
