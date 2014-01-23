@@ -38,6 +38,7 @@ if(g:iswindows && g:isGUI)
     color solarized
 else
     set bg=dark
+    color desert
 endif
 "}
 "===================================================================="
