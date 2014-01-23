@@ -32,7 +32,12 @@ endif
 "====> Windows platform>{
 "===================================================================="
 if(g:iswindows && g:isGUI)
-
+"let g:solarized_termcolors=256
+"let g:solarized_termtrans = 1
+    set bg=dark
+    color solarized
+else
+    set bg=dark
 endif
 "}
 "===================================================================="
@@ -99,6 +104,9 @@ Bundle 'scrooloose/nerdcommenter'
 Bundle 'nelson/cscope_maps'
 Bundle 'kien/ctrlp.vim'
 "Bundle 'tpope/vim-repeat'
+if (g:iswindows)
+    Bundle 'vim-scripts/Solarized'
+endif
 ""格式2：vim-scripts里面的仓库，直接打仓库名即可。
 "Bundle 'CSApprox'
 "Bundle 'L9'
@@ -160,11 +168,7 @@ set guifont=Consolas:h11:cANSI
 "source $VIMRUNTIME/mswin.vim
 "behave mswin
 "}
-"let g:solarized_termcolors=256
-"let g:solarized_termtrans = 1
-color desert
 
-set bg=dark
 set tabstop=4
 set shiftwidth=4
 set softtabstop=4
