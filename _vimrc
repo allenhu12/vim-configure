@@ -113,7 +113,7 @@ Bundle 'EasyGrep'
 Bundle 'Mark'
 "Bundle 'Conque-Shell'
 "Bundle 'FencView.vim'
-"Bundle 'Gundo'
+Bundle 'Gundo'
 "Bundle 'CmdlineComplete'
 "filetype plugin indent on
 
@@ -278,6 +278,8 @@ vmap <M-k> :m'<-2<cr>`>my`<mzgv`yo`z
 set <m-a> =a
 map <m-a> ggVG
 
+"<leader>b, add the ${}around the word
+map <leader>b wbi${<Esc>ea}<Esc>
 " => Visual mode related
 " Visual mode pressing * or # searches for the current selection
 " Super useful! From an idea by Michael Naumann
@@ -375,8 +377,8 @@ map f/ <esc>:Grep
 
 
 "==>The gundo settings = {
-"nnoremap <F11> :GundoToggle<CR>
-"nnoremap <F12> :earlier 100000<CR>
+nnoremap <F11> :GundoToggle<CR>
+nnoremap <F12> :earlier 100000<CR>
 "
 
 "==>Ctags settings {
