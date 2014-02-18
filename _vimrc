@@ -37,7 +37,7 @@ if(g:iswindows && g:isGUI)
     set bg=dark
     color solarized
 else
-    set bg=dark
+    "set bg=dark
     color desert
 endif
 "}
@@ -104,6 +104,7 @@ Bundle 'gmarik/vundle'
 Bundle 'scrooloose/nerdcommenter'
 Bundle 'nelson/cscope_maps'
 Bundle 'kien/ctrlp.vim'
+Bundle 'trotter/autojump.vim'
 "Bundle 'tpope/vim-repeat'
 if (g:iswindows)
     Bundle 'vim-scripts/Solarized'
@@ -123,6 +124,7 @@ Bundle 'Mark'
 "Bundle 'Conque-Shell'
 "Bundle 'FencView.vim'
 Bundle 'Gundo'
+Bundle 'rking/ag.vim'
 "Bundle 'CmdlineComplete'
 "filetype plugin indent on
 
@@ -173,7 +175,8 @@ set guifont=Consolas:h11:cANSI
 set tabstop=4
 set shiftwidth=4
 set softtabstop=4
-set expandtab
+" switch tab back when processing the makefile
+autocmd FileType make setlocal noexpandtab
 set scrolloff=3
 set autoindent
 set showmode
