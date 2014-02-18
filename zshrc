@@ -119,6 +119,7 @@ zstyle ':completion:*:*:default' force-list always
     alias cp='cp -i'
     alias mv='mv -i'
     alias rm='rm -i'
+    alias jj='j'
 #alias ls='ls -F --color=auto'
     alias ls='ls -h --color=tty'
     alias ll='ls -l'
