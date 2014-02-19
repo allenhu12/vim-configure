@@ -364,6 +364,10 @@ nnoremap <leader>ev <C-w><C-v><C-l>:e $MYVIMRC<cr>
 "map <C-S-F> :FufFileRecursive<CR>
 "};
 
+"==>The bufexplorer settings = {
+nnoremap <silent> <F10> :bn<CR>
+nnoremap <silent> <F9> :bp<CR>
+"}
 
 "==>The Mark settings = {
 nmap <silent> ,hl <Plug>MarkSet
