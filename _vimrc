@@ -312,6 +312,16 @@ nnoremap <leader>ev <C-w><C-v><C-l>:e $MYVIMRC<cr>
 "===================================================================="
 "====>plugin configuration
 "===================================================================="
+if executable('ag')
+  " Use ag over grep
+  set grepprg=ag\ --nogroup\ --nocolor
+
+  " Use ag in CtrlP for listing files. Lightning fast and respects .gitignore
+  let g:ctrlp_user_command = 'ag %s -l --nocolor -g ""'
+
+  " ag is fast enough that CtrlP doesn't need to cache
+  let g:ctrlp_use_caching = 0
+endif
 "==>buf_it settings = {
 "=>ctrl+h ctrl+l
 "nmap  <C-h>      :call BufPrevPart()<cr>
@@ -399,6 +409,12 @@ set tags=./tags;/,$HOME/vimtags
 "map <C-\> :tab split<CR>:exec("tag ".expand("<cword>"))<CR> " C-\ - Open the definition in a new tab
 "map <A-]> :vsp <CR>:exec("tag ".expand("<cword>"))<CR>      " A-] - Open the definition in a vertical split
 " }
+
+"==>Ctrlp settings{
+ let g:ctrlp_max_files = 80000
+ let g:ctrlp_max_depth = 80
+ let g:ctrlp_working_path_mode = ''
+"}
 "===================================================================="
 "===================================================================="
 
