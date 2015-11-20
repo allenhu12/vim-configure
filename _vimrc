@@ -35,10 +35,11 @@ if(g:iswindows && g:isGUI)
 "let g:solarized_termcolors=256
 "let g:solarized_termtrans = 1
     set bg=dark
-    color solarized
+    "color solarized
+	colo ron
 else
-    "set bg=dark
-    color desert
+    set bg=dark
+    color default
 endif
 "}
 "===================================================================="
@@ -58,6 +59,7 @@ if !g:iswindows
         set nowrap
 
 	else
+	    colo desert
 		set mouse=a				"enable mouse
 		set t_Co=256     		"enable 256 colors in terminal
 		set backspace=2			"enable backspace
@@ -131,7 +133,7 @@ Bundle 'rking/ag.vim'
 " original repos on github
 " github上的用户写的插件，使用这种用户名+repo名称的方式
 Bundle 'jlanzarotta/bufexplorer'
-Bundle 'milkypostman/vim-togglelist'
+"Bundle 'milkypostman/vim-togglelist'
 Bundle 'yegappan/mru'
 "Bundle 'tomasr/molokai'
 " Bundle 'tpope/vim-fugitive'
@@ -224,7 +226,7 @@ set statusline =%F%m%r%h%w\ [FORMAT=%{&ff}]\ [TYPE=%Y]\ [ASCII=\%03.3b]\ [HEX=\%
 set laststatus=2
 "Set to auto read when a file is changed from the outside
 set autoread
-
+set tags=tags;
 "means line end, line ahead
 "nmap la 0
 "nmap le $
@@ -395,6 +397,9 @@ vmap <silent> ,hr <Plug>MarkRegex
 ":Grep SearchString
 ":Grep string\C for case sensitive
 map f/ <esc>:Grep 
+map f/ <esc>:exec("Ag ".expand("<cword>"))<CR>
+map fb/ <esc>:exec("Bgrep ".expand("<cword>"))<CR>
+
 "}
 
 
@@ -406,14 +411,22 @@ nnoremap <F12> :earlier 100000<CR>
 "==>Ctags settings {
 "=>This will look in the current directory for 'tags', and work up the tree towards root until one is found.
 set tags=./tags;/,$HOME/vimtags
-"map <C-\> :tab split<CR>:exec("tag ".expand("<cword>"))<CR> " C-\ - Open the definition in a new tab
-"map <A-]> :vsp <CR>:exec("tag ".expand("<cword>"))<CR>      " A-] - Open the definition in a vertical split
+map <C-\> :tab split<CR>:exec("tag ".expand("<cword>"))<CR> " C-\ - Open the definition in a new tab
+map <A-]> :vsp <CR>:exec("tag ".expand("<cword>"))<CR>      " A-] - Open the definition in a vertical split
 " }
+
+"==>ToogleList Settings{
+nmap <script> <silent> <leader>l :call ToggleLocationList()<CR>
+nmap <script> <silent> <leader>q :call ToggleQuickfixList()<CR>
+"}
 
 "==>Ctrlp settings{
  let g:ctrlp_max_files = 80000
  let g:ctrlp_max_depth = 80
  let g:ctrlp_working_path_mode = ''
+ nmap <c-p> <silent> :CtrlPBuffer<CR>
+ nmap <leader>sb :CtrlPBuffer<CR>
+
 "}
 "===================================================================="
 "===================================================================="
@@ -450,5 +463,27 @@ function! VisualSelection(direction) range
     let @/ = l:pattern
     let @" = l:saved_reg
 endfunction
+
+
+
+
+function! GetBufferList()
+  redir =>buflist
+  silent! ls!
+  redir END
+  return buflist
+endfunction
+
+command -bang -nargs=? QFix call QFixToggle(<bang>0)
+function! QFixToggle(forced)
+  if exists("g:qfix_win") && a:forced == 0
+    cclose
+    unlet g:qfix_win
+  else
+    copen 10
+    let g:qfix_win = bufnr("$")
+  endif
+endfunction
+nmap <leader>q :QFix<CR>
 "===================================================================="
 "===================================================================="
