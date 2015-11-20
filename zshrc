@@ -1,16 +1,19 @@
 # PATH=$PATH:/home/allen.hu/user_bin/bin:/home/allen.hu/bin:/home/allen.hu/bin/p4v/bin:/usr/kerberos/bin:/usr/local/bin:/bin:/usr/bin:/usr/sbin:/usr/local/apache-ant-1.7.0/bin:/home/allen.hu/p4v/bin:/home/allen.hu/scripts:/home/allen.hu/local/bin
- PATH=/home/allen.hu/user_bin/bin:/home/allen.hu/bin:/home/allen.hu/bin/p4v/bin:/usr/kerberos/bin:/usr/local/bin:/bin:/usr/bin:/usr/sbin:/usr/local/apache-ant-1.7.0/bin:/home/allen.hu/p4v/bin:/home/allen.hu/scripts:/home/allen.hu/local/bin:$PATH
+ PATH=/usr/sbin/:/home/allen.hu/local/virtualenv/bin:/home/allen.hu/local/virtualenv/bin:/home/allen.hu/user_bin/bin:/home/allen.hu/bin:/home/allen.hu/bin/p4v/bin:/usr/kerberos/bin:/usr/local/bin:/bin:/usr/bin:/usr/sbin:/usr/local/apache-ant-1.7.0/bin:/home/allen.hu/p4v/bin:/home/allen.hu/scripts:/home/allen.hu/local/bin:/home/allen.hu/tools/p4v/p4v-2014.1.888424/bin:$PATH
   
   export PATH
-  export P4PORT=perforce.tw.video54.local:1666
+  export P4PORT=172.18.100.50:1666
   export P4USER=allen.hu
-  export P4CLIENT=ALLEN_WORKSPACE
+  export P4CLIENT=allen.hu_all
   export P4PASSWD=4alle$1234
   export MY_VIM_PATH=/home/allen.hu/workspace/git-depot/vim-conf/
+  export JAVA_HOME=/usr/java/jdk1.8.0_65
+  export ANT_HOME=/usr/local/apache-ant-1.9.6
+  export PATH=$PATH:/usr/local/apache-ant-1.9.6/bin/
 
   # shell support color, "security" should option->session option->emulation->ANSI color checked, use color scheme checked
- TERM=xterm-color
- export TERM
+# TERM=xterm-color
+# export TERM
 
 autoload colors
 colors
@@ -25,17 +28,6 @@ setopt MENU_COMPLETE
 setopt AUTO_PUSHD
 setopt PUSHD_IGNORE_DUPS
 
-case $TERM in
-    screen*)
-        function sctitle() { print -Pn "\ek$1\e\\"}
-        function precmd() { sctitle "%20< ..<%~%<<" }
-        function preexec() { sctitle "%20>..>$1%< <" }
-        export PS1="%{${fg[cyan]}%}[%D{%H:%M} %20<..<%~%<<]%{$reset_color%} "
-    ;;
-    *)
-        export PS1="%{${fg[cyan]}%}[%D{%H:%M} %n@%m:%20<..<%~%<<]%{$reset_color%} "
-    ;;
-esac
 
 # number of lines kept in history
 export HISTSIZE=10000
@@ -123,9 +115,11 @@ zstyle ':completion:*:*:default' force-list always
 #alias ls='ls -F --color=auto'
     alias ls='ls -h --color=tty'
     alias ll='ls -l'
+	alias lll='readlink -f'
     alias grep='grep --color=auto'
     alias ee='emacsclient -t'
     alias vim='/home/allen.hu/user_bin/bin/vim'
+    alias js='j --stat'
 #???? ?????????? cd ~xxx
     hash -d WWW="/home/lighttpd/html"
     hash -d ARCH="/mnt/arch"
@@ -136,40 +130,12 @@ zstyle ':completion:*:*:default' force-list always
     hash -d X="/etc/X11"
     hash -d BK="/home/r00t/config_bak"
 
-##for Emacs?Emacs?????Zsh????? ????Emacs????
-    if [[ "$TERM" == "dumb" ]]; then
-    setopt No_zle
-    PROMPT='%n@%M %/
-    >>'
-    alias ls='ls -F'
-    fi
-
-
-    setopt extended_glob
-    preexec () {
-	    if [[ "$TERM" == "screen" ]]; then
-		    local CMD=${1[(wr)^(*=*|sudo|-*)]}
-	        echo -n "\ek$CMD\e\\"
-		        fi
-    }
-
+DISABLE_AUTO_TITLE=true
 #
-PROMPT="%{$fg_bold[blue]%}%n %{${fg_bold[red]}%}:: %{${fg[green]}%}%3~%(0?. . ${fg[red]}%? )%{${fg[blue]}%}??%{${reset_color}%} "
-
-case $TERM in
-screen*)
-function sctitle() { print -Pn "\ek$1\e\\"}
-function precmd() { sctitle "%20< ..<%~%<<" }
-function preexec() { sctitle "%20>..>$1%< <" }
-export PS1="%{${fg[cyan]}%}[%D{%H:%M} %20<..<%~%<<]%{$reset_color%} "
-;;
-*)
-export PS1="%{${fg[cyan]}%}[%D{%H:%M} %n@%m:%20<..<%~%<<]%{$reset_color%} "
-;;
-esac
  # configuration for the vi mode in the zsh shell = {                                                                                      
   #set -o vi                                                                                                                                 
   bindkey '^R' history-incremental-search-backward                                                                                          
   # use vi mode under shell}
 [[ -s /home/allen.hu/.autojump/etc/profile.d/autojump.zsh ]] && source /home/allen.hu/.autojump/etc/profile.d/autojump.zsh
 autoload -U compinit && compinit -u
+source /home/allen.hu/workspace/git-depot/oh-my-zsh/templates/zshrc.zsh-dell-ubuntu
