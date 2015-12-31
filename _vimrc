@@ -102,7 +102,8 @@ endif
 Bundle 'gmarik/vundle'
 
 " My Bundles here:
-"Bundle 'Lokaltog/vim-easymotion'
+Bundle 'moll/vim-bbye'
+Bundle 'Lokaltog/vim-easymotion'
 Bundle 'scrooloose/nerdcommenter'
 Bundle 'nelson/cscope_maps'
 Bundle 'kien/ctrlp.vim'
@@ -120,6 +121,8 @@ endif
 ""Bundle 'buf_it'
 "Bundle 'taglist.vim'
 "Bundle 'SuperTab'
+"Bundle 'ingo-library'
+"Bundle 'EnhancedJumps'
 Bundle 'EasyGrep'
 "Bundle 'matchit.zip'
 Bundle 'Mark'
@@ -255,7 +258,8 @@ nnoremap <leader>re :bufdo e<CR>
 "When use (f,F,t,T) to locate a character in a line, ; can be a repeation
 "character, so Don't remap this to :
 nnoremap ; :
-
+inoremap jj <Esc>
+inoremap <Esc> <Esc><Esc>
 "ÉèÖÃ¿ì½Ý¼ü½«Ñ¡ÖÐÎÄ±¾¿é¸´ÖÆÖÁÏµÍ³¼ôÌù°å
 vnoremap<Leader>y "+y
 
@@ -279,9 +283,9 @@ map <leader>cd :cd %:p:h<cr>:pwd<cr>
 " Move a line of text using ALT+[jk] or Comamnd+[jk] on mac
 " to map ALT-j, you have to use set <m-j> =ctrl-v + alt-j
 set <m-j> =j
-"nmap <m-j> mz:m+<cr>`z
+vmap <m-j> mz:m+<cr>`z
 set <m-k> =k
-"nmap <m-k> mz:m-2<cr>`z
+vmap <m-k> mz:m-2<cr>`z
 vmap <M-j> :m'>+<cr>`<my`>mzgv`yo`z
 vmap <M-k> :m'<-2<cr>`>my`<mzgv`yo`z
 " ALT-a means select all
@@ -365,6 +369,7 @@ endif
 
 "==>easy motion settings = {
 "let g:EasyMotion_leader_key = '<,>'
+nmap <c-f> <leader><leader>s
 "}
 
 
@@ -396,7 +401,7 @@ vmap <silent> ,hr <Plug>MarkRegex
 "<leader>vo - Select the files to search in and set grep options
 ":Grep SearchString
 ":Grep string\C for case sensitive
-map f/ <esc>:Grep 
+" map f/ <esc>:Grep 
 map f/ <esc>:exec("Ag ".expand("<cword>"))<CR>
 map fb/ <esc>:exec("Bgrep ".expand("<cword>"))<CR>
 
@@ -424,9 +429,22 @@ nmap <script> <silent> <leader>q :call ToggleQuickfixList()<CR>
  let g:ctrlp_max_files = 80000
  let g:ctrlp_max_depth = 80
  let g:ctrlp_working_path_mode = ''
- nmap <c-p> <silent> :CtrlPBuffer<CR>
+ map <C-\> :CtrlPBuffer<CR>
  nmap <leader>sb :CtrlPBuffer<CR>
+ let g:ctrlp_extensions = ['tag', 'buffertag', 'quickfix', 'dir', 'rtscript',
+                          \ 'undo', 'line', 'changes', 'mixed', 'bookmarkdir']
+ let g:ctrlp_custom_ignore = '\v[\/](build|target|dist)|(\.(swp|ico|git|svn))$'
+"}
 
+"==>YankRing Settings{
+if !exists('g:yankring_replace_n_pkey')
+   let g:yankring_replace_n_pkey = '<C-Y>'
+endif
+nmap <C-e> :YRShow<CR>
+"}
+
+"==>bbye Settings{
+nnoremap <C-x> :Bdelete<CR>
 "}
 "===================================================================="
 "===================================================================="
@@ -485,5 +503,23 @@ function! QFixToggle(forced)
   endif
 endfunction
 nmap <leader>q :QFix<CR>
+
+
+
+function! GotoJump()
+  jumps
+  let j = input("Please select your jump: ")
+  if j != ''
+    let pattern = '\v\c^\+'
+    if j =~ pattern
+      let j = substitute(j, pattern, '', 'g')
+      execute "normal " . j . "\<c-i>"
+    else
+      execute "normal " . j . "\<c-o>"
+    endif
+  endif
+endfunction
+nmap <Leader>j :call GotoJump()<CR>
+
 "===================================================================="
 "===================================================================="

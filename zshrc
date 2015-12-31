@@ -12,8 +12,8 @@
   export PATH=$PATH:/usr/local/apache-ant-1.9.6/bin/
 
   # shell support color, "security" should option->session option->emulation->ANSI color checked, use color scheme checked
-# TERM=xterm-color
-# export TERM
+TERM=xterm-256color
+export TERM
 
 autoload colors
 colors
