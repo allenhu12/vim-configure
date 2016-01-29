@@ -1,0 +1,173 @@
+<?xml version="1.0"?>
+<root>
+    <item>
+        <name>F19 to F19</name>
+        <appendix>(F19 to Hyper (ctrl+shift+cmd+opt) + F19 Only, send escape)</appendix>
+        <identifier>private.f192f19_escape</identifier>
+        <autogen>
+            --KeyOverlaidModifier--
+            KeyCode::F19,
+            KeyCode::COMMAND_L,
+            ModifierFlag::OPTION_L | ModifierFlag::SHIFT_L | ModifierFlag::CONTROL_L,
+            KeyCode::ESCAPE
+        </autogen>
+    </item>
+    <item>
+        <name>Hyper J to Down</name>
+        <appendix>(Hyper-J to Down arrow)</appendix>
+        <identifier>private.hyper-j-down</identifier>
+        <autogen>
+            --KeyToKey--
+            KeyCode::J,
+            ModifierFlag::COMMAND_L | ModifierFlag::OPTION_L | ModifierFlag::SHIFT_L | ModifierFlag::CONTROL_L,
+            KeyCode::CURSOR_DOWN
+        </autogen>
+    </item>
+    <item>
+        <name>Hyper K to Up</name>
+        <appendix>(Hyper-K to Up arrow)</appendix>
+        <identifier>private.hyper-K-up</identifier>
+        <autogen>
+            --KeyToKey--
+            KeyCode::K,
+            ModifierFlag::COMMAND_L | ModifierFlag::OPTION_L | ModifierFlag::SHIFT_L | ModifierFlag::CONTROL_L,
+            KeyCode::CURSOR_UP
+        </autogen>
+    </item>
+    <item>
+        <name>Hyper H to Left</name>
+        <appendix>(Hyper-H to Left arrow)</appendix>
+        <identifier>private.hyper-h-left</identifier>
+        <autogen>
+            --KeyToKey--
+            KeyCode::H,
+            ModifierFlag::COMMAND_L | ModifierFlag::OPTION_L | ModifierFlag::SHIFT_L | ModifierFlag::CONTROL_L,
+            KeyCode::CURSOR_LEFT
+        </autogen>
+    </item>
+    <item>
+        <name>Hyper L to Right</name>
+        <appendix>(Hyper-L to Right arrow)</appendix>
+        <identifier>private.hyper-l-right</identifier>
+        <autogen>
+            --KeyToKey--
+            KeyCode::L,
+            ModifierFlag::COMMAND_L | ModifierFlag::OPTION_L | ModifierFlag::SHIFT_L | ModifierFlag::CONTROL_L,
+            KeyCode::CURSOR_RIGHT
+        </autogen>
+    </item>
+    <item>
+        <name>Hyper F to Move Right</name>
+        <appendix>(Hyper-L to Move Right like emacs alt-F)</appendix>
+        <identifier>private.hyper-f-like-emacs-alt-f-right</identifier>
+        <autogen>
+            --KeyToKey--
+            KeyCode::F,
+            ModifierFlag::COMMAND_L | ModifierFlag::OPTION_L | ModifierFlag::SHIFT_L | ModifierFlag::CONTROL_L | ModifierFlag::NONE,
+            KeyCode::CURSOR_RIGHT,
+			ModifierFlag::OPTION_L
+        </autogen>
+    </item>
+    <item>
+        <name>Hyper B to Move Left</name>
+        <appendix>(Hyper-L to Move Left like emacs alt-B)</appendix>
+        <identifier>private.hyper-b-like-emacs-alt-b-left</identifier>
+        <autogen>
+            --KeyToKey--
+            KeyCode::B,
+            ModifierFlag::COMMAND_L | ModifierFlag::OPTION_L | ModifierFlag::SHIFT_L | ModifierFlag::CONTROL_L | ModifierFlag::NONE,
+            KeyCode::CURSOR_LEFT,
+			ModifierFlag::OPTION_L
+        </autogen>
+    </item>
+    <item>
+        <name>Hyper E to End of Line</name>
+        <appendix>(Hyper-E to End of Line)</appendix>
+        <identifier>private.hyper-e-end-of-line</identifier>
+        <autogen>
+            --KeyToKey--
+            KeyCode::E,
+            ModifierFlag::COMMAND_L | ModifierFlag::OPTION_L | ModifierFlag::SHIFT_L | ModifierFlag::CONTROL_L,
+            KeyCode::CURSOR_RIGHT,
+            ModifierFlag::COMMAND_L
+        </autogen>
+    </item>
+    <item>
+        <name>Hyper A to begin of Line</name>
+        <appendix>(Hyper-A to Begin of Line)</appendix>
+        <identifier>private.hyper-begin-of-line</identifier>
+        <autogen>
+            --KeyToKey--
+            KeyCode::A,
+            ModifierFlag::COMMAND_L | ModifierFlag::OPTION_L | ModifierFlag::SHIFT_L | ModifierFlag::CONTROL_L,
+            KeyCode::CURSOR_LEFT,
+            ModifierFlag::COMMAND_L
+        </autogen>
+    </item>
+    <item>
+        <name>Hyper I to Top</name>
+        <appendix>(Hyper-I to Top)</appendix>
+        <identifier>private.hyper-i-top</identifier>
+        <autogen>
+            --KeyToKey--
+            KeyCode::I,
+            ModifierFlag::COMMAND_L | ModifierFlag::OPTION_L | ModifierFlag::SHIFT_L | ModifierFlag::CONTROL_L,
+            KeyCode::CURSOR_UP,
+            ModifierFlag::COMMAND_L
+        </autogen>
+    </item>
+    <item>
+        <name>Hyper W to Back Delete Word</name>
+        <appendix>(Hyper-W to Back Delete Word)</appendix>
+        <identifier>private.hyper-back-delete-word</identifier>
+        <autogen>
+            --KeyToKey--
+            KeyCode::W,
+            ModifierFlag::COMMAND_L | ModifierFlag::OPTION_L | ModifierFlag::SHIFT_L | ModifierFlag::CONTROL_L | ModifierFlag::NONE,
+			KeyCode::CURSOR_LEFT, ModifierFlag::OPTION_L | ModifierFlag::SHIFT_L,
+            KeyCode::DELETE
+        </autogen>
+    </item>
+    <item>
+        <name>Hyper M to Forward Delete</name>
+        <appendix>(Hyper-M to Forward Delete)</appendix>
+        <identifier>private.hyper-forward-delete</identifier>
+        <autogen>
+            --KeyToKey--
+            KeyCode::M,
+            ModifierFlag::COMMAND_L | ModifierFlag::OPTION_L | ModifierFlag::SHIFT_L | ModifierFlag::CONTROL_L,
+            KeyCode::DELETE,
+			ModifierFlag::FN
+        </autogen>
+    </item>
+    <item>
+        <name>Hyper N to Delete</name>
+        <appendix>(Hyper-N to Delete)</appendix>
+        <identifier>private.hyper-n-delete</identifier>
+        <autogen>
+            --KeyToKey--
+            KeyCode::N,
+            ModifierFlag::COMMAND_L | ModifierFlag::OPTION_L | ModifierFlag::SHIFT_L | ModifierFlag::CONTROL_L,
+            KeyCode::DELETE,
+        </autogen>
+    </item>
+    <item>
+        <name>Hyper + Space To Capslock</name>
+        <appendix>Hyper(cmd+ctrl+shift+opt)+space, send Capslock</appendix>
+        <identifier>private.hyperspace2enter</identifier>
+        <autogen>
+            --KeyToKey--
+            KeyCode::SPACE, ModifierFlag::OPTION_L | ModifierFlag::SHIFT_L | ModifierFlag::CONTROL_L | ModifierFlag::COMMAND_L,
+            KeyCode::CAPSLOCK
+        </autogen>
+    </item>
+    <item>
+        <name>Change Escape to Mission Control</name>
+        <identifier>private.escape_to_mission_control</identifier>
+        <autogen>
+            --KeyToKey--
+            KeyCode::ESCAPE,
+            KeyCode::CURSOR_UP, ModifierFlag::CONTROL_L
+        </autogen>
+    </item>
+</root>
