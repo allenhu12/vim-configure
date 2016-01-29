@@ -38,7 +38,7 @@ SetCapsLockState, AlwaysOff                                          ;|
 
 ;=====================================================================o
 ;                       CapsLock Switcher:                           ;|
-;---------------------------------o-----------------------------------o
+;---------------------------------o-----------------------------------c
 ;                    CapsLock + ` | {CapsLock}                       ;|
 ;---------------------------------o-----------------------------------o
 CapsLock & `::                                                       ;|
@@ -56,8 +56,11 @@ return                                                               ;|
 ;                         CapsLock Escaper:                          ;|
 ;----------------------------------o----------------------------------o
 ;                        CapsLock  |  {ESC}                          ;|
+; since ESC will close the editing window sometimes                  ;|
+; instead, we use ctrl+[ to send {ESC}                               ;
 ;----------------------------------o----------------------------------o
-CapsLock::Send, {ESC}                                                ;|
+;CapsLock::Send, {ESC}                                                ;|
+CapsLock & [:: Send, {ESC}                                              ;|
 ;---------------------------------------------------------------------o
 
 
@@ -262,7 +265,7 @@ return                                                               ;|
 ;                     CapsLock + n  |  Ctrl + Delete (Delete a Word) ;|
 ;                     CapsLock + m  |  Delete                        ;|
 ;                     CapsLock + ,  |  BackSpace                     ;|
-;                     CapsLock + .  |  Ctrl + BackSpace              ;|
+;                     CapsLock + .  |  Ctrl + BackSpace              ;|	
 ;-----------------------------------o---------------------------------o
 ;CapsLock & ,:: Send, {Del}                                           ;|
 ;CapsLock & .:: Send, ^{Del}                                          ;|
@@ -270,9 +273,8 @@ CapsLock & m:: Send, ^{Del}                                           ;|
 CapsLock & n:: Send, {BS}                                             ;|
 CapsLock & w:: Send, ^{BS}                                            ;|
 CapsLock & u:: Send, +{Home} {Del}                                    ;|
-CapsLock & f:: Send, ^{right}                                         ;|
+;CapsLock & f:: Send, ^{right}                                        ;|
 CapsLock & b:: Send, ^{left}                                          ;|
-CapsLock & [:: Send, ^[                                               ;|
 ;CapsLock & k:: Send, +{End}  {Del}                                   ;|
 ;---------------------------------------------------------------------o
 
@@ -346,6 +348,14 @@ CapsLock & F2:: SendRaw, `%:p:h                                       ;|
 ;;-----------------------------------o                                ;|
 ;CapsLock & g:: Send, {AppsKey}                                       ;|
 ;;---------------------------------------------------------------------o
+
+;=====================================================================o
+;                      CapsLock Window Controller                    ;|
+;                      CapsLock + f / Win+Tab (Switch windows)       ;|
+;                      CapsLock + r / Alt+Tab (Switch windows)       ;|
+;-----------------------------------o---------------------------------o
+CapsLock & r::Send, !{Tab}
+CapsLock & f::Send, {LWin Down}{Tab}{LWinUp}
 
 
 ;=====================================================================o
