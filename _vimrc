@@ -57,12 +57,10 @@ if !g:iswindows
             source /etc/vim/gvimrc.local
         endif
         set nowrap
-
 	else
 	    colo desert
 		set mouse=a				"enable mouse
 		set t_Co=256     		"enable 256 colors in terminal
-		set backspace=2			"enable backspace
         set wrap                "enable it under non-gui
 		if filereadable("/etc/vim/vimrc.local")
 			source /etc/vim/vimrc.local
@@ -79,6 +77,7 @@ endif
 
 syntax on                   "coloful vim
 set nocompatible
+set backspace=2			    "enable backspace
 set fileencodings=utf-8,gb2312,gbk,gb18030  
 set termencoding=utf-8  
 set encoding=utf-8 
@@ -105,6 +104,7 @@ Bundle 'gmarik/vundle'
 Bundle 'moll/vim-bbye'
 Bundle 'Lokaltog/vim-easymotion'
 Bundle 'scrooloose/nerdcommenter'
+Bundle 'scrooloose/nerdtree'
 Bundle 'nelson/cscope_maps'
 Bundle 'kien/ctrlp.vim'
 Bundle 'trotter/autojump.vim'
@@ -139,6 +139,7 @@ Bundle 'jlanzarotta/bufexplorer'
 "Bundle 'milkypostman/vim-togglelist'
 Bundle 'yegappan/mru'
 "Bundle 'tomasr/molokai'
+Bundle 'tpope/vim-surround'
 " Bundle 'tpope/vim-fugitive'
 " vim-scripts repos
 " vimscriptsµÄrepoÊ¹ÓÃÏÂÃæµÄ¸ñÊ½£¬Ö±½ÓÊÇ²å¼şÃû³Æ
@@ -243,15 +244,14 @@ set nowrap
 "set formatoptions=qrn1
 "set colorcolumn=138
 
-
 nnoremap j gj
 nnoremap k gk
 "insert mode movement
-imap <c-k> <up>
-imap <c-j> <down>
-"=> if this make backspace invalid, please check the securecrt or xshell keymap setting
-imap <c-h> <left>
-imap <c-l> <right>
+"imap <c-k> <up>
+"imap <c-j> <down>
+""=> if this make backspace invalid, please check the securecrt or xshell keymap setting
+"imap <c-h> <left>
+"imap <c-l> <right>
 
 ",re manually refresh the buffer
 nnoremap <leader>re :bufdo e<CR>
@@ -259,15 +259,13 @@ nnoremap <leader>re :bufdo e<CR>
 "character, so Don't remap this to :
 nnoremap ; :
 inoremap jj <Esc>
-inoremap <Esc> <Esc><Esc>
 "ÉèÖÃ¿ì½İ¼ü½«Ñ¡ÖĞÎÄ±¾¿é¸´ÖÆÖÁÏµÍ³¼ôÌù°å
 vnoremap<Leader>y "+y
 
 "ÉèÖÃ¿ì½İ¼ü½«ÏµÍ³¼ôÌù°åÄÚÈİÕ³ÌùÖÁvim
 nmap<Leader>p "+p
-
 "Y copy one line triming the spaces begin and end, you can use :di to see the
-"register contents and Ctrl+r+<num> to copy the according register in insert mode
+register contents and Ctrl+r+<num> to copy the according register in insert mode
 "note: ctrl+r+' " ' would insert the lastest register, 
 "note: ctrl+r+' * ' would insert the clipboard
 nmap Y ^y$
@@ -278,7 +276,7 @@ vnoremap D "_d
 ",cd change to current open files directory
 "" Switch CWD to the directory of the open buffer
 map <leader>cd :cd %:p:h<cr>:pwd<cr>
-"nnoremap <Leader>cd :lcd %:p:h<CR> 
+nnoremap <Leader>cd :lcd %:p:h<CR> 
 
 " Move a line of text using ALT+[jk] or Comamnd+[jk] on mac
 " to map ALT-j, you have to use set <m-j> =ctrl-v + alt-j
@@ -308,7 +306,8 @@ vnoremap <silent> <leader>r :call VisualSelection('replace')<CR>
 
 "au FocusLost * :wa
 "F2 to toggle the paste mode
-set pastetoggle=<F2>
+"please manually type ':set paste' to toggle this'
+set pastetoggle=<OQ>
 nnoremap <leader>ev <C-w><C-v><C-l>:e $MYVIMRC<cr>
 "===================================================================="
 "===================================================================="
@@ -342,13 +341,13 @@ endif
 
 
 "==>The NERD-Tree settings = {
-"nnoremap <leader>n   :NERDTree<cr>
-"nnoremap <leader>nb  :Bookmark 
-"nnoremap <leader>nob :OpenBookmark 
-"nnoremap <leader>N   :NERDTreeClose<cr>         
-"let NERDTreeWinPos ="left"                      "½«NERDTreeµÄ´°¿ÚÉèÖÃÔÚgvim´°¿ÚµÄ×ó±ß
-"let NERDTreeShowBookmarks=1                     "µ±´ò¿ªNERDTree´°¿ÚÊ±£¬×Ô¶¯ÏÔÊ¾Bookmarks
-"let NERDTreeChDirMode=2                         "´ò¿ªÊéÇ©Ê±£¬×Ô¶¯½«VimµÄpwdÉèÎª´ò¿ªµÄÄ¿Â¼£¬Èç¹ûÄãµÄÏîÄ¿ÓĞtagsÎÄ¼ş£¬Äã»á·¢ÏÖÕâ¸öÃüÁîºÜÓĞ°ïÖú
+nnoremap <leader>n   :NERDTree<cr>
+nnoremap <leader>nb  :Bookmark 
+nnoremap <leader>nob :OpenBookmark 
+nnoremap <leader>N   :NERDTreeClose<cr>         
+let NERDTreeWinPos ="left"                      "½«NERDTreeµÄ´°¿ÚÉèÖÃÔÚgvim´°¿ÚµÄ×ó±ß
+let NERDTreeShowBookmarks=1                     "µ±´ò¿ªNERDTree´°¿ÚÊ±£¬×Ô¶¯ÏÔÊ¾Bookmarks
+let NERDTreeChDirMode=2                         "´ò¿ªÊéÇ©Ê±£¬×Ô¶¯½«VimµÄpwdÉèÎª´ò¿ªµÄÄ¿Â¼£¬Èç¹ûÄãµÄÏîÄ¿ÓĞtagsÎÄ¼ş£¬Äã»á·¢ÏÖÕâ¸öÃüÁîºÜÓĞ°ïÖú
 "}
 
 
@@ -523,3 +522,5 @@ nmap <Leader>j :call GotoJump()<CR>
 
 "===================================================================="
 "===================================================================="
+set nocompatible
+
