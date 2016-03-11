@@ -60,7 +60,7 @@ return                                                               ;|
 ; instead, we use ctrl+[ to send {ESC}                               ;
 ;----------------------------------o----------------------------------o
 ;CapsLock::Send, {ESC}                                                ;|
-CapsLock & [:: Send, {ESC}                                              ;|
+CapsLock & [:: Send, {ESC}                                            ;|
 ;---------------------------------------------------------------------o
 
 
@@ -251,11 +251,11 @@ CapsLock & Down::  MouseMove, 0, 10, 0, R                            ;|
 CapsLock & Left::  MouseMove, -10, 0, 0, R                           ;|
 CapsLock & Right:: MouseMove, 10, 0, 0, R                            ;|
 ;-----------------------------------o                                ;|
-CapsLock & Enter::                                                   ;|
-SendEvent {Blind}{LButton down}                                      ;|
-KeyWait Enter                                                        ;|
-SendEvent {Blind}{LButton up}                                        ;|
-return                                                               ;|
+;CapsLock & Enter::                                                   ;|
+;SendEvent {Blind}{LButton down}                                      ;|
+;KeyWait Enter                                                        ;|
+;SendEvent {Blind}{LButton up}                                        ;|
+;return                                                               ;|
 ;---------------------------------------------------------------------o
 
 
@@ -269,14 +269,39 @@ return                                                               ;|
 ;-----------------------------------o---------------------------------o
 ;CapsLock & ,:: Send, {Del}                                           ;|
 ;CapsLock & .:: Send, ^{Del}                                          ;|
-CapsLock & m:: Send, ^{Del}                                           ;|
+CapsLock & m:: Send, {Del}                                           ;|
 CapsLock & n:: Send, {BS}                                             ;|
 CapsLock & w:: Send, ^{BS}                                            ;|
 CapsLock & u:: Send, +{Home} {Del}                                    ;|
 ;CapsLock & f:: Send, ^{right}                                        ;|
 CapsLock & b:: Send, ^{left}                                          ;|
 ;CapsLock & k:: Send, +{End}  {Del}                                   ;|
+CapsLock & i:: Send, +{Ins}                                           ;|
+CapsLock & Enter::Send, {End} {return}
+;disable the combo shift+return
+Shift & Enter:: return
 ;---------------------------------------------------------------------o
+
+;=====================================================================o
+;                            CapsLock + number: win+number            ;|
+
+;-----------------------------------o---------------------------------o
+CapsLock & 1:: Send, #1                                               ;|
+CapsLock & 2:: Send, #2                                               ;| 
+CapsLock & 3:: Send, #3                                               ;|  
+CapsLock & 4:: Send, #4                                               ;|  
+CapsLock & 5:: Send, #5                                               ;|  
+CapsLock & 6:: Send, #6                                               ;|  
+CapsLock & 7:: Send, #7                                               ;|
+CapsLock & 8:: Send, #8                                               ;|
+CapsLock & 9:: Send, #9                                               ;|
+CapsLock & 0:: Send, #0                                               ;|
+;;CapsLock & a:: Send, ^a                                             ;|
+;CapsLock & y:: Send, ^y                                              ;|
+;;CapsLock & w:: Send, ^{Right}                                       ;|
+;CapsLock & b:: Send, ^{Left}                                         ;|
+;;---------------------------------------------------------------------o
+
 
 
 ;=====================================================================o
