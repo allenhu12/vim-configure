@@ -440,6 +440,7 @@ if !exists('g:yankring_replace_n_pkey')
    let g:yankring_replace_n_pkey = '<C-Y>'
 endif
 nmap <C-e> :YRShow<CR>
+imap <C-e> <ESC>:YRShow<CR>
 "}
 
 "==>bbye Settings{
