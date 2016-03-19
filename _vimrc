@@ -108,6 +108,8 @@ Bundle 'scrooloose/nerdcommenter'
 Bundle 'nelson/cscope_maps'
 Bundle 'kien/ctrlp.vim'
 Bundle 'trotter/autojump.vim'
+Bundle 'vim-scripts/Marks-Browser'
+Bundle 'vim-scripts/Solarized'
 "Bundle 'tpope/vim-repeat'
 if (g:iswindows)
     Bundle 'vim-scripts/Solarized'
