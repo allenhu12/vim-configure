@@ -4,7 +4,7 @@
   export PATH
   export P4PORT=172.18.100.50:1666
   export P4USER=allen.hu
-  export P4CLIENT=allen.hu_Unleashed_200.2
+  export P4CLIENT=allen.hu_ZD_AP_CERT
   export P4PASSWD=4alle$1234
   export MY_VIM_PATH=/home/allen.hu/workspace/git-depot/vim-conf/
   export JAVA_HOME=/usr/java/jdk1.8.0_65

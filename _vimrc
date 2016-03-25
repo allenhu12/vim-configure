@@ -265,7 +265,7 @@ vnoremap<Leader>y "+y
 "设置快捷键将系统剪贴板内容粘贴至vim
 nmap<Leader>p "+p
 "Y copy one line triming the spaces begin and end, you can use :di to see the
-register contents and Ctrl+r+<num> to copy the according register in insert mode
+"register contents and Ctrl+r+<num> to copy the according register in insert mode
 "note: ctrl+r+' " ' would insert the lastest register, 
 "note: ctrl+r+' * ' would insert the clipboard
 nmap Y ^y$
@@ -303,6 +303,10 @@ vnoremap <silent> # :call VisualSelection('b')<CR>
 vnoremap <silent> gv :call VisualSelection('gv')<CR>
 " When you press <leader>r you can search and replace the selected text
 vnoremap <silent> <leader>r :call VisualSelection('replace')<CR>
+" make global marks easier
+nmap mm mM
+" make jump back to global marks easier
+nmap mmm `M
 
 "au FocusLost * :wa
 "F2 to toggle the paste mode

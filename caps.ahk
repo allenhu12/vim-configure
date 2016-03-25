@@ -278,6 +278,23 @@ CapsLock & b:: Send, ^{left}                                          ;|
 ;CapsLock & k:: Send, +{End}  {Del}                                   ;|
 CapsLock & i:: Send, +{Ins}                                           ;|
 CapsLock & Enter::Send, {End} {return}
+CapsLock & \::
+if GetKeyState("control") = 0   
+{                               
+    if GetKeyState("alt") = 0   
+        Send, {Up}              
+    else                        
+        Send, +{Up}                          
+}                               
+else {                          
+    if GetKeyState("alt") = 0   
+        Send, ^{Up}             
+    else                        
+        Send, +^{Up}                                 
+}       
+Send, {End} 
+Send, {return}
+return
 ;disable the combo shift+return
 Shift & Enter:: return
 ;---------------------------------------------------------------------o
