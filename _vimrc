@@ -108,6 +108,8 @@ Bundle 'scrooloose/nerdtree'
 Bundle 'nelson/cscope_maps'
 Bundle 'kien/ctrlp.vim'
 Bundle 'trotter/autojump.vim'
+Bundle 'vim-scripts/Marks-Browser'
+Bundle 'vim-scripts/Solarized'
 "Bundle 'tpope/vim-repeat'
 if (g:iswindows)
     Bundle 'vim-scripts/Solarized'
@@ -178,6 +180,7 @@ set guifont=Consolas:h11:cANSI
 "behave mswin
 "}
 
+set confirm
 set tabstop=4
 set shiftwidth=4
 set softtabstop=4
