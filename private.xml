@@ -152,16 +152,39 @@
         </autogen>
     </item>
     <item>
-        <name>Hyper + Space To Capslock</name>
-        <appendix>Hyper(cmd+ctrl+shift+opt)+space, send Capslock</appendix>
+        <name>Hyper + BACKQUOTE(`) To Capslock</name>
+        <appendix>Hyper(cmd+ctrl+shift+opt)+backquote, send Capslock</appendix>
         <identifier>private.hyperspace2enter</identifier>
         <autogen>
             --KeyToKey--
-            KeyCode::SPACE, ModifierFlag::OPTION_L | ModifierFlag::SHIFT_L | ModifierFlag::CONTROL_L | ModifierFlag::COMMAND_L,
+            KeyCode::BACKQUOTE, ModifierFlag::OPTION_L | ModifierFlag::SHIFT_L | ModifierFlag::CONTROL_L | ModifierFlag::COMMAND_L,
             KeyCode::CAPSLOCK
         </autogen>
     </item>
     <item>
+        <name>Hyper R to Reiterate the Applications</name>
+        <appendix>(Hyper-R to Reiterate, command+tab)</appendix>
+        <identifier>private.hyper-r-reiterate</identifier>
+        <autogen>
+            --KeyToKey--
+            KeyCode::R,
+            ModifierFlag::COMMAND_L | ModifierFlag::OPTION_L | ModifierFlag::SHIFT_L | ModifierFlag::CONTROL_L,
+            KeyCode::TAB,
+            ModifierFlag::COMMAND_L
+        </autogen>
+    </item>
+    <item>
+        <name>Hyper [ to ESC</name>
+        <appendix>(Hyper-[ to ESC vim-like)</appendix>
+        <identifier>private.hyper-[-vim-like-esc</identifier>
+        <autogen>
+            --KeyToKey--
+            KeyCode::BRACKET_LEFT,
+            ModifierFlag::COMMAND_L | ModifierFlag::OPTION_L | ModifierFlag::SHIFT_L | ModifierFlag::CONTROL_L,
+            KeyCode::ESCAPE,
+        </autogen>
+    </item>
+	<item>
         <name>Change Escape to Mission Control</name>
         <identifier>private.escape_to_mission_control</identifier>
         <autogen>
