@@ -120,6 +120,7 @@ zstyle ':completion:*:*:default' force-list always
     alias ee='emacsclient -t'
     alias vim='/home/allen.hu/user_bin/bin/vim'
     alias js='j --stat'
+	alias tmux='/usr/local/bin/tmux'
 #???? ?????????? cd ~xxx
     hash -d WWW="/home/lighttpd/html"
     hash -d ARCH="/mnt/arch"

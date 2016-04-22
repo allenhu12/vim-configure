@@ -28,6 +28,16 @@
 ;|Use it whatever and wherever you like. Hope it help                 |
 ;=====================================================================o
 
+;=====================================================================o
+;# 号代表 Win 键；
+;! 号代表 Alt 键；
+;^ 号代表 Ctrl 键；
+;+ 号代表 shift 键；
+;:: 号(两个英文冒号)起分隔作用；
+;run，非常常用 的 AHK 命令之一;
+;; 号代表 注释后面一行内容；
+;=====================================================================o
+
 
 ;=====================================================================o
 ;                       CapsLock Initializer                         ;|
@@ -250,6 +260,13 @@ CapsLock & Up::    MouseMove, 0, -10, 0, R                           ;|
 CapsLock & Down::  MouseMove, 0, 10, 0, R                            ;|
 CapsLock & Left::  MouseMove, -10, 0, 0, R                           ;|
 CapsLock & Right:: MouseMove, 10, 0, 0, R                            ;|
+;Shift & Right::
+;mouseClickDrag, L,0,0,50,0,,R
+;return
+;MouseGetPos, xpos, ypos
+;Msgbox, The cursor is at X%xpos% Y%ypos%
+;mouseClickDrag, L,0,0,50,0,,R
+;return                                           ;|
 ;-----------------------------------o                                ;|
 ;CapsLock & Enter::                                                   ;|
 ;SendEvent {Blind}{LButton down}                                      ;|

@@ -180,6 +180,8 @@ set guifont=Consolas:h11:cANSI
 "behave mswin
 "}
 
+" make clipboard accessable by windows applications, windows should run xming and configure secureCRT or putty
+set clipboard=unnamed
 set confirm
 set tabstop=4
 set shiftwidth=4
