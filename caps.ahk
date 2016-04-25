@@ -437,7 +437,7 @@ CapsLock & f::Send, {LWin Down}{Tab}{LWinUp}
 ;=====================================================================o
 ;                        CapsLock Char Mapping                       ;|
 ;-----------------------------------o---------------------------------o
-;                     CapsLock + ;  |  Enter (Cancel)                ;|
+;                     CapsLock + ;  |  tmux prefix = ctrl + b        ;|
 ;                     CapsLock + '  |  =                             ;|
 ;                     CapsLock + [  |  Back         (Visual Studio)  ;|
 ;                     CapsLock + ]  |  Goto Define  (Visual Studio)  ;|
@@ -454,6 +454,7 @@ CapsLock & f::Send, {LWin Down}{Tab}{LWinUp}
 ;                     CapsLock + 9  |  Shift + 9     (               ;|
 ;                     CapsLock + 0  |  Shift + 0     )               ;|
 ;-----------------------------------o---------------------------------o
+ CapsLock & `;:: Send, ^b
 ;CapsLock & `;:: Send, {Enter}                                        ;|
 ;CapsLock & ':: Send, =                                               ;|
 ;CapsLock & [:: Send, ^-                                              ;|
@@ -481,3 +482,17 @@ CapsLock & f::Send, {LWin Down}{Tab}{LWinUp}
 ;CapsLock & 9:: Send,+9                                               ;|
 ;CapsLock & 0:: Send,+0                                               ;|
 ;;---------------------------------------------------------------------o
+
+;=====================================================================o
+;                        CapsLock Char for clipmate                   |
+;                        (only apply in climate)                      |
+;-----------------------------------o---------------------------------o
+;                     CapsLock + f  |  F8 to select collections      ;|
+;-----------------------------------o---------------------------------o
+CapsLock & ':: Send, ^'
+#IfWinActive, ClipMate Classic
+CapsLock & f:: Send, {f8}
+#IfWinActive, ClipMate Explorer
+CapsLock & f:: Send, {f8}
+#IfWinActive
+
