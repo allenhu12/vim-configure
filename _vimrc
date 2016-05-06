@@ -105,11 +105,12 @@ Bundle 'moll/vim-bbye'
 Bundle 'Lokaltog/vim-easymotion'
 Bundle 'scrooloose/nerdcommenter'
 Bundle 'scrooloose/nerdtree'
-Bundle 'nelson/cscope_maps'
+"Bundle 'nelson/cscope_maps'
 Bundle 'kien/ctrlp.vim'
 Bundle 'trotter/autojump.vim'
-Bundle 'vim-scripts/Marks-Browser'
+"Bundle 'vim-scripts/Marks-Browser'
 Bundle 'vim-scripts/Solarized'
+Bundle 'wesleyche/SrcExpl'
 "Bundle 'tpope/vim-repeat'
 if (g:iswindows)
     Bundle 'vim-scripts/Solarized'
@@ -437,7 +438,7 @@ nmap <script> <silent> <leader>q :call ToggleQuickfixList()<CR>
  let g:ctrlp_max_files = 80000
  let g:ctrlp_max_depth = 80
  let g:ctrlp_working_path_mode = ''
- map <C-\> :CtrlPBuffer<CR>
+ "map <C-\> :CtrlPBuffer<CR>
  nmap <leader>sb :CtrlPBuffer<CR>
  let g:ctrlp_extensions = ['tag', 'buffertag', 'quickfix', 'dir', 'rtscript',
                           \ 'undo', 'line', 'changes', 'mixed', 'bookmarkdir']
@@ -454,6 +455,37 @@ imap <C-e> <ESC>:YRShow<CR>
 
 "==>bbye Settings{
 nnoremap <C-x> :Bdelete<CR>
+"}
+"==> {
+" // The switch of the Source Explorer
+nmap <F8> :SrcExplToggle<CR>
+" // Set the height of Source Explorer window
+let g:SrcExpl_winHeight = 8
+" // Set 100 ms for refreshing the Source Explorer
+let g:SrcExpl_refreshTime = 100
+" // Set "Enter" key to jump into the exact definition context
+" let g:SrcExpl_jumpKey = "<ENTER>"
+" // Set "Space" key for back from the definition context
+let g:SrcExpl_gobackKey = "<SPACE>"
+" // In order to Avoid conflicts, the Source Explorer should know what plugins
+" // are using buffers. And you need add their bufname into the list below
+" // according to the command ":buffers!"
+let g:SrcExpl_pluginList = [
+        \ "__Tag_List__",
+        \ "_NERD_tree_",
+        \ "Source_Explorer"
+    \ ]
+" // Enable/Disable the local definition searching, and note that this is not
+" // guaranteed to work, the Source Explorer doesn't check the syntax for now.
+" // It only searches for a match with the keyword according to command 'gd'
+let g:SrcExpl_searchLocalDef = 1
+" // Do not let the Source Explorer update the tags file when opening
+let g:SrcExpl_isUpdateTags = 0
+" // Use 'Exuberant Ctags' with '--sort=foldcase -R .' or '-L cscope.files' to
+" //  create/update a tags file
+let g:SrcExpl_updateTagsCmd = "ctags --sort=foldcase -R ."
+" // Set "<F9>" key for updating the tags file artificially
+let g:SrcExpl_updateTagsKey = "<F9>"
 "}
 "===================================================================="
 "===================================================================="
