@@ -81,7 +81,7 @@ set backspace=2			    "enable backspace
 set fileencodings=utf-8,gb2312,gbk,gb18030  
 set termencoding=utf-8  
 set encoding=utf-8 
-"filetype off				"disable filetype detection
+filetype plugin on				"enable filetype detection
 
 
 
@@ -103,6 +103,7 @@ Bundle 'gmarik/vundle'
 " My Bundles here:
 Bundle 'moll/vim-bbye'
 Bundle 'Lokaltog/vim-easymotion'
+" Help will be present at the bottom of the file
 Bundle 'scrooloose/nerdcommenter'
 Bundle 'scrooloose/nerdtree'
 "Bundle 'nelson/cscope_maps'
@@ -142,6 +143,7 @@ Bundle 'jlanzarotta/bufexplorer'
 "Bundle 'milkypostman/vim-togglelist'
 Bundle 'yegappan/mru'
 "Bundle 'tomasr/molokai'
+"the help on vim-surround will be presented on the bottom of the file
 Bundle 'tpope/vim-surround'
 " Bundle 'tpope/vim-fugitive'
 " vim-scripts repos
@@ -317,7 +319,7 @@ nmap mmm `M
 "au FocusLost * :wa
 "F2 to toggle the paste mode
 "please manually type ':set paste' to toggle this'
-set pastetoggle=<OQ>
+set pastetoggle=<F2>
 nnoremap <leader>ev <C-w><C-v><C-l>:e $MYVIMRC<cr>
 "===================================================================="
 "===================================================================="
@@ -456,13 +458,14 @@ imap <C-e> <ESC>:YRShow<CR>
 "==>bbye Settings{
 nnoremap <C-x> :Bdelete<CR>
 "}
-"==> {
+
+"==> Source Explorer {
 " // The switch of the Source Explorer
 nmap <F8> :SrcExplToggle<CR>
 " // Set the height of Source Explorer window
-let g:SrcExpl_winHeight = 8
+let g:SrcExpl_winHeight = 12
 " // Set 100 ms for refreshing the Source Explorer
-let g:SrcExpl_refreshTime = 100
+let g:SrcExpl_refreshTime = 500
 " // Set "Enter" key to jump into the exact definition context
 " let g:SrcExpl_jumpKey = "<ENTER>"
 " // Set "Space" key for back from the definition context
@@ -562,7 +565,52 @@ function! GotoJump()
 endfunction
 nmap <Leader>j :call GotoJump()<CR>
 
+
+
+nnoremap <F1> :call ToggleVimReference()<CR>
+
+let g:vim_reference_file = "/home/allen.hu/workspace/git-depot/vim-conf/_vimrc"
+let g:vim_reference_width = 85
+
+function! ToggleVimReference()
+    if !exists("s:vim_reference_open") || s:vim_reference_open == 0
+        let s:vim_reference_open = 1
+        execute "botright vnew " . g:vim_reference_file
+        execute "vertical resize " . g:vim_reference_width
+		"after open the reference file, simulate a keystroke 'G' to jump
+		normal G
+    else
+        update
+        execute "bdelete " . g:vim_reference_file
+        let s:vim_reference_open = 0
+    endif
+endfunction
+
 "===================================================================="
 "===================================================================="
 set nocompatible
 
+"===================================================================="
+"====> Examples
+"===================================================================="
+
+"===================================================================="
+" vim-surround
+" Add a suround [
+"		visual select the text, then "S", then "]", will add a "[]" without space
+"                                         then "[", will add a "[]" with space
+" Del a surround [
+"       move into the surrounding, then "ds[", will delete the "[]"
+" 
+" Change a surround from [ to {
+"       move into the surrounding, then "cs[{", will change the surrounding
+"===================================================================="
+
+"===================================================================="
+" NertComment
+" comment the codes (one or multiple lines)
+"	visual select the codes, then <leader>cm for multiple lines or <leader>cc
+"	for single lines
+" uncomment the codes (one or multiple lines)
+"	visual select the commentted codes, then <leader>c[space]
+"===================================================================="
