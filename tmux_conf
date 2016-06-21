@@ -48,8 +48,8 @@ set -g status-justify centre
 set -g status-right-length 60
 set -g status-right "#[fg=yellow]:: %d %b %Y #[fg=green]:: %l:%M %p :: #(date -u | awk '{print $4}')::"
 #开启window事件提示
-#setw -g monitor-activity on
-#set -g visual-activity on
+setw -g monitor-activity on
+set -g visual-activity on
 
 unbind '"'
 bind - splitw -v # 分割成上下两个窗口
