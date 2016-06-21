@@ -6,7 +6,6 @@ let g:iswindows = 0
 let g:ismac = 0
 let g:islinux = 0
 let g:isGUI = 0
-
 if has("unix")
     let s:uname = system("uname -s")
     if s:uname == "Darwin\n"
@@ -25,7 +24,6 @@ else
 endif
 "===================================================================="
 "===================================================================="
-
 
 
 "===================================================================="
@@ -114,6 +112,7 @@ Bundle 'trotter/autojump.vim'
 "Bundle 'vim-scripts/Marks-Browser'
 Bundle 'vim-scripts/Solarized'
 Bundle 'wesleyche/SrcExpl'
+Bundle 'AndrewRadev/simple_bookmarks.vim'
 "Bundle 'tpope/vim-repeat'
 if (g:iswindows)
     Bundle 'vim-scripts/Solarized'
@@ -153,7 +152,7 @@ Bundle 'tpope/vim-surround'
 "Bundle 'taglist.vim'
 " non github reposo
 " 非github的插件，可以直接使用其git地址
-" Bundle 'git://git.wincent.com/command-t.git'
+
 
 " Brief help
 " :BundleList          - list configured bundles
@@ -168,8 +167,6 @@ Bundle 'tpope/vim-surround'
 "}
 "===================================================================="
 "===================================================================="
-
-
 
 
 "===================================================================="
@@ -237,6 +234,7 @@ set incsearch
 set showmatch
 set hlsearch
 set statusline =%F%m%r%h%w\ [FORMAT=%{&ff}]\ [TYPE=%Y]\ [ASCII=\%03.3b]\ [HEX=\%02.2B]\ [POS=%04l,%04v][%p%%]\ [LEN=%L]
+set statusline +=%2*0x%04B\ %*          "character under cursor
 set laststatus=2
 "Set to auto read when a file is changed from the outside
 set autoread
@@ -468,7 +466,7 @@ nmap <F8> :SrcExplToggle<CR>
 " // Set the height of Source Explorer window
 let g:SrcExpl_winHeight = 12
 " // Set 100 ms for refreshing the Source Explorer
-let g:SrcExpl_refreshTime = 500
+let g:SrcExpl_refreshTime = 100
 " // Set "Enter" key to jump into the exact definition context
 " let g:SrcExpl_jumpKey = "<ENTER>"
 " // Set "Space" key for back from the definition context
@@ -511,6 +509,14 @@ nmap <leader>7 <Plug>AirlineSelectTab7
 nmap <leader>8 <Plug>AirlineSelectTab8
 nmap <leader>9 <Plug>AirlineSelectTab9
 "}
+
+"==>simple_bookmark {
+nmap <leader>bm :Bookmark 
+nmap <leader>dm :DelBookmark  
+nmap <leader>gm :GotoBookmark
+nmap <leader>sm :CopenBookmarks<CR>
+"}
+"
 "===================================================================="
 "===================================================================="
 
@@ -632,6 +638,19 @@ endfunction
 	"endif 
 "endwhile
 "endfunction
+
+"let g:airline_detect_modified = 0 "if you're sticking the + in section_c you probably want to disable detection
+"function! AirlineInit()
+    ""let g:airline_section_a = airline#section#create(['mode', ' ', '%{getcwd()}'])
+	"call airline#parts#define_raw('modified', '%{&modified ? "[+]" : ""}')
+	"call airline#parts#define_accent('modified', 'red')
+	"let g:airline_section_c = airline#section#create(['%f', 'modified', ' ASCII=\%03.3b', ' HEX=\%02.2B'])
+	""don't show section y
+	"let g:airline_section_y = airline#section#create_right([])
+"endfunction
+""autocmd User AirlineAfterInit call AirlineInit()
+"autocmd VimEnter * call AirlineInit()
+
 "===================================================================="
 "===================================================================="
 set nocompatible
@@ -671,3 +690,8 @@ set nocompatible
 "visual mode选中需要折叠的代码，然后zf
 "要展开：za (za是一个toggle命令) 
 "
+"
+"nmap <leader>bm :Bookmark 
+"nmap <leader>dm :DelBookmark  
+"nmap <leader>gm :GotoBookmark <TAB-completed>
+"nmap <leader>sm :CopenBookmarks<CR>
