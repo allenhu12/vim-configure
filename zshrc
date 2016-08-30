@@ -6,7 +6,8 @@
   export P4USER=allen.hu
   #export P4CLIENT=allen.hu_ZD_AP_CERT 
   #export P4CLIENT=allen.hu_Unleashed_200.2 
-  export P4CLIENT=allen.hu_allen-ubuntu_unleashed
+  #export P4CLIENT=allen.hu_allen-ubuntu_unleashed 
+  export P4CLIENT=allen.hu_unleashed_gateway
   export P4PASSWD=4alle$1234
   export MY_VIM_PATH=/home/allen.hu/workspace/git-depot/vim-conf/
   export JAVA_HOME=/usr/java/jdk1.8.0_65
@@ -126,7 +127,9 @@ zstyle ':completion:*:*:default' force-list always
 	alias p4v='/home/allen.hu/tools/p4v/p4v-2014.1.888424/bin/p4v'
 	alias zshrc='vim /home/allen.hu/workspace/git-depot/vim-conf/zshrc'
 	alias vimrc='vim /home/allen.hu/workspace/git-depot/vim-conf/_vimrc'
-	alias omz='vim /home/allen.hu/workspace/git-depot/oh-my-zsh/templates/zshrc.zsh-dell-ubuntu' 
+	alias omz='vim /home/allen.hu/workspace/git-depot/oh-my-zsh/templates/zshrc.zsh-dell-ubuntu'  
+	alias tmux0='tmux attach-session -t 0'
+	alias tmuxn0='tmux new-session -s 0'
 #???? ?????????? cd ~xxx
     hash -d WWW="/home/lighttpd/html"
     hash -d ARCH="/mnt/arch"

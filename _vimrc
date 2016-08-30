@@ -57,8 +57,8 @@ if !g:iswindows
         set nowrap
 	else
 	    colo desert
-		set mouse=a				"enable mouse
-		set t_Co=256     		"enable 256 colors in terminal
+		"set mouse=a				"enable mouse
+		"set t_Co=256     		"enable 256 colors in terminal
         set wrap                "enable it under non-gui
 		if filereadable("/etc/vim/vimrc.local")
 			source /etc/vim/vimrc.local
@@ -113,6 +113,7 @@ Bundle 'trotter/autojump.vim'
 Bundle 'vim-scripts/Solarized'
 Bundle 'wesleyche/SrcExpl'
 Bundle 'AndrewRadev/simple_bookmarks.vim'
+Bundle 'ludovicchabant/vim-gutentags'
 "Bundle 'tpope/vim-repeat'
 if (g:iswindows)
     Bundle 'vim-scripts/Solarized'
@@ -135,6 +136,7 @@ Bundle 'Mark'
 "Bundle 'FencView.vim'
 Bundle 'Gundo'
 Bundle 'rking/ag.vim'
+Bundle 'vim-scripts/YankRing.vim'
 "Bundle 'CmdlineComplete'
 "filetype plugin indent on
 
@@ -317,10 +319,13 @@ nmap mm mM
 " make jump back to global marks easier
 nmap mmm `M
 
+" 100[m will jump to the beginning of the C function 
+nmap [[ 99[m
 "au FocusLost * :wa
 "F2 to toggle the paste mode
 "please manually type ':set paste' to toggle this'
 set pastetoggle=<F2>
+inoremap <C-r> <C-r><C-p>
 nnoremap <leader>ev <C-w><C-v><C-l>:e $MYVIMRC<cr>
 "===================================================================="
 "===================================================================="
@@ -352,6 +357,9 @@ endif
 "nnoremap <Leader>w  :w<CR> 
 "}
 
+"==>The BufExplorer = {
+map <C-\> :ToggleBufExplorer<CR> 
+"} 
 
 "==>The NERD-Tree settings = {
 nnoremap <leader>n   :NERDTree<cr>
@@ -428,7 +436,7 @@ nnoremap <F12> :earlier 100000<CR>
 "==>Ctags settings {
 "=>This will look in the current directory for 'tags', and work up the tree towards root until one is found.
 set tags=./tags;/,$HOME/vimtags
-map <C-\> :tab split<CR>:exec("tag ".expand("<cword>"))<CR> " C-\ - Open the definition in a new tab
+"map <C-\> :tab split<CR>:exec("tag ".expand("<cword>"))<CR> " C-\ - Open the definition in a new tab
 map <A-]> :vsp <CR>:exec("tag ".expand("<cword>"))<CR>      " A-] - Open the definition in a vertical split
 " }
 
@@ -695,3 +703,10 @@ set nocompatible
 "nmap <leader>dm :DelBookmark  
 "nmap <leader>gm :GotoBookmark <TAB-completed>
 "nmap <leader>sm :CopenBookmarks<CR>
+"
+"=====================================================================:
+"查找替换: :%substitute/Professor/Teacher/[g/c/p]
+"把Professor替换成Teacher,%表示全文查找，g表示全局替换，c表示要求确认，p表示
+"选中替换：先用v命令进入选中模式，选中要替换的文本块，然后按:会出现:'<,>'
+"直接在后面加s命令进行替换
+"
