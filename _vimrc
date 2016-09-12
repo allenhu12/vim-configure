@@ -269,6 +269,10 @@ nnoremap <leader>re :bufdo e<CR>
 "character, so Don't remap this to :
 nnoremap ; :
 inoremap jj <Esc>
+"insert mode with rr will toggle paste
+inoremap rr <C-r><C-p>
+"insert mode with oo will toggle normal mode
+inoremap ooo <C-o>
 "设置快捷键将选中文本块复制至系统剪贴板
 vnoremap<Leader>y "+y
 "Cut to system clipboard
