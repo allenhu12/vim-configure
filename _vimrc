@@ -125,7 +125,7 @@ endif
 "Bundle 'The-NERD-tree'
 ""the buf_it.vim under e:/program files/vim/plugin is used, it is specially customized, we igore the git buf_it here
 ""Bundle 'buf_it'
-"Bundle 'taglist.vim'
+Bundle 'taglist.vim'
 "Bundle 'SuperTab'
 "Bundle 'ingo-library'
 "Bundle 'EnhancedJumps'
@@ -169,7 +169,6 @@ Bundle 'tpope/vim-surround'
 "}
 "===================================================================="
 "===================================================================="
-
 
 "===================================================================="
 "====> general settings> {
@@ -369,12 +368,14 @@ nnoremap <leader>N   :NERDTreeClose<cr>
 let NERDTreeWinPos ="left"                      "将NERDTree的窗口设置在gvim窗口的左边
 let NERDTreeShowBookmarks=1                     "当打开NERDTree窗口时，自动显示Bookmarks
 let NERDTreeChDirMode=2                         "打开书签时，自动将Vim的pwd设为打开的目录，如果你的项目有tags文件，你会发现这个命令很有帮助
+nnoremap <F7> :NERDTreeToggle<CR>
 "}
 
 
 "==>The taglist settings = {
-"let Tlist_Use_Right_Window=1
-"nmap<Leader>t :TlistToggle<cr>
+"let Tlist_Use_Right_Window=0
+nnoremap <leader>t :TlistToggle<cr>
+autocmd FileType qf wincmd J
 "}
 
 
@@ -523,6 +524,13 @@ nmap <leader>bm :Bookmark
 nmap <leader>dm :DelBookmark  
 nmap <leader>gm :GotoBookmark
 nmap <leader>sm :CopenBookmarks<CR>
+"}
+
+"==>vim-gutentags {
+" touch the file under the directory that you want to create the ctags 
+" it means that the directory will be treated as the gutentags project root
+" and then the ctags will be updated automatically when src file changes
+let g:gutentags_project_root = ['tagsh']
 "}
 "
 "===================================================================="
