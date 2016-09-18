@@ -111,10 +111,11 @@ Bundle 'kien/ctrlp.vim'
 Bundle 'trotter/autojump.vim'
 "Bundle 'vim-scripts/Marks-Browser'
 Bundle 'vim-scripts/Solarized'
-Bundle 'wesleyche/SrcExpl'
+"Bundle 'wesleyche/SrcExpl'
 Bundle 'AndrewRadev/simple_bookmarks.vim'
 Bundle 'ludovicchabant/vim-gutentags'
 "Bundle 'tpope/vim-repeat'
+Bundle 'amiorin/ctrlp-z'
 if (g:iswindows)
     Bundle 'vim-scripts/Solarized'
 endif
@@ -271,7 +272,15 @@ inoremap jj <Esc>
 "insert mode with rr will toggle paste
 inoremap rr <C-r><C-p>
 "insert mode with oo will toggle normal mode
-inoremap ooo <C-o>
+inoremap oo <C-o>
+"insert mode with ee will toggle yankring
+inoremap ee <ESC>:YRShow<CR>
+" Use ctrl-[hjkl] to select the active split!
+nmap <silent> <c-k> :wincmd k<CR>
+nmap <silent> <c-j> :wincmd j<CR>
+nmap <silent> <c-h> :wincmd h<CR>
+nmap <silent> <c-l> :wincmd l<CR>
+
 "设置快捷键将选中文本块复制至系统剪贴板
 vnoremap<Leader>y "+y
 "Cut to system clipboard
@@ -379,6 +388,8 @@ nnoremap <F7> :NERDTreeToggle<CR>
 "==>The taglist settings = {
 "let Tlist_Use_Right_Window=0
 nnoremap <leader>t :TlistToggle<cr>
+nnoremap <F6> :TlistToggle<CR>
+let Tlist_WinWidth = 50
 autocmd FileType qf wincmd J
 "}
 
@@ -535,6 +546,12 @@ nmap <leader>sm :CopenBookmarks<CR>
 " it means that the directory will be treated as the gutentags project root
 " and then the ctags will be updated automatically when src file changes
 let g:gutentags_project_root = ['tagsh']
+"}
+"
+"==>ctrlp-z {
+"let g:ctrlp_z_nerdtree=1
+let g:ctrlp_extensions = ['Z', 'F']
+nnoremap ff :CtrlPZ<Cr>
 "}
 "
 "===================================================================="
