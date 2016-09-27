@@ -137,7 +137,7 @@ Bundle 'Mark'
 "Bundle 'FencView.vim'
 Bundle 'Gundo'
 Bundle 'rking/ag.vim'
-Bundle 'vim-scripts/YankRing.vim'
+"Bundle 'vim-scripts/YankRing.vim'
 "Bundle 'CmdlineComplete'
 "filetype plugin indent on
 
@@ -150,6 +150,7 @@ Bundle 'yegappan/mru'
 "the help on vim-surround will be presented on the bottom of the file
 Bundle 'tpope/vim-surround'
 " Bundle 'tpope/vim-fugitive'
+Bundle 'jceb/vim-editqf'
 " vim-scripts repos
 " vimscripts的repo使用下面的格式，直接是插件名称
 "Bundle 'taglist.vim'
@@ -270,11 +271,10 @@ nnoremap <leader>re :bufdo e<CR>
 nnoremap ; :
 inoremap jj <Esc>
 "insert mode with rr will toggle paste
-inoremap rr <C-r><C-p>
+inoremap <C-r> <C-r><C-p>
 "insert mode with oo will toggle normal mode
-inoremap oo <C-o>
-"insert mode with ee will toggle yankring
-inoremap ee <ESC>:YRShow<CR>
+"inoremap oo <C-o>  don't map this because often times we should type oo in
+"insert mode
 " Use ctrl-[hjkl] to select the active split!
 nmap <silent> <c-k> :wincmd k<CR>
 nmap <silent> <c-j> :wincmd j<CR>
@@ -473,11 +473,11 @@ nmap <script> <silent> <leader>q :call ToggleQuickfixList()<CR>
 "}
 
 "==>YankRing Settings{
-if !exists('g:yankring_replace_n_pkey')
-   let g:yankring_replace_n_pkey = '<C-Y>'
-endif
-nmap <C-e> :YRShow<CR>
-imap <C-e> <ESC>:YRShow<CR>
+"if !exists('g:yankring_replace_n_pkey')
+"   let g:yankring_replace_n_pkey = '<C-Y>'
+"endif
+"nmap <C-e> :YRShow<CR>
+"imap <C-e> <ESC>:YRShow<CR>
 "}
 
 "==>bbye Settings{
@@ -695,6 +695,15 @@ set nocompatible
 "===================================================================="
 "====> Examples
 "===================================================================="
+"====================================================================
+"edit quickfix window
+"in quickfix, type "i" to the insert mode and modify the buffer
+"use the command :QFSave to save the the quickfix content to a 
+"specified folder. For example, :QFSave ~/quickfix/quickfix_sample.txt
+"use the command :QFLoad to load the quickfix file.
+"For example, :QFLoad ~/quickfix/quickfix_sample.txt and then trigger
+"the quickfix window by <leader>q
+
 
 "===================================================================="
 " vim-surround
