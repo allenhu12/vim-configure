@@ -103,6 +103,7 @@ Bundle 'vim-airline/vim-airline'
 Bundle 'vim-airline/vim-airline-themes'
 Bundle 'moll/vim-bbye'
 Bundle 'Lokaltog/vim-easymotion'
+Bundle 'maxbrunsfeld/vim-yankstack'
 " Help will be present at the bottom of the file
 Bundle 'scrooloose/nerdcommenter'
 Bundle 'scrooloose/nerdtree'
@@ -330,6 +331,10 @@ vnoremap <silent> <leader>r :call VisualSelection('replace')<CR>
 nmap mm mM
 " make jump back to global marks easier
 nmap mmm `M
+" make the recording easier
+" use qq to start the recorder, then 3rd q to complete
+" use qa to replay the recorder
+nmap qa @q
 
 " 100[m will jump to the beginning of the C function 
 nmap [[ 99[m
@@ -479,6 +484,13 @@ nmap <script> <silent> <leader>q :call ToggleQuickfixList()<CR>
 "nmap <C-e> :YRShow<CR>
 "imap <C-e> <ESC>:YRShow<CR>
 "}
+
+"==>YankStack Settings{
+nmap <leader>p <Plug>yankstack_substitute_older_paste
+nmap <C-e> ,p
+imap <C-e> <c-o>,p
+"}
+
 
 "==>bbye Settings{
 nnoremap <C-x> :Bdelete<CR>
@@ -632,8 +644,7 @@ nmap <Leader>j :call GotoJump()<CR>
 
 
 nnoremap <F1> :call ToggleVimReference()<CR>
-
-let g:vim_reference_file = "/home/allen.hu/workspace/git-depot/vim-conf/_vimrc"
+let g:vim_reference_file = "~/workspace/git-depot/vim-conf/_vimrc"
 let g:vim_reference_width = 85
 
 function! ToggleVimReference()
@@ -645,7 +656,7 @@ function! ToggleVimReference()
 		normal G
     else
         update
-        execute "bdelete " . g:vim_reference_file
+        execute "bdelete "  g:vim_reference_file
         let s:vim_reference_open = 0
     endif
 endfunction
