@@ -117,6 +117,7 @@ Bundle 'AndrewRadev/simple_bookmarks.vim'
 Bundle 'ludovicchabant/vim-gutentags'
 "Bundle 'tpope/vim-repeat'
 Bundle 'amiorin/ctrlp-z'
+Bundle 'tyru/qfhist.vim'
 if (g:iswindows)
     Bundle 'vim-scripts/Solarized'
 endif
@@ -565,7 +566,12 @@ let g:gutentags_project_root = ['tagsh']
 let g:ctrlp_extensions = ['Z', 'F']
 nnoremap ff :CtrlPZ<Cr>
 "}
-"
+"==>'tyru/qfhist.vim'(quickfix history) {
+" ctrl+n to show the older quickfix window
+nmap <C-n> :colder<CR>
+" ctrl+m to show the newer quickfix window
+nmap <c-m> :cnewer<CR>
+"}
 "===================================================================="
 "===================================================================="
 
@@ -708,13 +714,14 @@ set nocompatible
 "===================================================================="
 "====================================================================
 "edit quickfix window
-"in quickfix, type "i" to the insert mode and modify the buffer
+"in quickfix, type "i" to the insert mode and modify the buffer or
+"use :QFAddNote to modify the quickfix window directly
 "use the command :QFSave to save the the quickfix content to a 
 "specified folder. For example, :QFSave ~/quickfix/quickfix_sample.txt
 "use the command :QFLoad to load the quickfix file.
 "For example, :QFLoad ~/quickfix/quickfix_sample.txt and then trigger
 "the quickfix window by <leader>q
-
+"in normal mode, use ctrl+n/ctrl+m to jump the quickfix history
 
 "===================================================================="
 " vim-surround
