@@ -332,6 +332,10 @@ vnoremap <silent> <leader>r :call VisualSelection('replace')<CR>
 nmap mm mM
 " make jump back to global marks easier
 nmap mmm `M
+
+" another global mark
+nmap nn mN
+nmap nnn `N
 " make the recording easier
 " use qq to start the recorder, then 3rd q to complete
 " use qa to replay the recorder
