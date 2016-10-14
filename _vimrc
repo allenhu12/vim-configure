@@ -424,8 +424,9 @@ nmap <c-f> <leader><leader>s
 "};
 
 "==>The bufexplorer settings = {
-nnoremap <silent> <F10> :bn<CR>
-nnoremap <silent> <F9> :bp<CR>
+"no need to map, because we can use <C-6> to jump
+"nnoremap <silent> <F10> :bn<CR>
+"nnoremap <silent> <F9> :bp<CR>
 "}
 
 "==>The Mark settings = {
