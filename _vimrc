@@ -334,8 +334,8 @@ nmap mm mM
 nmap mmm `M
 
 " another global mark
-nmap nn mN
-nmap nnn `N
+nmap << mN
+nmap <<< `N
 " make the recording easier
 " use qq to start the recorder, then 3rd q to complete
 " use qa to replay the recorder
@@ -573,9 +573,11 @@ nnoremap ff :CtrlPZ<Cr>
 "}
 "==>'tyru/qfhist.vim'(quickfix history) {
 " ctrl+n to show the older quickfix window
-nmap <C-n> :colder<CR>
+ nnoremap <leader>[ :colder<CR>
 " ctrl+m to show the newer quickfix window
-nmap <c-m> :cnewer<CR>
+ nnoremap <leader>] :cnewer<CR>
+ nnoremap <C-m> :cnext<CR>
+ nnoremap <C-n> :cprevious<CR>
 "}
 "===================================================================="
 "===================================================================="
@@ -726,7 +728,8 @@ set nocompatible
 "use the command :QFLoad to load the quickfix file.
 "For example, :QFLoad ~/quickfix/quickfix_sample.txt and then trigger
 "the quickfix window by <leader>q
-"in normal mode, use ctrl+n/ctrl+m to jump the quickfix history
+"in normal mode, use ctrl+n/ctrl+m to jump next/before quickfix items
+"in normal mode, use <leader>[ and <leader>] to access quickfix history
 
 "===================================================================="
 " vim-surround
