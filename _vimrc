@@ -572,13 +572,17 @@ let g:ctrlp_extensions = ['Z', 'F']
 nnoremap ff :CtrlPZ<Cr>
 "}
 "==>'tyru/qfhist.vim'(quickfix history) {
-" ctrl+n to show the older quickfix window
- nnoremap <leader>[ :colder<CR>
-" ctrl+m to show the newer quickfix window
- nnoremap <leader>] :cnewer<CR>
+" ,+n to show the older quickfix window
+ nnoremap <leader>n :colder<CR>
+" ,+m to show the newer quickfix window
+ nnoremap <leader>m :cnewer<CR>
  nnoremap <C-m> :cnext<CR>
  nnoremap <C-n> :cprevious<CR>
 "}
+"==> qfedit plugin {
+" disable the mapping to save more shortcut keys
+let g:editqf_no_mappings = 1
+"==>
 "===================================================================="
 "===================================================================="
 
