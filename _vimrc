@@ -117,7 +117,8 @@ Bundle 'AndrewRadev/simple_bookmarks.vim'
 Bundle 'ludovicchabant/vim-gutentags'
 "Bundle 'tpope/vim-repeat'
 Bundle 'amiorin/ctrlp-z'
-Bundle 'tyru/qfhist.vim'
+"Bundle 'tyru/qfhist.vim'
+Bundle 'romainl/vim-qf'
 if (g:iswindows)
     Bundle 'vim-scripts/Solarized'
 endif
@@ -573,11 +574,11 @@ nnoremap ff :CtrlPZ<Cr>
 "}
 "==>'tyru/qfhist.vim'(quickfix history) {
 " ,+n to show the older quickfix window
- nnoremap <leader>n :colder<CR>
+" nnoremap <leader>n :colder<CR>
 " ,+m to show the newer quickfix window
- nnoremap <leader>m :cnewer<CR>
- nnoremap <C-m> :cnext<CR>
- nnoremap <C-n> :cprevious<CR>
+" nnoremap <leader>m :cnewer<CR>
+" nnoremap <C-m> :cnext<CR>
+" nnoremap <C-n> :cprevious<CR>
 "}
 "==> qfedit plugin {
 " disable the mapping to save more shortcut keys
