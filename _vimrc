@@ -1,6 +1,6 @@
 
 "===================================================================="
-"====><<Windows or Linux, terminal or gvim>>
+"====><<Windows or Linux, mac, terminal or gvim>>
 "===================================================================="
 let g:iswindows = 0
 let g:ismac = 0
@@ -272,17 +272,17 @@ nnoremap <leader>re :bufdo e<CR>
 "When use (f,F,t,T) to locate a character in a line, ; can be a repeation
 "character, so Don't remap this to :
 nnoremap ; :
-inoremap jj <Esc>
+inoremap ll <Esc>
 "insert mode with rr will toggle paste
 inoremap <C-r> <C-r><C-p>
 "insert mode with oo will toggle normal mode
 "inoremap oo <C-o>  don't map this because often times we should type oo in
 "insert mode
 " Use ctrl-[hjkl] to select the active split!
-nmap <silent> <c-k> :wincmd k<CR>
-nmap <silent> <c-j> :wincmd j<CR>
-nmap <silent> <c-h> :wincmd h<CR>
-nmap <silent> <c-l> :wincmd l<CR>
+" nmap <silent> <c-k> :wincmd k<CR>
+" nmap <silent> <c-j> :wincmd j<CR>
+" nmap <silent> <c-h> :wincmd h<CR>
+" nmap <silent> <c-l> :wincmd l<CR>
 
 "设置快捷键将选中文本块复制至系统剪贴板
 vnoremap<Leader>y "+y
@@ -584,6 +584,14 @@ nnoremap ff :CtrlPZ<Cr>
 " disable the mapping to save more shortcut keys
 let g:editqf_no_mappings = 1
 "==>
+"==> vim-qf plugin {
+nmap <silent> <c-k> <Plug>QfCprevious
+nmap <silent> <c-j> <Plug>QfCnext
+nmap <m-k> :colder<CR>
+nmap <m-j> :cnewer<CR>
+map <F9> <Plug>QfSwitch
+map <F10> <Plug>QfCtoggle
+"==>
 "===================================================================="
 "===================================================================="
 
@@ -733,8 +741,10 @@ set nocompatible
 "use the command :QFLoad to load the quickfix file.
 "For example, :QFLoad ~/quickfix/quickfix_sample.txt and then trigger
 "the quickfix window by <leader>q
-"in normal mode, use ctrl+n/ctrl+m to jump next/before quickfix items
-"in normal mode, use <leader>[ and <leader>] to access quickfix history
+"in normal mode, use ctrl+j/ctrl+k to jump next/before quickfix items
+"in normal mode, use alt+j/alt+k to access quickfix history
+"in any mode, use <F9> to switch on/off the quickfix windows
+"in any mode, use <F10> to toggle the quickfix windows
 
 "===================================================================="
 " vim-surround

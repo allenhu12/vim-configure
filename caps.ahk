@@ -424,13 +424,14 @@ CapsLock & F2:: SendRaw, `%:p:h                                       ;|
 ;CapsLock & g:: Send, {AppsKey}                                       ;|
 ;;---------------------------------------------------------------------o
 
-;=====================================================================o
-;                      CapsLock Window Controller                    ;|
-;                      CapsLock + f / Win+Tab (Switch windows)       ;|
-;                      CapsLock + r / Alt+Tab (Switch windows)       ;|
-;-----------------------------------o---------------------------------o
+;===========================================================================================
+;                      CapsLock Window Controller                                          ;|
+;                      CapsLock + f / Shift+Alt+Space (Switch windows in switcheroo)       ;|
+;                      CapsLock + r / Alt+Tab (Switch windows)                             ;|
+;-----------------------------------o-------------------------------------------------------
 CapsLock & r::Send, !{Tab}
-CapsLock & f::Send, {LWin Down}{Tab}{LWinUp}
+;CapsLock & f::Send, {LWin Down}{Tab}{LWinUp}
+CapsLock & f::Send, +!{Space}
 
 
 ;=====================================================================o
