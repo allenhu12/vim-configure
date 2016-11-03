@@ -182,14 +182,19 @@ set guitablabel=%N\ %f
 " for windows vim {
 set guifont=Microsoft_YaHei_Mono:h11:cGB2312
 set guifont=Consolas:h11:cANSI
-
-set termguicolors
-colorscheme gruvbox
-
 "source $VIMRUNTIME/vimrc_example.vim
 "source $VIMRUNTIME/mswin.vim
 "behave mswin
 "}
+
+if (v:version >= 800)
+	if (g:ismac)
+	    set termguicolors
+	    colorscheme gruvbox 
+	elseif (g:islinux)
+	    colorscheme gruvbox
+	endif
+endif
 
 " make clipboard accessable by windows applications, windows should run xming and configure secureCRT or putty
 set clipboard=unnamed
@@ -731,7 +736,8 @@ endfunction
 "===================================================================="
 "===================================================================="
 set nocompatible
-
+"make tmux compatible with gruvbox
+set t_ut=
 "===================================================================="
 "====> Examples
 "===================================================================="
