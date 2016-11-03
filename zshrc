@@ -151,3 +151,4 @@ DISABLE_AUTO_TITLE=true
 [[ -s /home/allen.hu/.autojump/etc/profile.d/autojump.zsh ]] && source /home/allen.hu/.autojump/etc/profile.d/autojump.zsh
 autoload -U compinit && compinit -u
 source /home/allen.hu/workspace/git-depot/oh-my-zsh/templates/zshrc.zsh-dell-ubuntu
+source "$HOME/.vim/bundle/gruvbox/gruvbox_256palette.sh"
