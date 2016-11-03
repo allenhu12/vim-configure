@@ -83,8 +83,6 @@ filetype plugin on				"enable filetype detection
 
 
 
-
-
 "===================================================================="
 "====>Vundle configuration{
 "===================================================================="
@@ -154,6 +152,7 @@ Bundle 'yegappan/mru'
 Bundle 'tpope/vim-surround'
 " Bundle 'tpope/vim-fugitive'
 Bundle 'jceb/vim-editqf'
+Bundle 'morhetz/gruvbox'
 " vim-scripts repos
 " vimscripts的repo使用下面的格式，直接是插件名称
 "Bundle 'taglist.vim'
@@ -183,6 +182,10 @@ set guitablabel=%N\ %f
 " for windows vim {
 set guifont=Microsoft_YaHei_Mono:h11:cGB2312
 set guifont=Consolas:h11:cANSI
+
+set termguicolors
+colorscheme gruvbox
+
 "source $VIMRUNTIME/vimrc_example.vim
 "source $VIMRUNTIME/mswin.vim
 "behave mswin
