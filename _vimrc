@@ -56,9 +56,9 @@ if !g:iswindows
         endif
         set nowrap
 	else
-	    colo desert
+		colo desert
 		"set mouse=a				"enable mouse
-		"set t_Co=256     		"enable 256 colors in terminal
+		"set t_Co=256			"enable 256 colors in terminal
         set wrap                "enable it under non-gui
 		if filereadable("/etc/vim/vimrc.local")
 			source /etc/vim/vimrc.local
@@ -75,7 +75,7 @@ endif
 
 syntax on                   "coloful vim
 set nocompatible
-set backspace=2			    "enable backspace
+set backspace=2				"enable backspace
 set fileencodings=utf-8,gb2312,gbk,gb18030  
 set termencoding=utf-8  
 set encoding=utf-8 
@@ -107,7 +107,7 @@ Bundle 'scrooloose/nerdcommenter'
 Bundle 'scrooloose/nerdtree'
 "Bundle 'nelson/cscope_maps'
 Bundle 'kien/ctrlp.vim'
-Bundle 'trotter/autojump.vim'
+"Bundle 'trotter/autojump.vim'
 "Bundle 'vim-scripts/Marks-Browser'
 Bundle 'vim-scripts/Solarized'
 "Bundle 'wesleyche/SrcExpl'
@@ -117,12 +117,16 @@ Bundle 'ludovicchabant/vim-gutentags'
 Bundle 'amiorin/ctrlp-z'
 "Bundle 'tyru/qfhist.vim'
 Bundle 'romainl/vim-qf'
+Bundle 'tomtom/tlib_vim'
+Bundle 'amiorin/vim-fasd'
 if (g:iswindows)
     Bundle 'vim-scripts/Solarized'
 endif
+Bundle 'vim-scripts/FuzzyFinder'
+Bundle 'junegunn/vim-peekaboo'
 ""格式2：vim-scripts里面的仓库，直接打仓库名即可。
 "Bundle 'CSApprox'
-"Bundle 'L9'
+Bundle 'L9'
 "Bundle 'FuzzyFinder'
 "Bundle 'The-NERD-tree'
 ""the buf_it.vim under e:/program files/vim/plugin is used, it is specially customized, we igore the git buf_it here
@@ -189,17 +193,19 @@ set guifont=Consolas:h11:cANSI
 
 if (v:version >= 800)
 	if (g:ismac)
-	    set termguicolors
-	    colorscheme gruvbox 
+		set termguicolors
+		colorscheme gruvbox 
 	elseif (g:islinux)
-	    colorscheme gruvbox
+		colorscheme gruvbox
 	endif
 endif
 
 " make clipboard accessable by windows applications, windows should run xming and configure secureCRT or putty
 set clipboard=unnamed
 set confirm
+set smartindent
 set tabstop=4
+set expandtab
 set shiftwidth=4
 set softtabstop=4
 " switch tab back when processing the makefile
@@ -253,10 +259,12 @@ set laststatus=2
 "Set to auto read when a file is changed from the outside
 set autoread
 set tags=tags;
-"means line end, line ahead
-"nmap la 0
-"nmap le $
+" Go to home and end using capitalized directions
+noremap H ^
+noremap L $
 nnoremap <leader><space> :noh<cr>
+" keep cursor distance to the bottom
+set scrolloff=7
 "don't map the tab, because tab equals to ctrl+I
 "nnoremap <tab> %
 "vnoremap <tab> %
@@ -280,7 +288,6 @@ nnoremap <leader>re :bufdo e<CR>
 "When use (f,F,t,T) to locate a character in a line, ; can be a repeation
 "character, so Don't remap this to :
 nnoremap ; :
-inoremap ll <Esc>
 "insert mode with rr will toggle paste
 inoremap <C-r> <C-r><C-p>
 "insert mode with oo will toggle normal mode
@@ -678,7 +685,7 @@ nmap <Leader>j :call GotoJump()<CR>
 
 
 nnoremap <F1> :call ToggleVimReference()<CR>
-let g:vim_reference_file = "~/workspace/git-depot/vim-conf/_vimrc"
+let g:vim_reference_file = "~/workspace/git-depot/vim-configure/_vimrc"
 let g:vim_reference_width = 85
 
 function! ToggleVimReference()
@@ -798,3 +805,5 @@ set t_ut=
 "选中替换：先用v命令进入选中模式，选中要替换的文本块，然后按:会出现:'<,>'
 "直接在后面加s命令进行替换
 "
+"=======================================================================
+"jump to the beginning of the function body  [m

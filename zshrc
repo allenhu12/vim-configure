@@ -1,5 +1,5 @@
 # PATH=$PATH:/home/allen.hu/user_bin/bin:/home/allen.hu/bin:/home/allen.hu/bin/p4v/bin:/usr/kerberos/bin:/usr/local/bin:/bin:/usr/bin:/usr/sbin:/usr/local/apache-ant-1.7.0/bin:/home/allen.hu/p4v/bin:/home/allen.hu/scripts:/home/allen.hu/local/bin
- PATH=/usr/sbin/:/home/allen.hu/local/virtualenv/bin:/home/allen.hu/local/virtualenv/bin:/home/allen.hu/user_bin/bin:/home/allen.hu/bin:/home/allen.hu/bin/p4v/bin:/usr/kerberos/bin:/usr/local/bin:/bin:/usr/bin:/usr/sbin:/usr/local/apache-ant-1.7.0/bin:/home/allen.hu/p4v/bin:/home/allen.hu/scripts:/home/allen.hu/local/bin:/home/allen.hu/tools/p4v/p4v-2014.1.888424/bin:$PATH
+ PATH=/usr/sbin/:/home/allen.hu/local/virtualenv/bin:/home/allen.hu/local/virtualenv/bin:/home/allen.hu/user_bin/bin:/home/allen.hu/bin:/home/allen.hu/bin/p4v/bin:/usr/kerberos/bin:/usr/local/bin:/bin:/usr/bin:/usr/sbin:/usr/local/apache-ant-1.7.0/bin:/home/allen.hu/p4v/bin:/home/allen.hu/scripts:/home/allen.hu/local/bin:/home/allen.hu/tools/p4v-2017.1.1491634/bin:~/.local/bin:$PATH
   
   export PATH
   export P4PORT=172.18.100.50:1666
@@ -7,9 +7,10 @@
   #export P4CLIENT=allen.hu_ZD_AP_CERT 
   #export P4CLIENT=allen.hu_Unleashed_200.2 
   #export P4CLIENT=allen.hu_allen-ubuntu_unleashed 
-  export P4CLIENT=allen.hu_unleashed_gateway
+  #export P4CLIENT=allen.hu_unleashed_gateway
+  export P4CLIENT=allen.hu_vm_ubuntu_gateway
   export P4PASSWD=4alle$1234
-  export MY_VIM_PATH=/home/allen.hu/workspace/git-depot/vim-conf/
+  export MY_VIM_PATH=/home/allen.hu/workspace/git-depot/vim-configure/
   export JAVA_HOME=/usr/java/jdk1.8.0_65
   export ANT_HOME=/usr/local/apache-ant-1.9.6
   export PATH=$PATH:/usr/local/apache-ant-1.9.6/bin/
@@ -121,13 +122,9 @@ zstyle ':completion:*:*:default' force-list always
 	alias lll='readlink -f'
     alias grep='grep --color=auto'
     alias ee='emacsclient -t'
-    #alias vim='/home/allen.hu/user_bin/bin/vim'
-	alias vim='/home/allen.hu/user_bin/vim8.0/bin/vim'
     alias js='j --stat'
-	alias tmux='/usr/local/bin/tmux'
-	alias p4v='/home/allen.hu/tools/p4v/p4v-2014.1.888424/bin/p4v'
-	alias zshrc='vim /home/allen.hu/workspace/git-depot/vim-conf/zshrc'
-	alias vimrc='vim /home/allen.hu/workspace/git-depot/vim-conf/_vimrc'
+	alias zshrc='vim /home/allen.hu/workspace/git-depot/vim-configure/zshrc'
+	alias vimrc='vim /home/allen.hu/workspace/git-depot/vim-configure/_vimrc'
 	alias omz='vim /home/allen.hu/workspace/git-depot/oh-my-zsh/templates/zshrc.zsh-dell-ubuntu'  
 	alias tmux0='tmux attach-session -t 0'
 	alias tmuxn0='tmux new-session -s 0'
@@ -149,6 +146,12 @@ DISABLE_AUTO_TITLE=true
   bindkey '^R' history-incremental-search-backward                                                                                          
   # use vi mode under shell}
 [[ -s /home/allen.hu/.autojump/etc/profile.d/autojump.zsh ]] && source /home/allen.hu/.autojump/etc/profile.d/autojump.zsh
-autoload -U compinit && compinit -u
-source /home/allen.hu/workspace/git-depot/oh-my-zsh/templates/zshrc.zsh-dell-ubuntu
-source "$HOME/.vim/bundle/gruvbox/gruvbox_256palette.sh"
+#autoload -U compinit && compinit -u
+#source /home/allen.hu/workspace/git-depot/oh-my-zsh/templates/zshrc.zsh-dell-ubuntu
+#source "$HOME/.vim/bundle/gruvbox/gruvbox_256palette.sh"
+if [[ -r /usr/local/lib/python2.7/dist-packages/powerline/bindings/zsh/powerline.zsh ]]; then
+    source /usr/local/lib/python2.7/dist-packages/powerline/bindings/zsh/powerline.zsh
+fi
+ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=100
+ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=241"
+eval "$(fasd --init auto)"
