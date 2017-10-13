@@ -1,3 +1,6 @@
+source /usr/local/lib/python2.7/dist-packages/powerline/bindings/tmux/powerline.conf
+set-option -g default-terminal "screen-256color"
+set -g terminal-overrides 'xterm*:smcup@:rmcup@'
 ##set prEFIX为Ctrl-a
 ##set -g prefix C-z
 ##解除Ctrl-b与PREFIX的对应关系
@@ -41,12 +44,12 @@ setw -g window-status-current-fg white
 setw -g window-status-current-bg red
 setw -g window-status-current-attr bright
 #设置status bar格式
-set -g status-left-length 40
-set -g status-left "#[fg=green]Session: #S #[fg=yellow]#I #[fg=cyan]#P"
+#set -g status-left-length 40
+#set -g status-left "#[fg=green]Session: #S #[fg=yellow]#I #[fg=cyan]#P"
 set -g status-interval 3660 
-set -g status-justify centre
-set -g status-right-length 60
-set -g status-right "#[fg=yellow]:: %d %b %Y #[fg=green]:: %l:%M %p :: #(date -u | awk '{print $4}')::"
+#set -g status-justify centre
+#set -g status-right-length 60
+#set -g status-right "#[fg=yellow]:: %d %b %Y #[fg=green]:: %l:%M %p :: #(date -u | awk '{print $4}')::"
 #开启window事件提示
 setw -g monitor-activity on
 set -g visual-activity on
@@ -59,13 +62,16 @@ bind | splitw -h # 分割成左右两个窗口
 bind k selectp -U # 选择上窗格
 bind j selectp -D # 选择下窗格
 bind h selectp -L # 选择左窗格
-bind l selectp -R # select right pane
+#unbind 'l'
+#bind l selectp -R # select right pane
 # l will switch to the last panea
+bind l last-window
 
 bind-key J resize-pane -D 10
 bind-key K resize-pane -U 10
 bind-key H resize-pane -L 10
 bind-key L resize-pane -R 10
+
 
 # List of plugins
 set -g @plugin 'tmux-plugins/tpm'
@@ -80,3 +86,4 @@ set -g @plugin 'tmux-plugins/tmux-resurrect'
 
 # Initialize TMUX plugin manager (keep this line at the very bottom of tmux.conf)
 run '/home/allen.hu/workspace/git-depot/tmux/plugins/tpm/tpm'
+
