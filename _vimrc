@@ -365,6 +365,8 @@ nmap [[ 99[m
 set pastetoggle=<F2>
 inoremap <C-r> <C-r><C-p>
 nnoremap <leader>ev <C-w><C-v><C-l>:e $MYVIMRC<cr>
+"F5 to show the full path of the current file
+nmap <F5> :echo expand('%:p')<CR>
 "===================================================================="
 "===================================================================="
 
