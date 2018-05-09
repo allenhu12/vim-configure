@@ -61,6 +61,12 @@ KeyWait, ``                                                          ;|
 return                                                               ;|
 ;---------------------------------------------------------------------o
 
+;=====================================================================o
+;                       CapsLock Switcher:                           ;|
+;---------------------------------o-----------------------------------c
+;                    CapsLock + space | ctrl + space (switch input method)
+;---------------------------------o-----------------------------------o
+CapsLock & Space:: Send, ^{Space}
 
 ;=====================================================================o
 ;                       CapsLock Switcher:                           ;|
@@ -301,7 +307,7 @@ CapsLock & Right:: MouseMove, 10, 0, 0, R                            ;|
 ;                     CapsLock + .  |  Ctrl + BackSpace              ;|	
 ;-----------------------------------o---------------------------------o
 ;CapsLock & ,:: Send, {Del}                                           ;|
-;CapsLock & .:: Send, ^{Del}                                          ;|
+CapsLock & .:: Send, ^{Del}                                          ;|
 CapsLock & m:: Send, {Del}                                           ;|
 CapsLock & n:: Send, {BS}                                             ;|
 CapsLock & w:: Send, ^{BS}                                            ;|
@@ -334,12 +340,14 @@ Shift & Enter:: return
 
 ;=====================================================================o
 ;                            CapsLock + number: win+number            ;|
-
+;                            CapsLock + g: switch to browser
+;                            CapsLock + s: switch to secuCrt
+;                            CapsLock + d: switch to dopus
 ;-----------------------------------o---------------------------------o
-CapsLock & 1:: Send, #1                                               ;|
+CapsLock & d:: Send, #1                                               ;|
 CapsLock & 2:: Send, #2                                               ;| 
-CapsLock & 3:: Send, #3                                               ;|  
-CapsLock & 4:: Send, #4                                               ;|  
+CapsLock & s:: Send, #3                                               ;|  
+CapsLock & g:: Send, #4                                               ;|  
 CapsLock & 5:: Send, #5                                               ;|  
 CapsLock & 6:: Send, #6                                               ;|  
 CapsLock & 7:: Send, #7                                               ;|
