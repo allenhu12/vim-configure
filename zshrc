@@ -2,7 +2,8 @@
  PATH=/usr/sbin/:/home/allen.hu/local/virtualenv/bin:/home/allen.hu/local/virtualenv/bin:/home/allen.hu/user_bin/bin:/home/allen.hu/bin:/home/allen.hu/bin/p4v/bin:/usr/kerberos/bin:/usr/local/bin:/bin:/usr/bin:/usr/sbin:/usr/local/apache-ant-1.7.0/bin:/home/allen.hu/p4v/bin:/home/allen.hu/scripts:/home/allen.hu/local/bin:/home/allen.hu/tools/p4v-2017.1.1491634/bin:~/.local/bin:$PATH
   
   export PATH
-  export P4PORT=172.18.100.50:1666
+  #export P4PORT=172.18.100.50:1666
+  export P4PORT=172.16.14.5:1666
   export P4USER=allen.hu
   #export P4CLIENT=allen.hu_ZD_AP_CERT 
   #export P4CLIENT=allen.hu_Unleashed_200.2 
