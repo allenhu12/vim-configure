@@ -97,6 +97,8 @@ endif
 Bundle 'gmarik/vundle'
 
 " My Bundles here:
+Bundle 'Yggdroot/LeaderF'
+Bundle 'justinmk/vim-dirvish'
 Bundle 'vim-airline/vim-airline'
 Bundle 'vim-airline/vim-airline-themes'
 Bundle 'moll/vim-bbye'
@@ -131,7 +133,7 @@ Bundle 'L9'
 "Bundle 'The-NERD-tree'
 ""the buf_it.vim under e:/program files/vim/plugin is used, it is specially customized, we igore the git buf_it here
 ""Bundle 'buf_it'
-Bundle 'taglist.vim'
+"Bundle 'taglist.vim'
 "Bundle 'SuperTab'
 "Bundle 'ingo-library'
 "Bundle 'EnhancedJumps'
@@ -159,7 +161,6 @@ Bundle 'jceb/vim-editqf'
 Bundle 'morhetz/gruvbox'
 " vim-scripts repos
 " vimscripts的repo使用下面的格式，直接是插件名称
-"Bundle 'taglist.vim'
 " non github reposo
 " 非github的插件，可以直接使用其git地址
 
@@ -358,7 +359,7 @@ nmap <<< `N
 nmap qa @q
 
 " 100[m will jump to the beginning of the C function 
-nmap [[ 99[m
+nmap [[ 999[m
 "au FocusLost * :wa
 "F2 to toggle the paste mode
 "please manually type ':set paste' to toggle this'
@@ -367,6 +368,8 @@ inoremap <C-r> <C-r><C-p>
 nnoremap <leader>ev <C-w><C-v><C-l>:e $MYVIMRC<cr>
 "F5 to show the full path of the current file
 nmap <F5> :echo expand('%:p')<CR>
+"switch from insert mode to normal mode will not take about 1 seconds
+set ttimeoutlen=50
 "===================================================================="
 "===================================================================="
 
@@ -415,10 +418,10 @@ nnoremap <F7> :NERDTreeToggle<CR>
 
 "==>The taglist settings = {
 "let Tlist_Use_Right_Window=0
-nnoremap <leader>t :TlistToggle<cr>
-nnoremap <F6> :TlistToggle<CR>
-let Tlist_WinWidth = 50
-autocmd FileType qf wincmd J
+"nnoremap <leader>t :TlistToggle<cr>
+"nnoremap <F6> :TlistToggle<CR>
+"let Tlist_WinWidth = 50
+"autocmd FileType qf wincmd J
 "}
 
 
@@ -491,6 +494,7 @@ nmap <script> <silent> <leader>q :call ToggleQuickfixList()<CR>
 "}
 
 "==>Ctrlp settings{
+ let g:ctrlp_map = '<c-/>'
  let g:ctrlp_max_files = 80000
  let g:ctrlp_max_depth = 80
  let g:ctrlp_working_path_mode = ''
@@ -581,7 +585,26 @@ nmap <leader>sm :CopenBookmarks<CR>
 " touch the file under the directory that you want to create the ctags 
 " it means that the directory will be treated as the gutentags project root
 " and then the ctags will be updated automatically when src file changes
-let g:gutentags_project_root = ['tagsh']
+ let g:gutentags_project_root = ['tagsh']
+" gutentags 搜索工程目录的标志，碰到这些文件/目录名就停止向上一级目录递归
+" let g:gutentags_project_root = ['.root', '.svn', '.git', '.hg', '.project']
+
+" 所生成的数据文件的名称
+let g:gutentags_ctags_tagfile = '.tags'
+
+" 将自动生成的 tags 文件全部放入 ~/.cache/tags 目录中，避免污染工程目录
+let s:vim_tags = expand('~/.cache/tags')
+let g:gutentags_cache_dir = s:vim_tags
+
+" 配置 ctags 的参数
+let g:gutentags_ctags_extra_args = ['--fields=+niazS', '--extra=+q']
+let g:gutentags_ctags_extra_args += ['--c++-kinds=+px']
+let g:gutentags_ctags_extra_args += ['--c-kinds=+px']
+
+" 检测 ~/.cache/tags 不存在就新建
+if !isdirectory(s:vim_tags)
+   silent! call mkdir(s:vim_tags, 'p')
+endif
 "}
 "
 "==>ctrlp-z {
@@ -609,6 +632,23 @@ nmap <m-j> :cnewer<CR>
 map <F9> <Plug>QfSwitch
 map <F10> <Plug>QfCtoggle
 "==>
+"
+"==>Leaderf {
+let g:Lf_ShortcutF = '<c-p>'
+noremap <F6> :LeaderfFunction!<cr>
+let g:Lf_ShowRelativePath = 0
+let g:Lf_HideHelp = 1
+"let g:Lf_PreviewResult = {'Function':0, 'Colorscheme':1}
+
+let g:Lf_NormalMap = {
+	\ "File":   [["<ESC>", ':exec g:Lf_py "fileExplManager.quit()"<CR>']],
+	\ "Buffer": [["<ESC>", ':exec g:Lf_py "bufExplManager.quit()"<CR>']],
+	\ "Mru":    [["<ESC>", ':exec g:Lf_py "mruExplManager.quit()"<CR>']],
+	\ "Tag":    [["<ESC>", ':exec g:Lf_py "tagExplManager.quit()"<CR>']],
+	\ "Function":    [["<ESC>", ':exec g:Lf_py "functionExplManager.quit()"<CR>']],
+	\ "Colorscheme":    [["<ESC>", ':exec g:Lf_py "colorschemeExplManager.quit()"<CR>']],
+	\ }
+"}
 "===================================================================="
 "===================================================================="
 
@@ -809,3 +849,9 @@ set t_ut=
 "
 "=======================================================================
 "jump to the beginning of the function body  [m
+"Ag ignore
+"Ag! -w "sysinfo" --ignore "*js" --ignore "*css" --ignore "*map" 
+"
+"=======================================================================
+"show a ASCII code
+"in normal mode, use "ga"
