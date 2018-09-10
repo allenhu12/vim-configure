@@ -259,7 +259,8 @@ set statusline +=%2*0x%04B\ %*          "character under cursor
 set laststatus=2
 "Set to auto read when a file is changed from the outside
 set autoread
-set tags=tags;
+set autochdir
+
 " Go to home and end using capitalized directions
 noremap H ^
 noremap L $
@@ -855,3 +856,4 @@ set t_ut=
 "=======================================================================
 "show a ASCII code
 "in normal mode, use "ga"
+" :set tags+=../video54/tags
