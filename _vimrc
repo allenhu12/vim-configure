@@ -1,4 +1,3 @@
-
 "===================================================================="
 "====><<Windows or Linux, mac, terminal or gvim>>
 "===================================================================="
@@ -159,6 +158,8 @@ Bundle 'tpope/vim-surround'
 " Bundle 'tpope/vim-fugitive'
 Bundle 'jceb/vim-editqf'
 Bundle 'morhetz/gruvbox'
+Bundle 'Valloric/YouCompleteMe'
+Bundle 'Yggdroot/indentLine'
 " vim-scripts repos
 " vimscripts的repo使用下面的格式，直接是插件名称
 " non github reposo
