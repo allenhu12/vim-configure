@@ -653,6 +653,10 @@ let g:Lf_NormalMap = {
 	\ }
 "}
 "
+"==>indentLine{
+"default is off
+let g:indentLine_enabled=0
+"}
 " Quick run via <F3>
 nnoremap <F3> :call <SID>compile_and_run()<CR>
 
