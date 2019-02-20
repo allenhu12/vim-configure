@@ -62,16 +62,26 @@ return
 ;---------------------------------------------------------------------o
 
 ;=====================================================================o
+;                         CapsLock Escaper:          standalone press 'CapsLock' will Send 'ESC';|
+;----------------------------------o----------------------------------o
+;                        CapsLock  |  {ESC}                          ;|
+;----------------------------------o----------------------------------o
+CapsLock::Send, {ESC}                                                ;|
+;---------------------------------------------------------------------o
+
+;=====================================================================o
 ;                       CapsLock Switcher:                                           
 ;
 ; CapsLock + space | Left Alt + shift (switch input method for Windows 10)
 ;
 ;=====================================================================o
-CapsLock & Space::
-Send, {LAlt Down}
-Send, {Shift}
-Send, {LAlt Up}
-Return
+; CapsLock & Space::
+; Send, {LAlt Down}
+; Send, {Shift}
+; Send, {LAlt Up}
+; Return
+
+CapsLock & Space::Send, #{Space}
 
 ;=====================================================================o
 ;                       CapsLock Switcher:                           
@@ -557,7 +567,10 @@ return
 ;-----------------------------------o-----------------------------------------o
 ;=============================================================================o
 #IfWinActive, ahk_exe chrome.exe
-CapsLock & \:: Send, ^q
+CapsLock & \:: 
+Send, ^q
+sleep, 500
+Send, #!z ;locate the popup window in the center with divvy shortcut
 return
 #IfWinActive
 
