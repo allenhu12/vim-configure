@@ -1,4 +1,3 @@
-
 "===================================================================="
 "====><<Windows or Linux, mac, terminal or gvim>>
 "===================================================================="
@@ -159,6 +158,9 @@ Bundle 'tpope/vim-surround'
 " Bundle 'tpope/vim-fugitive'
 Bundle 'jceb/vim-editqf'
 Bundle 'morhetz/gruvbox'
+Bundle 'Valloric/YouCompleteMe'
+Bundle 'Yggdroot/indentLine'
+Bundle 'skywind3000/asyncrun.vim'
 " vim-scripts repos
 " vimscripts的repo使用下面的格式，直接是插件名称
 " non github reposo
@@ -259,7 +261,8 @@ set statusline +=%2*0x%04B\ %*          "character under cursor
 set laststatus=2
 "Set to auto read when a file is changed from the outside
 set autoread
-set tags=tags;
+set autochdir
+
 " Go to home and end using capitalized directions
 noremap H ^
 noremap L $
@@ -649,6 +652,40 @@ let g:Lf_NormalMap = {
 	\ "Colorscheme":    [["<ESC>", ':exec g:Lf_py "colorschemeExplManager.quit()"<CR>']],
 	\ }
 "}
+"
+"==>indentLine{
+"default is off
+let g:indentLine_enabled=0
+"}
+" Quick run via <F3>
+nnoremap <F3> :call <SID>compile_and_run()<CR>
+
+function! s:compile_and_run()
+    exec 'w'
+    if &filetype == 'c'
+        exec "AsyncRun! gcc % -o %<; time ./%<"
+    elseif &filetype == 'cpp'
+       exec "AsyncRun! g++ -std=c++11 % -o %<; time ./%<"
+    elseif &filetype == 'java'
+       exec "AsyncRun! javac %; time java %<"
+    elseif &filetype == 'sh'
+       exec "AsyncRun! time bash %"
+    elseif &filetype == 'python'
+       "exec "AsyncRun! time python %"
+       exec ":! python3 %"
+    endif
+endfunction
+
+" Deprecated:
+" augroup SPACEVIM_ASYNCRUN
+"     autocmd!
+"    " Automatically open the quickfix window
+"     autocmd User AsyncRunStart call asyncrun#quickfix_toggle(15, 1)
+" augroup END
+"
+" asyncrun now has an option for opening quickfix automatically
+let g:asyncrun_open = 15
+
 "===================================================================="
 "===================================================================="
 
@@ -855,3 +892,4 @@ set t_ut=
 "=======================================================================
 "show a ASCII code
 "in normal mode, use "ga"
+" :set tags+=../video54/tags
