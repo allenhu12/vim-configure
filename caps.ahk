@@ -62,6 +62,14 @@ return
 ;---------------------------------------------------------------------o
 
 ;=====================================================================o
+;                         CapsLock Escaper:                          ;|
+;----------------------------------o----------------------------------o
+;                        CapsLock  |  {ESC}                          ;|
+;----------------------------------o----------------------------------o
+CapsLock::Send, {ESC}                                                ;|
+;---------------------------------------------------------------------o
+
+;=====================================================================o
 ;                       CapsLock Switcher:                                           
 ;
 ; CapsLock + space | Left Alt + shift (switch input method for Windows 10)
@@ -434,12 +442,12 @@ CapsLock & F2:: SendRaw, `%:p:h
 
 ;===========================================================================================
 ;                      CapsLock Window Controller                                        
-;                      CapsLock + f / Shift+Alt+Space (Switch windows in switcheroo)       ;
+;                      CapsLock + f / Shift+Space (Switch windows in switcheroo)       ;
 ;                      CapsLock + r / Alt+Tab (Switch windows)                            
 ;-----------------------------------o-------------------------------------------------------
 CapsLock & r::Send, !{Tab}
 ;CapsLock & f::Send, {LWin Down}{Tab}{LWinUp}
-CapsLock & f::Send, +!{Space}
+CapsLock & f::Send, +{Space}
 
 
 ;=====================================================================o
@@ -538,6 +546,16 @@ mouseclick, left, 2539, 322, Screen
 }
 return
 #IfWinActive
+
+;=============================================================================o
+;
+;			CapsLock Char for Firefox
+;-----------------------------------o-----------------------------------------o
+#IfWinActive, ahk_exe firefox.exe ; determined by the AHK tools window spy
+CapsLock & \:: Send, +t  ; plugin vimium, "T" list tabs
+return
+#IfWinActive
+
 ;=============================================================================o
 ;                        CapsLock Char for Evernote                   
 ;                        (only apply in Evernote)                      
