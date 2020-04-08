@@ -3,7 +3,7 @@
   
   export PATH
   #export P4PORT=172.18.100.50:1666
-  export P4PORT=172.16.14.5:1666
+  export P4PORT=p4.video54.local:1666
   export P4USER=allen.hu
   #export P4CLIENT=allen.hu_ZD_AP_CERT 
   #export P4CLIENT=allen.hu_Unleashed_200.2 
@@ -12,9 +12,12 @@
   export P4CLIENT=allen.hu_vm_ubuntu_gateway
   export P4PASSWD=4alle$1234
   export MY_VIM_PATH=/home/allen.hu/workspace/git-depot/vim-configure/
-  export JAVA_HOME=/usr/java/jdk1.8.0_65
+  export JAVA_HOME=/usr/java/jdk1.8.0_121
   export ANT_HOME=/usr/local/apache-ant-1.9.6
   export PATH=$PATH:/usr/local/apache-ant-1.9.6/bin/
+  export CHEATCOLORS=true
+  export PATH="/home/allen.hu/.pyenv/bin:$PATH"
+
 
   # shell support color, "security" should option->session option->emulation->ANSI color checked, use color scheme checked
 TERM=xterm-256color
@@ -129,6 +132,10 @@ zstyle ':completion:*:*:default' force-list always
 	alias omz='vim /home/allen.hu/workspace/git-depot/oh-my-zsh/templates/zshrc.zsh-dell-ubuntu'  
 	alias tmux0='tmux attach-session -t 0'
 	alias tmuxn0='tmux new-session -s 0'
+#vim.gtk can support X11 to share the clipboard with windows mobaxterm
+#vim8 binary is located at /usr/local/bin/vim
+    alias vim='/usr/bin/vim.gtk'
+    alias vim='/home/allen.hu/user_bin/bin/vim'
 #???? ?????????? cd ~xxx
     hash -d WWW="/home/lighttpd/html"
     hash -d ARCH="/mnt/arch"
@@ -150,9 +157,11 @@ DISABLE_AUTO_TITLE=true
 #autoload -U compinit && compinit -u
 #source /home/allen.hu/workspace/git-depot/oh-my-zsh/templates/zshrc.zsh-dell-ubuntu
 #source "$HOME/.vim/bundle/gruvbox/gruvbox_256palette.sh"
-if [[ -r /usr/local/lib/python2.7/dist-packages/powerline/bindings/zsh/powerline.zsh ]]; then
-    source /usr/local/lib/python2.7/dist-packages/powerline/bindings/zsh/powerline.zsh
-fi
+#if [[ -r /usr/local/lib/python2.7/dist-packages/powerline/bindings/zsh/powerline.zsh ]]; then
+#    source /usr/local/lib/python2.7/dist-packages/powerline/bindings/zsh/powerline.zsh
+#fi
 ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=100
 ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=241"
 eval "$(fasd --init auto)"
+eval "$(pyenv init -)"
+eval "$(pyenv virtualenv-init -)"

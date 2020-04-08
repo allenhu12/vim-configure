@@ -161,6 +161,8 @@ Bundle 'morhetz/gruvbox'
 Bundle 'Valloric/YouCompleteMe'
 Bundle 'Yggdroot/indentLine'
 Bundle 'skywind3000/asyncrun.vim'
+Bundle 'icymind/NeoSolarized' 
+Bundle 'tpope/vim-vividchalk'
 " vim-scripts repos
 " vimscripts的repo使用下面的格式，直接是插件名称
 " non github reposo
@@ -197,7 +199,7 @@ set guifont=Consolas:h11:cANSI
 if (v:version >= 800)
 	if (g:ismac)
 		set termguicolors
-		colorscheme gruvbox 
+		"colorscheme gruvbox 
 	elseif (g:islinux)
 		colorscheme gruvbox
 	endif
@@ -261,7 +263,7 @@ set statusline +=%2*0x%04B\ %*          "character under cursor
 set laststatus=2
 "Set to auto read when a file is changed from the outside
 set autoread
-set autochdir
+"set autochdir
 
 " Go to home and end using capitalized directions
 noremap H ^
