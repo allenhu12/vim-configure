@@ -308,7 +308,7 @@ mouseClickDrag, L,0,0,50,0,,R
 return  
 
 #IfWinActive, ahk_exe MobaXterm.exe ; determined by the AHK tools window spy
-^R::
+CapsLock & R::
 MouseMove, 1355, 150
 if vPosY2 < 720
 {
