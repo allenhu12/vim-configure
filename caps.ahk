@@ -62,8 +62,7 @@ return
 ;---------------------------------------------------------------------o
 
 ;=====================================================================o
-;                         CapsLock Escaper:          
-;              standalone press 'CapsLock' will Send 'ESC';|
+;                         CapsLock Escaper:                          ;|
 ;----------------------------------o----------------------------------o
 ;                        CapsLock  |  {ESC}                          ;|
 ;----------------------------------o----------------------------------o
@@ -76,13 +75,20 @@ CapsLock::Send, {ESC}                                                ;|
 ; CapsLock + space | Left Alt + shift (switch input method for Windows 10)
 ;
 ;=====================================================================o
-; CapsLock & Space::
-; Send, {LAlt Down}
-; Send, {Shift}
-; Send, {LAlt Up}
-; Return
+CapsLock & Space::
+Send, {LAlt Down}
+Send, {Shift}
+Send, {LAlt Up}
+Return
 
-CapsLock & Space::Send, #{Space}
+;=====================================================================o
+;                         CapsLock switcher for textexpander:                       
+;----------------------------------o----------------------------------o
+;                                                                        
+;----------------------------------o----------------------------------o
+;CapsLock::Send, {ESC}                                             
+CapsLock & e:: Send, ^+e                                       
+;---------------------------------------------------------------------o
 
 ;=====================================================================o
 ;                       CapsLock Switcher:                           
@@ -197,41 +203,41 @@ return
 ;                      CapsLock + e |  End                  
 ;                      Ctrl, Alt Compatible                   
 ;-----------------------------------o---------------------------------o
-CapsLock & a::                                              
-if GetKeyState("control") = 0                                 
-{                                                           
-    if GetKeyState("alt") = 0                                 
-        Send, {Home}                                       
-    else                                                    
-        Send, +{Home}                                      
-    return                                                  
-}                                                           
-else {                                                       
-    if GetKeyState("alt") = 0                                 
-        Send, ^{Home}                                      
-    else                                                    
-        Send, +^{Home}                                     
-    return                                                  
-}                                                           
+;CapsLock & a::                                              
+;if GetKeyState("control") = 0                                 
+;{                                                           
+;    if GetKeyState("alt") = 0                                 
+;        Send, {Home}                                       
+;    else                                                    
+;        Send, +{Home}                                      
+;    return                                                  
+;}                                                           
+;else {                                                       
+;    if GetKeyState("alt") = 0                                 
+;        Send, ^{Home}                                      
+;    else                                                    
+;        Send, +^{Home}                                     
+;    return                                                  
+;}                                                           
 return                                                      
 ;-----------------------------------o                               
-CapsLock & e::                                              
-if GetKeyState("control") = 0                                 
-{                                                           
-    if GetKeyState("alt") = 0                                 
-        Send, {End}                                         
-    else                                                    
-        Send, +{End}                                        
-    return                                                  
-}                                                           
-else {                                                       
-    if GetKeyState("alt") = 0                                 
-        Send, ^{End}                                        
-    else                                                    
-        Send, +^{End}                                       
-    return                                                  
-}                                                           
-return                                                      
+;CapsLock & e::                                              
+;if GetKeyState("control") = 0                                 
+;{                                                           
+;    if GetKeyState("alt") = 0                                 
+;        Send, {End}                                         
+;    else                                                    
+;        Send, +{End}                                        
+;    return                                                  
+;}                                                           
+;else {                                                       
+;    if GetKeyState("alt") = 0                                 
+;        Send, ^{End}                                        
+;    else                                                    
+;        Send, +^{End}                                       
+;    return                                                  
+;}                                                           
+;return                                                      
 ;---------------------------------------------------------------------o
 
 
@@ -293,13 +299,34 @@ CapsLock & Up::    MouseMove, 0, -10, 0, R
 CapsLock & Down::  MouseMove, 0, 10, 0, R                         
 CapsLock & Left::  MouseMove, -10, 0, 0, R                          
 CapsLock & Right:: MouseMove, 10, 0, 0, R                          
-;Shift & Right::
-;mouseClickDrag, L,0,0,50,0,,R
-;return
-;MouseGetPos, xpos, ypos
-;Msgbox, The cursor is at X%xpos% Y%ypos%
-;mouseClickDrag, L,0,0,50,0,,R
-;return                                           
+Shift & Right::
+mouseClickDrag, L,0,0,50,0,,R
+return
+MouseGetPos, xpos, ypos
+Msgbox, The cursor is at X%xpos% Y%ypos%
+mouseClickDrag, L,0,0,50,0,,R
+return  
+
+#IfWinActive, ahk_exe MobaXterm.exe ; determined by the AHK tools window spy
+^R::
+MouseMove, 1355, 150
+if vPosY2 < 720
+{
+Click Right
+MouseMove, 10, 0, 0, R
+MouseMove, 0, 300, 0, R 
+mouseClickDrag, L,0,0,50,0,,R
+}
+else
+{
+Click Right
+MouseMove, 10, 0, 0, R
+MouseMove, 0, -250, 0, R 
+mouseClickDrag, L,0,0,50,0,,R
+}
+MouseMove, 1355, 0
+return
+#IfWinActive                            
 ;-----------------------------------o                       
 ;CapsLock & Enter::                                                 
 ;SendEvent {Blind}{LButton down}                                    
@@ -351,14 +378,11 @@ Shift & Enter:: return
 
 ;=====================================================================o
 ;                            CapsLock + number: win+number       
-;                            CapsLock + g: switch to browser
-;                            CapsLock + s: switch to secuCrt
-;                            CapsLock + d: switch to dopus
 ;-----------------------------------o---------------------------------o
-CapsLock & d:: Send, #1                                            
+CapsLock & 1:: Send, #1                                            
 CapsLock & 2:: Send, #2                                            
-CapsLock & s:: Send, #3                                            
-CapsLock & g:: Send, #4                                            
+CapsLock & 3:: Send, #3                                            
+CapsLock & 4:: Send, #4                                            
 CapsLock & 5:: Send, #5                                            
 CapsLock & 6:: Send, #6                                            
 CapsLock & 7:: Send, #7                                            
@@ -445,12 +469,12 @@ CapsLock & F2:: SendRaw, `%:p:h
 
 ;===========================================================================================
 ;                      CapsLock Window Controller                                        
-;                      CapsLock + f / Shift+Space (Switch windows in switcheroo)       ;
+;                      CapsLock + f / ctrl+Shift+Space (Switch windows in switcheroo)       ;
 ;                      CapsLock + r / Alt+Tab (Switch windows)                            
 ;-----------------------------------o-------------------------------------------------------
 CapsLock & r::Send, !{Tab}
 ;CapsLock & f::Send, {LWin Down}{Tab}{LWinUp}
-CapsLock & f::Send, +{Space}
+CapsLock & f::Send, ^+{Space}
 
 
 ;=====================================================================o
@@ -539,23 +563,23 @@ CapsLock & f:: Send, {f8}
 ;                     CapsLock + p  | Ctrl+Shift+E to trigger Tab group     
 ;                     CapsLock + p  | Ctrl+Shift+E to trigger Tab group     
 ;-----------------------------------o-----------------------------------------o
-#IfWinActive, Vimperator
-CapsLock & o::
-{
+;#IfWinActive, Vimperator
+;CapsLock & o::
+;{
 ;MouseGetPos, xpos, ypos 
 ;Msgbox, The cursor is at X%xpos% Y%ypos%. 
-mouseclick, left, 2539, 322, Screen
+;mouseclick, left, 2539, 322, Screen
 
-}
-return
-#IfWinActive
+;}
+;return
+;#IfWinActive
 
 ;=============================================================================o
 ;
 ;			CapsLock Char for Firefox
 ;-----------------------------------o-----------------------------------------o
 #IfWinActive, ahk_exe firefox.exe ; determined by the AHK tools window spy
-CapsLock & \:: Send, +t  ; plugin vimium, "T" list tabs
+CapsLock & t:: Send, +t  ; plugin vimium, "T" list tabs
 return
 #IfWinActive
 
@@ -577,11 +601,13 @@ return
 ; CapsLock + \   |  show toomanytabs windows                            
 ;-----------------------------------o-----------------------------------------o
 ;=============================================================================o
+;#IfWinActive, ahk_exe chrome.exe
+;CapsLock & \:: Send, ^q
+;return
+;#IfWinActive
+
 #IfWinActive, ahk_exe chrome.exe
-CapsLock & \:: 
-Send, ^q
-sleep, 500
-Send, #!z ;locate the popup window in the center with divvy shortcut
+CapsLock & t:: Send, +t  ; plugin vimium, "T" list tabs
 return
 #IfWinActive
 
