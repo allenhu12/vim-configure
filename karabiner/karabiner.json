@@ -455,31 +455,6 @@
                   }
                 ],
                 "type" : "basic"
-              },
-              {
-                "from" : {
-                  "key_code" : "backslash",
-                  "modifiers" : {
-                    "mandatory" : [
-                      "right_command",
-                      "right_control",
-                      "right_shift",
-                      "right_option"
-                    ]
-                  }
-                },
-                "to" : [
-                  {
-                    "key_code" : "up_arrow"
-                  },
-                  {
-                    "key_code" : "end"
-                  },
-                  {
-                    "key_code" : "return_or_enter"
-                  }
-                ],
-                "type" : "basic"
               }
             ]
           },
