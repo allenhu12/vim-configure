@@ -27,6 +27,17 @@ map("n", "Q", ":qa!<CR>", opt)
 map("i", "<C-h>", "<ESC>I", opt)
 map("i", "<C-l>", "<ESC>A", opt)
 
+-- normal mode, better window management
+map("n", "<C-h>", "<C-w>h", opt)
+map("n", "<C-j>", "<C-w>j", opt)
+map("n", "<C-k>", "<C-w>k", opt)
+map("n", "<C-l>", "<C-w>l", opt)
+-- ":" to ";" to enter command mode quickly, noted, no "slient = ture"
+map("n", ";", ":", {noremap = true} )
+-- Move text up and down
+map("n", "<S-j>", "<Esc>:m .+1<CR>==gi", opt)
+map("n", "<S-k>", "<Esc>:m .-2<CR>==gi", opt)
+
 
 -- 插件快捷键
 local pluginKeys = {}
