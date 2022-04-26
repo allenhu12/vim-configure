@@ -83,5 +83,6 @@ map("n", "<Tab>", ":BufferLineCycleNext<CR>", opt)
 map("n", "<C-p>", ":Telescope find_files<CR>", opt)
 -- 全局搜索
 map("n", "f/", ":Telescope live_grep<CR>", opt)
-
+-- easymotion
+map("n", "<C-f>", "<Plug>(easymotion-overwin-f)", opt)
 return pluginKeys
