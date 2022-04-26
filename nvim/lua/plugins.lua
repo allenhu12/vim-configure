@@ -18,7 +18,10 @@ packer.startup(
    -- project
    use("ahmedkhalf/project.nvim")
    -- treesitter （新增）
-    use({ "nvim-treesitter/nvim-treesitter", run = ":TSUpdate" })
+   use({ "nvim-treesitter/nvim-treesitter", run = ":TSUpdate" })
+   use({"ojroques/vim-oscyank"})
+   -- easymotion
+   use({"easymotion/vim-easymotion"})
 end)
 
 -- 每次保存 plugins.lua 自动安装插件
