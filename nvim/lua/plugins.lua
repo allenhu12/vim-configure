@@ -22,6 +22,8 @@ packer.startup(
    use({"ojroques/vim-oscyank"})
    -- easymotion
    use({"easymotion/vim-easymotion"})
+   --
+   use({'dyng/ctrlsf.vim'})
 end)
 
 -- 每次保存 plugins.lua 自动安装插件
