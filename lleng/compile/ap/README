@@ -1,0 +1,102 @@
+1. Docker 安装
+
+docker 安装请参考下面的链接.
+
+https://www.runoob.com/docker/ubuntu-docker-install.html
+
+通过 网上的script直接安装. curl -fsSL https://get.docker.com | bash -s docker --mirror Aliyun
+如果要使用 Docker 作为非 root 用户,则应考虑使用类似以下方式将用户添加到 docker 组:
+$ sudo usermod -aG docker your-user
+通过docker run hello-world 来测试docker已经可以运行.
+
+2. Build image
+执行build.sh 会通过 Dockerfile  build image
+如果需要安装新的packet,在Dockerfile 中新加后再执行build.sh 就可以 更新image.
+
+3. 编译ZD、unleash,AP.
+
+首先复制config.txt(可以不变的部分放这个文件并修改适配自己的目录，把变的部分放在复制的文件)，并命名一个新的文件文件，每一个文件可以在后面启动一个新的docker
+存放编译出image的目录，还有一些host和container共享文件会用到。这个一般情况只需需要放到config.txt 就可以了。
+SHARE_DIR="/tftpboot"
+如果多个container需要共享一个编译，设置这个目录。
+TOOLCHAIN_DIR="/code/ext_toolchain_"
+上面两个目录不设置就是上面两个的默认目录。
+
+dir=/sdd/new_watch/depot
+C_DIR=release/zd_10.5.1/buildroot/
+BUILD_DIR=${dir}/$C_DIR
+#IMAGE=ruckus/compile_ap
+PROFILE=director1200
+
+当需要在同一个release编译相同的profile最好修改下面的配置并去掉注释。编译出的image可以从编译结果看到差异(会多一层配置的目录来区分不同container的编译结果)。
+# TFTP_SUB=qca
+
+
+一个是前面两行的需要编译的路径,二是需要编译的profile.
+
+当修改完成后就可以运行
+./run.sh -c config.txt 
+
+用-f为remove旧的container,开始新的container.
+./run.sh -f config.txt
+
+如果需要直接编译添加-m选项
+./run.sh -c config.txt -m
+./run.sh -f config.txt -m
+
+
+root@lester-desktop:ap# ./run.sh -f config.txt 
+Name: config.txt
+Command: -f
+Load configuration: config.txt
+Image name: (ruckus/compile_centos_7.7)
+contain_name: (config.txt)
+start start_container(config.txt) by force 
+Remove (6d80ad13d9de) existed container
+6d80ad13d9de
+Copy script to BUILD_DIR:(/sdd/new_watch/depot/release/zd_10.5.1/buildroot/) for docker
+Docker compile dir:(/opt/mycompile/release/zd_10.5.1/buildroot/)
+TFTP_SUB:
+PROFILE:director1200
+TOOLCHAIN_OPT:
+Start new container (config.txt)
+Image name :(ruckus/compile_centos_7.7)
+Run shell script: (/opt/tftpboot/docker-entrypoint.sh)
+wait 1 second, and get th id.
+dfb29d9e0f45610f20eb674460396f2df6bbc3fc786786399ce26508b4d3161a
+echo id: dfb29d9e0f45
+进入需要编译的目录(敲入Enter会进入编译目录)
+
+[root@dfb29d9e0f45 buildroot]# 
+
+开始编译. 
+[root@c8ac2ce0ce64 buildroot]# ./make.sh
+
+多线程编译
+[root@c8ac2ce0ce64 buildroot]# ./make.sh -j 4
+
+
+后面也可以添加其他参数.make.sh 只是帮忙把一些环境参数设置好.
+[root@c8ac2ce0ce64 buildroot]# ./make.sh info 
+
+退出编译
+[root@c8ac2ce0ce64 buildroot]# exit
+
+4. 其他有用的docker 命令
+
+查看当前运行的容器
+root@lester-desktop:compile_docker# docker ps
+CONTAINER ID        IMAGE                   COMMAND             CREATED             STATUS              PORTS               NAMES
+7aef6a938b1f        ruckus/compile_ap_7.7   "/bin/bash"         24 hours ago        Up 24 hours                             watchap10.4.1.txt
+5332fb7cd3d8        ruckus/compile_ap_7.7   "/bin/bash"         24 hours ago        Up 24 hours                             watchzd10.5.txt
+30e2821019ee        ruckus/compile_ap_7.7   "/bin/bash"         25 hours ago        Up 25 hours                             watchzd10.4.1.txt
+
+查看所有的容器
+root@lester-desktop:compile_docker# docker ps -a
+CONTAINER ID        IMAGE                   COMMAND                  CREATED             STATUS                      PORTS               NAMES
+c8ac2ce0ce64        ruckus/compile_ap_7.7   "/bin/bash"              4 minutes ago       Exited (0) 41 seconds ago                       newzd10.4.1.txt
+7aef6a938b1f        ruckus/compile_ap_7.7   "/bin/bash"              24 hours ago        Up 24 hours                                     watchap10.4.1.txt
+5332fb7cd3d8        ruckus/compile_ap_7.7   "/bin/bash"              24 hours ago        Up 24 hours                                     watchzd10.5.txt
+30e2821019ee        ruckus/compile_ap_7.7   "/bin/bash"              25 hours ago        Up 25 hours                                     watchzd10.4.1.txt
+
+或者使用run.sh一些常用的docker 命令.可以通过运行./run.sh -h查看 

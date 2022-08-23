@@ -1,0 +1,22 @@
+alias ri='repo init -u ssh://git@ruckus-git.ruckuswireless.com:7999/wrls/rks_repo_manifest.git'
+alias riu='repo init -u ssh://git@ruckus-git.ruckuswireless.com:7999/wrls/rks_repo_manifest.git -m unleashed.xml'
+alias rs='repo sync -j8'
+alias rc='repo forall -c'
+
+# 1. repo init -u ssh://git@ruckus-git.ruckuswireless.com:7999/wrls/rks_repo_manifest.git -m unleashed.xml
+# 2. repo sync -j8
+# 3. repo forall -c 'git checkout release/unleashed_200.13'
+# 4. repo forall -c 'git pull'
+
+
+# 1. Create dev branch
+#     git checkout -b dev/UN-1234
+# 2. Modify code
+# 3. Submit code
+#     git add ac/Makefile
+#     git commit
+# 4. Push code into GIT Server
+#     git push origin dev/UN-1234:dev/UN-1234
+
+ 
+
