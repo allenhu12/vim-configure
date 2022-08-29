@@ -1,0 +1,8 @@
+Locally, save docker image as a .tar: docker save -o <path for created tar file> <image name>
+
+Locally, use scp to transfer .tar to remote
+
+On remote server, load image into docker: docker load -i <path to docker image tar file>
+
+docker save -o compile_ap ruckus/compile_ap
+docker load -i compile_ap

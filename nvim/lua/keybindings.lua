@@ -1,10 +1,14 @@
 -- vim.g.mapleader = ","
 -- vim.g.maplocalleader = ","
+map("n", "<Space>", "", opt)
 vim.g.mapleader = " "
 vim.g.maplocalleader = " "
 local map = vim.api.nvim_set_keymap
 -- 复用 opt 参数
 local opt = {noremap = true, silent = true }
+-- vim.g.mapleader = ","
+-- vim.g.maplocalleader = ","
+
 -- visual模式下缩进代码
 map("v", "<", "<gv", opt)
 map("v", ">", ">gv", opt)
@@ -39,6 +43,21 @@ map("n", ";", ":", {noremap = true} )
 -- Move text up and down
 map("n", "<S-j>", "<Esc>:m .+1<CR>==gi", opt)
 map("n", "<S-k>", "<Esc>:m .-2<CR>==gi", opt)
+map("n", "<m-k>", "<Esc>:m .-2<CR>==gi", opt)
+map("n", "<leader>n", ":noh<cr>", opt)
+-- nnoremap <A-j> :m .+1<CR>==
+-- nnoremap <A-k> :m .-2<CR>==
+-- inoremap <A-j> <Esc>:m .+1<CR>==gi
+-- inoremap <A-k> <Esc>:m .-2<CR>==gi
+-- vnoremap <A-j> :m '>+1<CR>gv=gv
+-- vnoremap <A-k> :m '<-2<CR>gv=gv
+-- map("v", "<m-j>", "m '>+1<CR>gv=gv", opt)
+-- map("v", "<m-k>", "m '<-2<CR>gv=gv", opt)
+
+
+-- stay indent
+map("v", "<", "<gv", opt)
+map("v", ">", ">gv", opt)
 
 
 -- 插件快捷键
@@ -46,7 +65,7 @@ local pluginKeys = {}
 
 -- nvim-tree
 -- alt + m 键打开关闭tree
-map("n", "<A-m>", ":NvimTreeToggle<CR>", opt)
+map("n", "<m-m>", ":NvimTreeToggle<CR>", opt)
 -- 列表快捷键
 pluginKeys.nvimTreeList = {
   -- 打开文件或文件夹
@@ -72,6 +91,8 @@ pluginKeys.nvimTreeList = {
 -- 左右Tab切换
 map("n", "<C-h>", ":BufferLineCyclePrev<CR>", opt)
 map("n", "<C-l>", ":BufferLineCycleNext<CR>", opt)
+map("n", "<C-g>", ":BufferLinePick<CR>", opt)
+
 -- 关闭
 --"moll/vim-bbye"
 -- map("n", "<C-w>", ":Bdelete!<CR>", opt)
@@ -83,6 +104,8 @@ map("n", "<Tab>", ":BufferLineCycleNext<CR>", opt)
 -- Telescope
 -- 查找文件
 map("n", "<C-p>", ":Telescope find_files<CR>", opt)
+-- buffers
+map("n", "<C-\\>", ":Telescope buffers<CR>", opt)
 -- 全局搜索
 map("n", "f/", ":Telescope live_grep<CR>", opt)
 -- easymotion
