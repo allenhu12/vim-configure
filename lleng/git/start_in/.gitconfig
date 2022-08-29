@@ -1,0 +1,13 @@
+[user]
+## put your name and email here
+#        email = 
+#        name = 
+[color]
+        ui = true
+[core]
+        editor = vim
+        excludesfile = ~/.gitignore
+[commit]
+        template = ~/.gitmessage
+[include]
+    path = ~/.gitalias

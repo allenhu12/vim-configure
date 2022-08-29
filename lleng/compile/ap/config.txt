@@ -1,0 +1,16 @@
+SHARE_DIR="/tftpboot"
+TOOLCHAIN_DIR="/code/ext_toolchain_"
+
+dir=/sdd/new_watch/depot
+C_DIR=release/zd_10.5.1/buildroot/
+BUILD_DIR=${dir}/$C_DIR
+OS=centos6.7_unleash:v1.1two
+IMAGE=ruckus/compile_centos_7.7
+# TFTP_SUB=qca
+PROFILE=ap-11n
+PROFILE=director1200
+#PROFILE=directorx86
+#PROFILE=vmva
+#PROFILE=ap-11n-wasp
+#PROFILE=ap-arm-qca-unleashed
+#PROFILE=ap-arm-11ax-unleashed

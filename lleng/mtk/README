@@ -1,0 +1,19 @@
+Step1 : update docker-entry.sh
+
+you need have not root username run the docker command and change docker-entry.sh username same with your host.
+change the lleng  to user name in Dockerfile
+	echo "lleng        ALL=(ALL)       NOPASSWD: ALL" >>/etc/sudoers 
+
+Step2 : Build docker image
+./build.sh
+
+Step3 : update start.sh
+change WORKER_DIR and HOME_DIR(user home direcory will share with contanier) 
+
+Step4 : start container
+
+stop and remove existed container and start with container.
+./start.sh -f
+or
+start with container.
+./start.sh -g

@@ -1,0 +1,8 @@
+#!/bin/bash
+if [ -z "$1" ];then
+CONTAINER_NAME=ruckus/compile_ap_7.7
+else
+CONTAINER_NAME=$1
+fi
+
+sudo docker exec -it $CONTAINER_NAME /bin/bash
