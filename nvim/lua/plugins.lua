@@ -24,6 +24,12 @@ packer.startup(
    use({"easymotion/vim-easymotion"})
    --
    use({'dyng/ctrlsf.vim'})
+   --
+   use({'amiorin/ctrlp-z'})
+   -- 
+   use 'neoclide/coc.nvim'
+   --
+   use({'jvgrootveld/telescope-zoxide'})
 end)
 
 -- 每次保存 plugins.lua 自动安装插件

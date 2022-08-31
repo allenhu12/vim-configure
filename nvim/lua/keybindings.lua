@@ -1,11 +1,11 @@
 -- vim.g.mapleader = ","
 -- vim.g.maplocalleader = ","
-map("n", "<Space>", "", opt)
-vim.g.mapleader = " "
-vim.g.maplocalleader = " "
 local map = vim.api.nvim_set_keymap
 -- 复用 opt 参数
 local opt = {noremap = true, silent = true }
+map("n", "<Space>", "", opt)
+vim.g.mapleader = " "
+vim.g.maplocalleader = " "
 -- vim.g.mapleader = ","
 -- vim.g.maplocalleader = ","
 
@@ -62,7 +62,8 @@ map("v", ">", ">gv", opt)
 
 -- 插件快捷键
 local pluginKeys = {}
-
+-- zoxide to switch directory
+map("n", "ff", ":Telescope zoxide list<CR>", opt)
 -- nvim-tree
 -- alt + m 键打开关闭tree
 map("n", "<m-m>", ":NvimTreeToggle<CR>", opt)
