@@ -30,6 +30,10 @@ packer.startup(
    use 'neoclide/coc.nvim'
    --
    use({'jvgrootveld/telescope-zoxide'})
+   --
+   use({'junegunn/vim-peekaboo'})
+   --
+   use({'rking/ag.vim'})
 end)
 
 -- 每次保存 plugins.lua 自动安装插件
