@@ -114,7 +114,7 @@ map("n", "<C-f>", "<Plug>(easymotion-overwin-f)", opt)
 -- trouble
 -- Lua
 
-map("n","<C-o>", ":Troublel<cr>",opt)
+map("n","<leader>xx", ":TroubleToggle<cr>",opt)
 
 vim.api.nvim_set_keymap("n", "<leader>xw", "<cmd>Trouble workspace_diagnostics<cr>",
   {silent = true, noremap = true}

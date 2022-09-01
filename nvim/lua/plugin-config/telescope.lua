@@ -4,6 +4,10 @@ if not status then
   return
 end
 
+local actions = require("telescope.actions")
+local trouble = require("trouble.providers.telescope")
+
+
 telescope.setup({
   defaults = {
         -- 打开弹窗后进入的初始模式，默认为 insert，也可以是 normal
@@ -11,6 +15,10 @@ telescope.setup({
         -- 窗口内快捷键
         --mappings = require("keybindings").telescopeList,
         file_ignore_patterns = {"tags", "build/"},
+        mappings = {
+            i = { ["<c-t>"] = trouble.open_with_trouble },
+            n = { ["<c-t>"] = trouble.open_with_trouble },
+        },
   },
   pickers = {
     -- 内置 pickers 配置
