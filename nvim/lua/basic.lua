@@ -81,6 +81,10 @@ vim.o.pumheight = 10
 vim.o.showtabline = 2
 -- 使用增强状态栏插件后不再需要 vim 的模式提示
 vim.o.showmode = false
+
+vim.g.ctrlsf_default_view_mode = 'compact'
+vim.g.ctrlsf_auto_preview = 1
+vim.g.ctrlsf_populate_qflist = 1
 vim.opt.wrap = true
 vim.cmd "set whichwrap+=<,>,[,],h,l"
 vim.cmd([[
@@ -102,4 +106,14 @@ inoremap <silent><expr> <CR> coc#pum#visible() ? coc#pum#confirm()
 ]]
 )
 
-
+local function is_git_repo()
+    local f = io.popen("git rev-parse --show-toplevel")
+    local l = f:read("*a")
+    f:close()
+    return l
+end
+local string = is_git_repo()
+str1 = string:gsub('\n', '')
+str1 = str1.."/tags";
+print(str1)
+vim.cmd("set tags="..str1)

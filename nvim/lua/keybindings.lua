@@ -131,5 +131,6 @@ vim.api.nvim_set_keymap("n", "<leader>xq", "<cmd>Trouble quickfix<cr>",
 vim.api.nvim_set_keymap("n", "gR", "<cmd>Trouble lsp_references<cr>",
   {silent = true, noremap = true}
 )
+-- map("n", "<m-j>", "<cmd>lua require("trouble").next({skip_groups = true, jump = true})<cr>", opt)
 
 return pluginKeys
