@@ -25,7 +25,7 @@ packer.startup(
         --
         use({'dyng/ctrlsf.vim'})
         --
-        use({'amiorin/ctrlp-z'})
+        -- use({'amiorin/ctrlp-z'})
         -- 
         use 'neoclide/coc.nvim'
         --
@@ -47,6 +47,17 @@ packer.startup(
                 }
             end
         }
+        -- for quick fix window 
+        use {'romainl/vim-qf'}
+        use {'kevinhwang91/nvim-bqf', ft = 'qf'}
+        use {'milkypostman/vim-togglelist'}
+        -- optional
+        use {'junegunn/fzf', run = function()
+            vim.fn['fzf#install']()
+        end
+        }
+        -- for tags
+        use {'tpope/vim-fugitive'}
     end)
 
 -- 每次保存 plugins.lua 自动安装插件
