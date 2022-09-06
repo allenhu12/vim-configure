@@ -50,7 +50,8 @@ packer.startup(
         -- for quick fix window 
         use {'romainl/vim-qf'}
         use {'kevinhwang91/nvim-bqf', ft = 'qf'}
-        use {'milkypostman/vim-togglelist'}
+        -- use a built_in function to toggle quickfix window
+        -- use {'milkypostman/vim-togglelist'}
         -- optional
         use {'junegunn/fzf', run = function()
             vim.fn['fzf#install']()
