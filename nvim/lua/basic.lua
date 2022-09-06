@@ -117,3 +117,13 @@ str1 = string:gsub('\n', '')
 str1 = str1.."/tags";
 print(str1)
 vim.cmd("set tags="..str1)
+
+vim.api.nvim_exec([[
+function! ToggleQuickFix()
+    if empty(filter(getwininfo(), 'v:val.quickfix'))
+        copen
+    else
+        cclose
+    endif
+endfunction
+]], false)

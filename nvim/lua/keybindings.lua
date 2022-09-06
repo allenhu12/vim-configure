@@ -25,9 +25,9 @@ map("n", "<C-d>", "9j", opt)
 map("v", "p", '"_dP', opt)
 
 -- 退出
-map("n", "q", ":q<CR>", opt)
-map("n", "qq", ":q!<CR>", opt)
-map("n", "Q", ":qa!<CR>", opt)
+-- map("n", "q", ":q<CR>", opt)
+-- map("n", "qq", ":q!<CR>", opt)
+ --map("n", "Q", ":qa!<CR>", opt)
 
 -- insert 模式下，跳到行首行尾
 map("i", "<C-h>", "<ESC>I", opt)
@@ -114,23 +114,26 @@ map("n", "<C-f>", "<Plug>(easymotion-overwin-f)", opt)
 -- trouble
 -- Lua
 
-map("n","<leader>xx", ":TroubleToggle<cr>",opt)
-
-vim.api.nvim_set_keymap("n", "<leader>xw", "<cmd>Trouble workspace_diagnostics<cr>",
-  {silent = true, noremap = true}
-)
-vim.api.nvim_set_keymap("n", "<leader>xd", "<cmd>Trouble document_diagnostics<cr>",
-  {silent = true, noremap = true}
-)
-vim.api.nvim_set_keymap("n", "<leader>xl", "<cmd>Trouble loclist<cr>",
-  {silent = true, noremap = true}
-)
-vim.api.nvim_set_keymap("n", "<leader>xq", "<cmd>Trouble quickfix<cr>",
-  {silent = true, noremap = true}
-)
-vim.api.nvim_set_keymap("n", "gR", "<cmd>Trouble lsp_references<cr>",
-  {silent = true, noremap = true}
-)
+ -- map("n","<leader>xx", ":TroubleToggle<cr>",opt)
+ -- 
+ -- vim.api.nvim_set_keymap("n", "<leader>xw", "<cmd>Trouble workspace_diagnostics<cr>",
+ --   {silent = true, noremap = true}
+ -- )
+ -- vim.api.nvim_set_keymap("n", "<leader>xd", "<cmd>Trouble document_diagnostics<cr>",
+ --   {silent = true, noremap = true}
+ -- )
+ -- vim.api.nvim_set_keymap("n", "<leader>xl", "<cmd>Trouble loclist<cr>",
+ --   {silent = true, noremap = true}
+ -- )
+ -- vim.api.nvim_set_keymap("n", "<leader>xq", "<cmd>Trouble quickfix<cr>",
+ --   {silent = true, noremap = true}
+ -- )
+ -- vim.api.nvim_set_keymap("n", "gR", "<cmd>Trouble lsp_references<cr>",
+ --   {silent = true, noremap = true}
+ -- )
 -- map("n", "<m-j>", "<cmd>lua require("trouble").next({skip_groups = true, jump = true})<cr>", opt)
-
+-- trouble end
+map("n", "qq", ":call ToggleQuickFix()<cr>", opt)
+map("n", "<leader>l", ":call ToggleLocationList()<CR>", opt)
+map("n", "<leader>q", ":call ToggleQuickFix()<CR>", opt)
 return pluginKeys
