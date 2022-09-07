@@ -12,12 +12,12 @@ vim.g.maplocalleader = " "
 -- visual模式下缩进代码
 map("v", "<", "<gv", opt)
 map("v", ">", ">gv", opt)
--- 上下移动选中文本
+-- 上下移动选中文本111111
 map("v", "J", ":move '>+1<CR>gv-gv", opt)
 map("v", "K", ":move '<-2<CR>gv-gv", opt)
 -- 上下滚动浏览
-map("n", "<C-j>", "4j", opt)
-map("n", "<C-k>", "4k", opt)
+--map("n", "<C-j>", "4j", opt)
+--map("n", "<C-k>", "4k", opt)
 -- ctrl u / ctrl + d  只移动9行，默认移动半屏
 map("n", "<C-u>", "9k", opt)
 map("n", "<C-d>", "9j", opt)
@@ -28,10 +28,15 @@ map("v", "p", '"_dP', opt)
 -- map("n", "q", ":q<CR>", opt)
 -- map("n", "qq", ":q!<CR>", opt)
  --map("n", "Q", ":qa!<CR>", opt)
-
 -- insert 模式下，跳到行首行尾
 map("i", "<C-h>", "<ESC>I", opt)
 map("i", "<C-l>", "<ESC>A", opt)
+
+-- command mode
+map("c", "<C-j>", "<C-n>", {noremap = true})
+map("c", "<C-k>", "<C-p>", {noremap = true})
+map("c", "<C-h>", "<Left>", {noremap = true})
+map("c", "<C-l", "<Right>", {noremap = true})
 
 -- normal mode, better window management
 map("n", "<C-h>", "<C-w>h", opt)
@@ -93,10 +98,15 @@ pluginKeys.nvimTreeList = {
 -- map("n", "<C-h>", ":BufferLineCyclePrev<CR>", opt)
 -- map("n", "<C-l>", ":BufferLineCycleNext<CR>", opt)
 map("n", "<C-g>", ":BufferLinePick<CR>", opt)
-map("n", "<C-1>", ":BufferLineGoToBuffer 1", opt)
-map("n", "<leader>1", ":BufferLineGoToBuffer 1", opt)
-map("n", "<C-2>", ":BufferLineGoToBuffer 2<CR>", opt)
-map("n", "<C-3>", ":BufferLineGoToBuffer 3<CR>", opt)
+map("n", "x;1", ":BufferLineGoToBuffer 1<CR>", opt)
+map("n", "x;2", ":BufferLineGoToBuffer 2<CR>", opt)
+map("n", "x;3", ":BufferLineGoToBuffer 3<CR>", opt)
+map("n", "x;4", ":BufferLineGoToBuffer 4<CR>", opt)
+map("n", "x;5", ":BufferLineGoToBuffer 5<CR>", opt)
+map("n", "x;6", ":BufferLineGoToBuffer 6<CR>", opt)
+map("n", "x;7", ":BufferLineGoToBuffer 7<CR>", opt)
+map("n", "x;8", ":BufferLineGoToBuffer 8<CR>", opt)
+map("n", "x;9", ":BufferLineGoToBuffer 9<CR>", opt)
 
 -- 关闭
 --"moll/vim-bbye"
