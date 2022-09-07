@@ -61,6 +61,8 @@ packer.startup(
         use {'tpope/vim-fugitive'}
         -- for keymap query
         use {"folke/which-key.nvim"}
+        -- for tags preview
+        use {"skywind3000/vim-preview"}
     end)
 
 -- 每次保存 plugins.lua 自动安装插件
