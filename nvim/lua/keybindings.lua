@@ -48,7 +48,6 @@ map("n", ";", ":", {noremap = true} )
 -- Move text up and down
 map("n", "<S-j>", "<Esc>:m .+1<CR>==gi", opt)
 map("n", "<S-k>", "<Esc>:m .-2<CR>==gi", opt)
-map("n", "<m-k>", "<Esc>:m .-2<CR>==gi", opt)
 map("n", "<leader>n", ":noh<cr>", opt)
 -- nnoremap <A-j> :m .+1<CR>==
 -- nnoremap <A-k> :m .-2<CR>==
@@ -150,4 +149,15 @@ map("n", "<C-f>", "<Plug>(easymotion-overwin-f)", opt)
 map("n", "qq", ":call ToggleQuickFix()<cr>", opt)
 map("n", "<leader>l", ":call ToggleLocationList()<CR>", opt)
 map("n", "<leader>q", ":call ToggleQuickFix()<CR>", opt)
+
+-- vim-preview
+map("n", "<M-]>", ":PreviewTag<CR>", opt)
+map("n", "<M-t>", ":PreviewClose<CR>", opt)
+-- noremap <m-u> :PreviewScroll -1<cr>
+-- noremap <m-d> :PreviewScroll +1<cr>
+-- inoremap <m-u> <c-\><c-o>:PreviewScroll -1<cr>
+-- inoremap <m-d> <c-\><c-o>:PreviewScroll +1<cr>
+map("n", "M-k", ":PreviewScroll -1<cr>", opt)
+map("n", "M-j", ":PreviewScroll +1<cr>", opt)
+
 return pluginKeys
