@@ -24,6 +24,12 @@ name=mytest
 . config.txt
 HOST_CFG="$SHARE_DIR/docker_compile_config.txt"
 mount_name=mycompile
+CONTAINER_WORKSPACE="/home/hubo/workspace"
+HOST_WORKSPACE="$CONTAINER_WORKSPACE"
+CONTAINER_IMAGE="/home/hubo/images"
+HOST_IMAGE="$CONTAINER_IMAGE"
+CONTAINER_TOOLS="/home/hubo/tools"
+HOST_TOOLS="$CONTAINER_TOOLS"
 
 
 
@@ -82,6 +88,9 @@ start_compile_contain(){
     echo "Run shell script: ($run_shell)"
     docker run -it -d $PORT_FOWARD  --name ${name} -v ${dir}:/opt/${mount_name} \
                                         $COMTAINER_MOUNT_DIR \
+                                        -v ${HOST_WORKSPACE}:${CONTAINER_WORKSPACE} \
+                                        -v ${HOST_IMAGE}:${CONTAINER_IMAGE} \
+                                        -v ${HOST_TOOLS}:${CONTAINER_TOOLS} \
                                         ${IMAGE} $run_shell  & 
     #/opt/${name}/buildroot/make.sh; cd ${dir}buildroot
 
