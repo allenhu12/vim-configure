@@ -34,6 +34,7 @@ map("i", "<C-l>", "<ESC>A", opt)
 
 -- command mode
 map("c", "<C-j>", "<C-n>", {noremap = true})
+map("c", "<C-,>", "<C-w>", {noremap = true})
 map("c", "<C-k>", "<C-p>", {noremap = true})
 map("c", "<C-h>", "<Left>", {noremap = true})
 map("c", "<C-l", "<Right>", {noremap = true})
