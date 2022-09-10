@@ -133,13 +133,17 @@ local function is_git_repo()
     local f = io.popen("git rev-parse --show-toplevel")
     local l = f:read("*a")
     f:close()
+    print("bbbbbbb")
     return l
 end
-local string = is_git_repo()
-str1 = string:gsub('\n', '')
-str1 = str1.."/tags";
-print(str1)
-vim.cmd("set tags="..str1)
+
+local function set_vim_tags()
+    local string = is_git_repo()
+    str1 = string:gsub('\n', '')
+    str1 = str1.."/tags";
+    print(str1)
+    vim.cmd("set tags+="..str1)
+end
 
 vim.api.nvim_exec([[
 function! ToggleQuickFix()
@@ -151,3 +155,23 @@ function! ToggleQuickFix()
 endfunction
 ]], false)
 
+vim.cmd([[
+augroup _open_nvim_tree
+    autocmd! * <buffer>
+    autocmd WinEnter * silent! lua print("haha")
+augroup end
+]])
+
+local api = vim.api
+ -- go to last loc when opening a buffer
+api.nvim_create_autocmd(
+  "BufReadPost",
+  { command = [[if line("'\"") > 1 && line("'\"") <= line("$") | execute "normal! g`\"" | endif]] }
+)
+
+vim.api.nvim_create_autocmd("BufEnter", {
+    pattern = "*",
+    callback = function()
+        vim.schedule(set_vim_tags)
+    end,
+})
