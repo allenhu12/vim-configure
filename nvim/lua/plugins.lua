@@ -59,6 +59,7 @@ packer.startup(
         }
         -- for tags
         use {'tpope/vim-fugitive'}
+        use {'preservim/tagbar'}
         -- for keymap query
         use {"folke/which-key.nvim"}
         -- for tags preview

@@ -152,13 +152,14 @@ map("n", "<leader>l", ":call ToggleLocationList()<CR>", opt)
 map("n", "<leader>q", ":call ToggleQuickFix()<CR>", opt)
 
 -- vim-preview
-map("n", "<M-]>", ":PreviewTag<CR>", opt)
-map("n", "<M-t>", ":PreviewClose<CR>", opt)
+map("n", "<leader>]", ":PreviewTag<CR>", opt)
+map("n", "<leader>t", ":PreviewClose<CR>", opt)
 -- noremap <m-u> :PreviewScroll -1<cr>
 -- noremap <m-d> :PreviewScroll +1<cr>
 -- inoremap <m-u> <c-\><c-o>:PreviewScroll -1<cr>
 -- inoremap <m-d> <c-\><c-o>:PreviewScroll +1<cr>
-map("n", "M-k", ":PreviewScroll -1<cr>", opt)
-map("n", "M-j", ":PreviewScroll +1<cr>", opt)
+map("n", "<leader>k", ":PreviewScroll -1<cr>", opt)
+map("n", "<leader>j", ":PreviewScroll +1<cr>", opt)
+
 
 return pluginKeys
