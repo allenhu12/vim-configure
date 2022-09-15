@@ -133,7 +133,7 @@ local function is_git_repo()
     local f = io.popen("git rev-parse --show-toplevel")
     local l = f:read("*a")
     f:close()
-    print("bbbbbbb")
+    -- print("bbbbbbb")
     return l
 end
 
@@ -141,7 +141,7 @@ local function set_vim_tags()
     local string = is_git_repo()
     str1 = string:gsub('\n', '')
     str1 = str1.."/tags";
-    print(str1)
+    -- print(str1)
     vim.cmd("set tags+="..str1)
 end
 

@@ -71,7 +71,7 @@ local pluginKeys = {}
 map("n", "ff", ":Telescope zoxide list<CR>", opt)
 -- nvim-tree
 -- alt + m 键打开关闭tree
-map("n", "<m-m>", ":NvimTreeToggle<CR>", opt)
+map("n", "<leader>t", ":NvimTreeToggle<CR>", opt)
 -- 列表快捷键
 pluginKeys.nvimTreeList = {
   -- 打开文件或文件夹
@@ -161,5 +161,7 @@ map("n", "<leader>t", ":PreviewClose<CR>", opt)
 map("n", "<leader>k", ":PreviewScroll -1<cr>", opt)
 map("n", "<leader>j", ":PreviewScroll +1<cr>", opt)
 
-
+-- simple_bookmarks
+map("n", "<leader>b", ":Bookmark ",{noremap = true})
+map("n", "<leader>g", ":GotoBookmark ", {noremap = true})
 return pluginKeys
