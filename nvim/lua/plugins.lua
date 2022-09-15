@@ -6,8 +6,10 @@ packer.startup(
         -- 你的插件列表...
         -- colorscheme
         use("folke/tokyonight.nvim")
+        use ( "EdenEast/nightfox.nvim" )
+        use {"savq/melange"}
         -- others
-        use({ "kyazdani42/nvim-tree.lua", requires = "kyazdani42/nvim-web-devicons" })
+        use({ "kyazdani42/nvim-tree.lua", requires = "kyazdani42/nvim-web-devicons", tag = 'nightly' })
         use({ "akinsho/bufferline.nvim", tag = "v2.*",requires = { "kyazdani42/nvim-web-devicons", "moll/vim-bbye" }})
         use({ "nvim-lualine/lualine.nvim",  requires = { "kyazdani42/nvim-web-devicons" } })
         use("arkav/lualine-lsp-progress")
@@ -64,6 +66,11 @@ packer.startup(
         use {"folke/which-key.nvim"}
         -- for tags preview
         use {"skywind3000/vim-preview"}
+        -- for bookmarks
+        use {"AndrewRadev/simple_bookmarks.vim"}
+        -- for highlight marks
+        -- for surround
+        use {'tpope/vim-surround'}
     end)
 
 -- 每次保存 plugins.lua 自动安装插件
