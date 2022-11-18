@@ -59,6 +59,7 @@ packer.startup(
             vim.fn['fzf#install']()
         end
         }
+        use {"junegunn/fzf.vim"}
         -- for tags
         use {'tpope/vim-fugitive'}
         use {'preservim/tagbar'}
@@ -71,6 +72,8 @@ packer.startup(
         -- for highlight marks
         -- for surround
         use {'tpope/vim-surround'}
+        -- for quickly file browser
+        use { "nvim-telescope/telescope-file-browser.nvim" }
     end)
 
 -- 每次保存 plugins.lua 自动安装插件

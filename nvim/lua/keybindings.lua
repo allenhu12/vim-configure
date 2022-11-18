@@ -164,4 +164,6 @@ map("n", "<leader>j", ":PreviewScroll +1<cr>", opt)
 -- simple_bookmarks
 map("n", "<leader>b", ":Bookmark ",{noremap = true})
 map("n", "<leader>g", ":GotoBookmark ", {noremap = true})
+-- fzf.vim
+map("n", "<C-t>", ":Cd<CR>", opt)
 return pluginKeys

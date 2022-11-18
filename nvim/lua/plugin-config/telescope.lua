@@ -33,10 +33,26 @@ telescope.setup({
             file_ignore_patterns = {"tags"},
     }
   },
-  extensions = {
-     -- 扩展插件配置
-  },
+    extensions = {
+        -- 扩展插件配置
+
+        file_browser = {
+            theme = "ivy",
+            -- disables netrw and use telescope-file-browser in its place
+            hijack_netrw = true,
+            mappings = {
+                ["i"] = {
+                    -- your custom insert mode mappings
+                },
+                ["n"] = {
+                    -- your custom normal mode mappings
+                },
+            },
+        },
+
+    },
 })
 
 -- telescope extensions
 pcall(telescope.load_extension, "env")
+pcall(telescope.load_extension, "file_browser")
