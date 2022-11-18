@@ -175,3 +175,12 @@ vim.api.nvim_create_autocmd("BufEnter", {
         vim.schedule(set_vim_tags)
     end,
 })
+
+-- use :Cd to switch to directory with FZF
+-- please refer to https://github.com/junegunn/fzf.vim/issues/251
+vim.cmd([[
+command! -bang -bar -nargs=? -complete=dir Cd
+    \ call fzf#run(fzf#wrap(
+    \ {'source': 'find '.( empty("<args>") ? ( <bang>0 ? "~" : "." ) : "<args>" ) .' -type d',
+    \ 'sink': 'cd'}))
+]])
