@@ -1,0 +1,5 @@
+nvim/plugin/packer_compiled.lua|198 col 31| url = "https://github.com/romainl/vim-qf"
+|| 
+nvim/lua/plugins.lua|51 col 15| use {'romainl/vim-qf'}
+|| 
+_vimrc|120 col 9| Bundle 'romainl/vim-qf'

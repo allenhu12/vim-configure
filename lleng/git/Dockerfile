@@ -171,7 +171,7 @@ RUN add-apt-repository ppa:git-core/ppa -y \
 	&&  apt-get install git -y
 
 
-ENV DOCKER_USER git
+ENV DOCKER_USER hubo
 
 COPY docker-entry.sh /etc/docker-entry.sh
 ENTRYPOINT ["/etc/docker-entry.sh"]

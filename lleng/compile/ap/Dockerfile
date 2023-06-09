@@ -44,3 +44,8 @@ RUN yum install -y moreutils
 
 RUN mkdir -p /tmp/docker && curl -fsSL https://get.docker.com -o /tmp/docker/get-docker.sh \
     && chmod +x /tmp/docker/get-docker.sh && DRY_RUN=1 && bash /tmp/docker/get-docker.sh
+
+COPY install_libssl111.sh /tmp/docker/install_libssl111.sh
+RUN chmod 777 /tmp/docker/install_libssl111.sh
+# Run the script during image build to install libssl.so.1.1.1
+RUN /tmp/docker/install_libssl111.sh

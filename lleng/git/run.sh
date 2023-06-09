@@ -8,16 +8,48 @@ if [ -f $COMM_SH ];then
 . $COMM_SH
 fi
 
+
+cmd=$1
+name=$2
+op=$3
+
+load_config_file(){
+local conf_file_name="$1"
+    if [ -n "$conf_file_name" ];then
+        if [ -f "$conf_file_name" ];then
+            echo "Load configuration: ${conf_file_name}"
+            . ${conf_file_name}
+        else
+            echo "don't load config, use default config"
+        fi
+        
+    fi
+    contain_name="${conf_file_name//[\/]/_}"
+}
+
+if [ "$cmd" != "-h" ];then
+echo "Name: $name"
+echo "Command: $cmd"
+load_config_file "$name"
+echo "Image name: ($IMAGE)"
+echo "contain_name: ($contain_name)"
+fi
+
+
 #################################################
 # 1. copy id_rsa and id_rsa.pub to start in.
 # 2. Modify  below value match your env.
 
 # DOCKER_USER please same with run this script in host.
-DOCKER_USER=git
+DOCKER_USER=hubo
 
 # The configuration floder in Host.
 # If running user is not root, This folder should own by user. it is better this folder own by running user.
-SHARE_DIR="/sdd/tftpboot/"
+#SHARE_DIR="/sdd/tftpboot/"
+echo "docker entry dir : $DOCKER_ENTRY_DIR"
+SHARE_DIR=$DOCKER_ENTRY_DIR
+#SHARE_DIR="/home/hubo"
+echo "share dir : $SHARE_DIR"
 # It is your code top directory.
 WORKER_DIR=/sdd/git_un
 
@@ -42,20 +74,41 @@ declare -r CUR_DIR=`pwd`
 declare -r RUN_IN_DIR="$CUR_DIR/start_in"
 
 declare -r HOST_CFG="$SHARE_DIR/docker_compile_config.txt"
-declare -r CONTAINER_SHARE_DIR="/opt/tftpboot"
+declare -r CONTAINER_SHARE_DIR="$DOCKER_ENTRY_DIR"
+#declare -r CONTAINER_SHARE_DIR="/home/hubo/"
 declare -r CONTAINER_WORKTREE_DIR="/opt/worktree"
-declare -r CONTAINER_SHELL="$CONTAINER_SHARE_DIR/docker-entrypoint.sh"
+declare -r CONTAINER_SHELL="${CONTAINER_SHARE_DIR}docker-entrypoint.sh"
+# declare -r CONTAINER_SHELL=""
 declare -r GIT_SHARE_DIR=$SHARE_DIR/gitshare/
+
+echo "CONTAINER_SHELL: $CONTAINER_SHELL"
 
 name=git3
 OS=ubuntu:14.04
 IMAGE=ruckus/git_u_1404
 mount_name=mycompile
-. config.txt
+# . config.txt
+
+ CONTAINER_WORKSPACE="/home/hubo/workspace"
+ CONTAINER_WORKSPACE="/home/hubo/workspace"
+ HOST_WORKSPACE="$CONTAINER_WORKSPACE"
+ CONTAINER_IMAGE="/home/hubo/images"
+ HOST_IMAGE="$CONTAINER_IMAGE"
+ CONTAINER_TOOLS="/home/hubo/tools"
+ HOST_TOOLS="$CONTAINER_TOOLS"
+
+
+# CONTAINER_WORKSPACE="/workspace"
+# HOST_WORKSPACE="/home/hubo/workspace"
+# HOST_IMAGE="/home/hubo/images"
+# CONTAINER_IMAGE="/images"
+# HOST_TOOLS="/home/hubo/tools"
+# CONTAINER_TOOLS="/tools"
 
 #C_DIR=buildroot/
 C_DIR=""
-BUILD_DIR=${dir}/$C_DIR
+# BUILD_DIR=${dir}/$C_DIR
+echo "BUILD_DIR : $BUILD_DIR"
 TFTP_SUB=11axun
 #PROFILE=directorx86
 #PROFILE=vmva
@@ -90,20 +143,23 @@ echo "TFTP_SUB:$TFTP_SUB"
 echo "PROFILE:$PROFILE"
 echo "TOOLCHAIN_OPT:$TOOLCHAIN_OPT"
 #
-echo "CDIR=/opt/${mount_name}/$C_DIR" > $HOST_CFG
+
+####################################################
+##### comment no needed HOST_CFG
+#echo "CDIR=/opt/${mount_name}/$C_DIR" > $HOST_CFG
 # TFTP_SUB come from configuration file
-if [ "$TFTP_SUB" != "" ];then
-        echo "TFTP_SUB=${TFTP_SUB}" >> $HOST_CFG
-fi
-echo "MY_PROFILE=$PROFILE" >>$HOST_CFG
-echo "COMPILE_NAME=${name} " >>$HOST_CFG
-if [ "$TOOLCHAIN_OPT" = "FALSE" ] ;then
-echo "TOOLCHAIN_OPT=FALSE" >> $HOST_CFG
-else
-echo "TOOLCHAIN_OPT=$TOOLCHAIN_OPT" >> $HOST_CFG
-fi
-echo "HOST_BUILD_DIR=$BUILD_DIR" >> $HOST_CFG
-echo "HOST_SHARE_DIR=$SHARE_DIR" >> $HOST_CFG
+# if [ "$TFTP_SUB" != "" ];then
+#         echo "TFTP_SUB=${TFTP_SUB}" >> $HOST_CFG
+# fi
+# echo "MY_PROFILE=$PROFILE" >>$HOST_CFG
+# echo "COMPILE_NAME=${name} " >>$HOST_CFG
+# if [ "$TOOLCHAIN_OPT" = "FALSE" ] ;then
+# echo "TOOLCHAIN_OPT=FALSE" >> $HOST_CFG
+# else
+# echo "TOOLCHAIN_OPT=$TOOLCHAIN_OPT" >> $HOST_CFG
+# fi
+# echo "HOST_BUILD_DIR=$BUILD_DIR" >> $HOST_CFG
+# echo "HOST_SHARE_DIR=$SHARE_DIR" >> $HOST_CFG
 
 cp -f $RUN_IN_DIR/docker-entrypoint.sh $SHARE_DIR 
 if [ -f "$SHARE_DIR/p4config" ];then
@@ -115,15 +171,16 @@ if [[ "${type}" =~ 'make' ]]; then
 fi
 echo "/bin/bash" >>  $SHARE_DIR/docker-entrypoint.sh
 
-echo "copy git relate configuation"
-[ -d $GIT_SHARE_DIR ] &&  rm -rf ${GIT_SHARE_DIR}
-mkdir -p $GIT_SHARE_DIR
-cp start_in/.git* $GIT_SHARE_DIR
-cp start_in/id_rsa* $GIT_SHARE_DIR
-cp start_in/.alias $GIT_SHARE_DIR
-cp start_in/.bashrc $GIT_SHARE_DIR
-cp start_in/create_worktree.sh $GIT_SHARE_DIR
-
+#####################################################
+# echo "copy git relate configuation"
+# [ -d $GIT_SHARE_DIR ] &&  rm -rf ${GIT_SHARE_DIR}
+# mkdir -p $GIT_SHARE_DIR
+# cp start_in/.git* $GIT_SHARE_DIR
+# cp start_in/id_rsa* $GIT_SHARE_DIR
+# cp start_in/.alias $GIT_SHARE_DIR
+# cp start_in/.bashrc $GIT_SHARE_DIR
+# cp start_in/create_worktree.sh $GIT_SHARE_DIR
+#####################################################
 }
 
 start_compile_contain(){
@@ -136,13 +193,26 @@ start_compile_contain(){
     echo "Start new container $name"
     echo "$image name :${IMAGE}"
     echo "$run_shell"
+    echo "$CONTAINER_SHELL"
     if [[ "${type}" =~ 'new' ]]; then
+        echo " docker exec"
         docker exec -it -u ${DOCKER_USER} ${name} $CONTAINER_SHELL
     else
+        echo " docker run "
         docker run -it -d -P --name ${name}  \
-                    -e LOCAL_USER_ID=$(id -u $USER) \
-                    -e DOCKER_USER=$DOCKER_USER ${MOUNT_DIR} \
-                    ${IMAGE} $CONTAINER_SHELL  & 
+                     -e LOCAL_USER_ID=$(id -u $USER) \
+                     -e DOCKER_USER=$DOCKER_USER  \
+		 			 -v ${HOST_WORKSPACE}:${CONTAINER_WORKSPACE} \
+                      -v ${HOST_IMAGE}:${CONTAINER_IMAGE} \
+                      -v ${HOST_TOOLS}:${CONTAINER_TOOLS} \
+                     ${IMAGE} /bin/bash & 
+       #  docker run -it -d -P --name $name \
+       #              -e LOCAL_USER_ID=$(id -u $USER) \
+       #              -e DOCKER_USER=$DOCKER_USER  \
+	   #   			 -v ${HOST_WORKSPACE}:${CONTAINER_WORKSPACE} \
+       #                -v ${HOST_IMAGE}:${CONTAINER_IMAGE} \
+       #                -v ${HOST_TOOLS}:${CONTAINER_TOOLS} \
+       #              --entrypoint "/usr/local/bin/docker-entry.sh" $IMAGE /bin/bash &
     fi                                     
     #/opt/${name}/buildroot/make.sh; cd ${dir}buildroot
 
@@ -212,7 +282,8 @@ local type="$1"
 local shell_cmd=/bin/bash
 
 if [ "$type" != "" ];then
-        shell_cmd=/opt/tftpboot/docker-entrypoint.sh
+        #shell_cmd=/opt/tftpboot/docker-entrypoint.sh
+        shell_cmd="${DOCKER_ENTRY_DIR}/docker-entrypoint.sh"
 fi
 echo "CDIR=/opt/${mount_name}/$C_DIR" > /tftpboot/docker_compile_config.txt
 cp docker-entrypoint.sh /opt/tftpboot
@@ -234,22 +305,6 @@ fi
 
 
 
-cmd=$1
-name=$2
-op=$3
-load_config_file(){
-local conf_file_name="$1"
-    if [ -n "$conf_file_name" ];then
-        if [ -f "$conf_file_name" ];then
-            echo "Load configuration: ${conf_file_name}"
-            . ${conf_file_name}
-        else
-            echo "don't load config, use default config"
-        fi
-        
-    fi
-    contain_name="${conf_file_name//[\/]/_}"
-}
 
 
 
@@ -273,20 +328,16 @@ example 11:
 }
 
 
-if [ "$cmd" != "-h" ];then
-echo "Name: $name"
-echo "Command: $cmd"
-load_config_file "$name"
-echo "Image name: ($IMAGE)"
-echo "contain_name: ($contain_name)"
-fi
 
-MOUNT_DIR=" -v ${WORKER_DIR}:/opt/${mount_name} -v $SHARE_DIR:$CONTAINER_SHARE_DIR"
-MOUNT_DIR="$MOUNT_DIR -v $TOOLCHAIN_DIR:$TOOLCHAIN_OPT -v $WORKTREE_DIR:$CONTAINER_WORKTREE_DIR "
+#################################################################################################
+#MOUNT_DIR=" -v ${WORKER_DIR}:/opt/${mount_name} -v $SHARE_DIR:$CONTAINER_SHARE_DIR"
+#MOUNT_DIR="$MOUNT_DIR -v $TOOLCHAIN_DIR:$TOOLCHAIN_OPT -v $WORKTREE_DIR:$CONTAINER_WORKTREE_DIR "
+#################################################################################################
 
 echo "image name : ${IMAGE}"
-echo "MOUNT_DIR ${MOUNT_DIR}"
+#echo "MOUNT_DIR ${MOUNT_DIR}"
 
+echo "Docker entry dir : $DOCKER_ENTRY_DIR"
 echo "command:$cmd"
 
 compile_type=""
