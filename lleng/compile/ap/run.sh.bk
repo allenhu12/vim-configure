@@ -15,13 +15,13 @@ RUN_IN_DIR="$CUR_DIR/start_in"
 #########################################
 # This may need change in your env. 
 #########################################
-SHARE_DIR="/home/hubo/workspace/tftpboot"
+SHARE_DIR="/tftpboot"
 TOOLCHAIN_DIR="/code/ext_toolchain_"
 #########################################
 
 CONTAINER_SHARE_DIR="/opt/tftpboot"
 name=mytest
-#. config.txt
+. config.txt
 HOST_CFG="$SHARE_DIR/docker_compile_config.txt"
 mount_name=mycompile
 CONTAINER_WORKSPACE="/home/hubo/workspace"
@@ -56,18 +56,16 @@ echo "TFTP_SUB:$TFTP_SUB"
 echo "PROFILE:$PROFILE"
 echo "TOOLCHAIN_OPT:$TOOLCHAIN_OPT"
 #
-
-echo "The HOST_CFG here is ${HOST_CFG}"
-#echo "CDIR=/opt/${mount_name}/$C_DIR" > $HOST_CFG
+echo "CDIR=/opt/${mount_name}/$C_DIR" > $HOST_CFG
 # TFTP_SUB come from configuration file
-#if [ "$TFTP_SUB" != "" ];then
-#        echo "TFTP_SUB=${TFTP_SUB}" >> $HOST_CFG
-#fi
-#echo "MY_PROFILE=$PROFILE" >>$HOST_CFG
-#echo "COMPILE_NAME=${name} " >>$HOST_CFG
-#if [ "$TOOLCHAIN_OPT" = "FALSE" ] ;then
-#echo "TOOLCHAIN_OPT=FALSE" >> $HOST_CFG
-#fi
+if [ "$TFTP_SUB" != "" ];then
+        echo "TFTP_SUB=${TFTP_SUB}" >> $HOST_CFG
+fi
+echo "MY_PROFILE=$PROFILE" >>$HOST_CFG
+echo "COMPILE_NAME=${name} " >>$HOST_CFG
+if [ "$TOOLCHAIN_OPT" = "FALSE" ] ;then
+echo "TOOLCHAIN_OPT=FALSE" >> $HOST_CFG
+fi
 cp -f $RUN_IN_DIR/docker-entrypoint.sh $SHARE_DIR 
 if [ -f "$SHARE_DIR/p4config" ];then
  cat $SHARE_DIR/p4config >> $SHARE_DIR/docker-entrypoint.sh
@@ -205,7 +203,6 @@ local conf_file_name="$1"
         
     fi
     contain_name="${conf_file_name//[\/]/_}"
-    contain_name="${MY_CONTAINER_NAME}"
 }
 
 if [ "$cmd" != "-h" ];then
