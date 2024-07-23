@@ -1,0 +1,19 @@
+SHARE_DIR="/home/hubo/workspace/tftpboot"
+TOOLCHAIN_DIR="/code/ext_toolchain_"
+
+dir=/sdd/new_watch/depot
+C_DIR=release/zd_10.5.1/buildroot/
+#BUILD_DIR=${dir}/$C_DIR
+BUILD_DIR=/home/hubo/workspace/git-depot/release/unleashed_200.15.6.112/buildroot
+DOCKER_ENTRY_DIR=/home/hubo/workspace/git-depot/release/unleashed_200.15.6.112/
+OS=ubuntu:14.04
+IMAGE=ruckus/git_u_1404
+MY_CONTAINER_NAME=unleashed_200.15_release
+# TFTP_SUB=qca
+PROFILE=ap-arm-cypress-unleashed
+#PROFILE=director1200
+#PROFILE=directorx86
+#PROFILE=vmva
+#PROFILE=ap-11n-wasp
+#PROFILE=ap-arm-qca-unleashed
+#PROFILE=ap-arm-11ax-unleashed
