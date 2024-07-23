@@ -48,4 +48,30 @@
 	"diagnostic.virtualText": true,
 	"codeLens.enable": true,
 	"list.previewHighlightGroup": "Statement",
+    "languageserver": {
+    "ccls": {
+            "command": "ccls",
+            "filetypes": [
+                "c",
+                "cpp",
+                "hpp",
+                "objc",
+                "objcpp"
+            ],
+            "initializationOptions": {
+                "cache": {
+                  "directory": "/tmp/.ccls-cache",
+                }
+            },
+            "rootPatterns": [
+                ".ccls",
+                "/home/hubo/workspace/git-depot/unleashed_200.15/compile_commands.json
+",
+                ".vim/",
+                ".git/",
+                ".hg/",
+                ".svn/",
+            ]
+        },
+    }
 }

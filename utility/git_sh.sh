@@ -124,6 +124,36 @@ pull_rebase_worktree() {
     done
 }
 
+# Pull the latest code to the base repositories
+pull_base_repos() {
+    for repo in $repo_list; do
+        repo_dir="$base_path/$repo"
+        
+        if [ -d "$repo_dir/.git" ]; then
+            cd "$repo_dir"
+            echo -e "${highlight}Pulling latest code for base repository: $repo${normal}"
+            git pull 
+        else
+            echo "Base repository not found or not a Git repository: $repo_dir"
+        fi
+    done
+}
+
+# Fetch the latest code to the base repositories
+fetch_base_repos() {
+    for repo in $repo_list; do
+        repo_dir="$base_path/$repo"
+        
+        if [ -d "$repo_dir/.git" ]; then
+            cd "$repo_dir"
+            echo -e "${highlight}Fetching latest code for base repository: $repo${normal}"
+            git fetch
+        else
+            echo "Base repository not found or not a Git repository: $repo_dir"
+        fi
+    done
+}
+
 # Main script logic to handle arguments
 case "$1" in
     verify)
@@ -155,6 +185,19 @@ case "$1" in
                 ;;
             *)
                 echo "Invalid worktree command. Usage: $0 worktree {add|pull-rebase}"
+                ;;
+        esac
+        ;;
+    base)
+        case "$2" in
+            pull)
+                pull_base_repos
+                ;;
+            fetch)
+                fetch_base_repos
+                ;;
+            *)
+                echo "Invalid base command. Usage: $0 base {pull|fetch}"
                 ;;
         esac
         ;;
