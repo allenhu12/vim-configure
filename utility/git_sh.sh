@@ -7,6 +7,16 @@
 ### ./git_sh.sh worktree add -lb <local-branch-name> -rb <remote-branch-name>  # To add a worktree
 ### ./git_sh.sh worktree pull-rebase <local-branch-name>  # To pull and rebase in worktree
 
+# Define key-value pairs in a single string (repository name:local folder)
+repo_map="wrls/opensource:opensource wrls/rks_ap:rks_ap wrls/dl:dl wrls/linux_3_14:opensource/linux/kernels/linux-3.14.43 wrls/linux_4_4:opensource/linux/kernels/linux-4.4.60 wrls/linux_5_4:opensource/linux/kernels/linux-5.4 wrls/linux_5_4_mtk:linux_5_4_mtk wrls/controller:rks_ap/controller wrls/ap_zd_controller:rks_ap/controller/common wrls/ruckus-spark:ruckus-spark wrls/ap_scg_common:rks_ap/ap_scg_common wrls/ap_scg_rcli:rks_ap/controller/rcli wrls/vendor_qca_11ac:rks_ap/platform_dp/linux/driver/vendor_qca_11ac wrls/vendor_qca_11ax:rks_ap/platform_dp/linux/driver/vendor_qca_11ax wrls/vendor_qca_11ax6e:rks_ap/platform_dp/linux/driver/vendor_qca_11ax6e wrls/vendor_qca_11be:rks_ap/platform_dp/linux/driver/vendor_qca_11be wrls/vendor_mtk_11be:rks_ap/platform_dp/linux/driver/vendor_mtk_11be wrls/vendor_qca_ref:rks_ap/platform_dp/linux/driver/vendor_qca_ref wrls/vendor_qca_tools:vendor_qca_tools wrls/vendor_mtk:vendor_mtk wrls/rpoint_handler:rpoint_handler wrls/rtty:rtty wrls/rksiot:rksiot wrls/rksiot_hpkg:rksiot_hpkg"
+
+# ANSI color codes
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+NC='\033[0m' # No Color
+
 
 
 # Determine the script's directory
@@ -15,8 +25,10 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Define the repository list
 repo_list="dl rks_ap rks_ap/ap_scg_common rks_ap/controller rks_ap/controller/rcli rks_ap/controller/common rks_ap/platform_dp/linux/driver/vendor_qca_ref rks_ap/platform_dp/linux/driver/vendor_qca_11ac rks_ap/platform_dp/linux/driver/vendor_qca_11ax rks_ap/platform_dp/linux/driver/vendor_qca_11be rksiot vendor_qca_tools rpoint_handler rksiot_hpkg opensource opensource/linux/kernels/linux-4.4.60 opensource/linux/kernels/linux-5.4 rtty"
 
+
+
 # Define base paths relative to the script's directory
-base_path="$script_dir/unleashed_repo_base"
+base_path="$script_dir/repo_base"
 worktree_base_path="$script_dir"
 ssh_base="ssh://tdc-mirror-git@ruckus-git.ruckuswireless.com:7999/wrls/"
 
@@ -45,6 +57,55 @@ clone_repos() {
         else
             echo "Repository already exists: $base_path/$repo"
         fi
+    done
+}
+
+fetch_repos() {
+    IFS=' ' read -r -a repo_pairs <<< "$repo_map"
+
+    for pair in "${repo_pairs[@]}"; do
+        IFS=':' read -r repo local_folder <<< "$pair"
+        repo_url="${ssh_base}${repo}.git"
+        local_repo_path="$base_path/$local_folder"
+
+        echo -e "${CYAN}Processing repository: ${YELLOW}${repo}${NC}"
+        echo -e "${CYAN}Local folder: ${YELLOW}${local_repo_path}${NC}"
+        echo -e "${CYAN}Remote URL: ${YELLOW}${repo_url}${NC}"
+
+        if [ ! -d "$local_repo_path/.git" ]; then
+            echo -e "${GREEN}Fetching metadata for repository: ${YELLOW}${repo}${NC}"
+
+            mkdir -p "$local_repo_path" || {
+                echo -e "${RED}Failed to create directory: ${local_repo_path} for ${repo}${NC}"
+                continue
+            }
+
+            cd "$local_repo_path" || {
+                echo -e "${RED}Failed to enter directory: ${local_repo_path} for ${repo}${NC}"
+                continue
+            }
+
+            echo -e "${GREEN}Entering directory: ${YELLOW}$(pwd)${NC} for ${YELLOW}${repo}${NC}"
+
+            git init || {
+                echo -e "${RED}Failed to initialize bare repository at: ${local_repo_path} for ${repo_url}${NC}"
+                continue
+            }
+
+            git remote add origin "$repo_url" || {
+                echo -e "${RED}Failed to add remote for repository: ${repo_url} at ${local_repo_path}${NC}"
+                continue
+            }
+
+            git fetch origin || {
+                echo -e "${RED}Failed to fetch from repository: ${repo_url} into ${local_repo_path}${NC}"
+                continue
+            }
+        else
+            echo -e "${YELLOW}Repository already exists: ${local_repo_path} for ${repo}${NC}"
+        fi
+
+        echo -e "${CYAN}Completed processing repository: ${YELLOW}${repo}${NC}\n"
     done
 }
 
@@ -124,36 +185,6 @@ pull_rebase_worktree() {
     done
 }
 
-# Pull the latest code to the base repositories
-pull_base_repos() {
-    for repo in $repo_list; do
-        repo_dir="$base_path/$repo"
-        
-        if [ -d "$repo_dir/.git" ]; then
-            cd "$repo_dir"
-            echo -e "${highlight}Pulling latest code for base repository: $repo${normal}"
-            git pull 
-        else
-            echo "Base repository not found or not a Git repository: $repo_dir"
-        fi
-    done
-}
-
-# Fetch the latest code to the base repositories
-fetch_base_repos() {
-    for repo in $repo_list; do
-        repo_dir="$base_path/$repo"
-        
-        if [ -d "$repo_dir/.git" ]; then
-            cd "$repo_dir"
-            echo -e "${highlight}Fetching latest code for base repository: $repo${normal}"
-            git fetch
-        else
-            echo "Base repository not found or not a Git repository: $repo_dir"
-        fi
-    done
-}
-
 # Main script logic to handle arguments
 case "$1" in
     verify)
@@ -161,6 +192,9 @@ case "$1" in
         ;;
     clone)
         clone_repos
+        ;;
+    fetch)
+        fetch_repos
         ;;
     branch)
         list_branches
@@ -185,19 +219,6 @@ case "$1" in
                 ;;
             *)
                 echo "Invalid worktree command. Usage: $0 worktree {add|pull-rebase}"
-                ;;
-        esac
-        ;;
-    base)
-        case "$2" in
-            pull)
-                pull_base_repos
-                ;;
-            fetch)
-                fetch_base_repos
-                ;;
-            *)
-                echo "Invalid base command. Usage: $0 base {pull|fetch}"
                 ;;
         esac
         ;;
