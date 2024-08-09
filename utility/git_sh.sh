@@ -8,7 +8,32 @@
 ### ./git_sh.sh worktree pull-rebase <local-branch-name>  # To pull and rebase in worktree
 
 # Define key-value pairs in a single string (repository name:local folder)
-repo_map="wrls/opensource:opensource wrls/rks_ap:rks_ap wrls/dl:dl wrls/linux_3_14:opensource/linux/kernels/linux-3.14.43 wrls/linux_4_4:opensource/linux/kernels/linux-4.4.60 wrls/linux_5_4:opensource/linux/kernels/linux-5.4 wrls/linux_5_4_mtk:linux_5_4_mtk wrls/controller:rks_ap/controller wrls/ap_zd_controller:rks_ap/controller/common wrls/ruckus-spark:ruckus-spark wrls/ap_scg_common:rks_ap/ap_scg_common wrls/ap_scg_rcli:rks_ap/controller/rcli wrls/vendor_qca_11ac:rks_ap/platform_dp/linux/driver/vendor_qca_11ac wrls/vendor_qca_11ax:rks_ap/platform_dp/linux/driver/vendor_qca_11ax wrls/vendor_qca_11ax6e:rks_ap/platform_dp/linux/driver/vendor_qca_11ax6e wrls/vendor_qca_11be:rks_ap/platform_dp/linux/driver/vendor_qca_11be wrls/vendor_mtk_11be:rks_ap/platform_dp/linux/driver/vendor_mtk_11be wrls/vendor_qca_ref:rks_ap/platform_dp/linux/driver/vendor_qca_ref wrls/vendor_qca_tools:vendor_qca_tools wrls/vendor_mtk:vendor_mtk wrls/rpoint_handler:rpoint_handler wrls/rtty:rtty wrls/rksiot:rksiot wrls/rksiot_hpkg:rksiot_hpkg"
+repo_map="
+    wrls/opensource:opensource
+    wrls/rks_ap:rks_ap
+    wrls/dl:dl
+    wrls/linux_3_14:opensource/linux/kernels/linux-3.14.43
+    wrls/linux_4_4:opensource/linux/kernels/linux-4.4.60
+    wrls/linux_5_4:opensource/linux/kernels/linux-5.4
+    wrls/linux_5_4_mtk:linux_5_4_mtk
+    wrls/controller:rks_ap/controller
+    wrls/ap_zd_controller:rks_ap/controller/common
+    wrls/ruckus-spark:ruckus-spark
+    wrls/ap_scg_common:rks_ap/ap_scg_common
+    wrls/ap_scg_rcli:rks_ap/controller/rcli
+    wrls/vendor_qca_11ac:rks_ap/platform_dp/linux/driver/vendor_qca_11ac
+    wrls/vendor_qca_11ax:rks_ap/platform_dp/linux/driver/vendor_qca_11ax
+    wrls/vendor_qca_11ax6e:rks_ap/platform_dp/linux/driver/vendor_qca_11ax6e
+    wrls/vendor_qca_11be:rks_ap/platform_dp/linux/driver/vendor_qca_11be
+    wrls/vendor_mtk_11be:rks_ap/platform_dp/linux/driver/vendor_mtk_11be
+    wrls/vendor_qca_ref:rks_ap/platform_dp/linux/driver/vendor_qca_ref
+    wrls/vendor_qca_tools:vendor_qca_tools
+    wrls/vendor_mtk:vendor_mtk
+    wrls/rpoint_handler:rpoint_handler
+    wrls/rtty:rtty
+    wrls/rksiot:rksiot
+    wrls/rksiot_hpkg:rksiot_hpkg
+"
 
 # ANSI color codes
 RED='\033[0;31m'
@@ -30,7 +55,7 @@ repo_list="dl rks_ap rks_ap/ap_scg_common rks_ap/controller rks_ap/controller/rc
 # Define base paths relative to the script's directory
 base_path="$script_dir/repo_base"
 worktree_base_path="$script_dir"
-ssh_base="ssh://tdc-mirror-git@ruckus-git.ruckuswireless.com:7999/wrls/"
+ssh_base="ssh://tdc-mirror-git@ruckus-git.ruckuswireless.com:7999/"
 
 # Define color for highlighted output
 highlight='\033[1;33m'  # Yellow color for highlight
