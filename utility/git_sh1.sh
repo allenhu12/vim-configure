@@ -1,9 +1,23 @@
 #!/bin/bash
-# step 1 ./git_sh1.sh fetch <repo_name> (for example, "all", "controller")
-# step 2 ./git_sh1.sh wortree add all -lb <local_branch_name> -rb <remote_branch_name>
-# ./git_sh1.sh worktree add ap_zd_controller -lb local5 -rb origin/master
-# Define key-value pairs in a single string (repository name:local folder)
-# step 3 ./git_sh.sh worktree pull-rebase controller local5
+
+# Usage:
+# Step 1: Fetch repository metadata
+#   ./git_sh1.sh fetch <repo_name>
+#   Example: ./git_sh1.sh fetch all
+#   Example: ./git_sh1.sh fetch controller
+
+# Step 2: Add worktree
+#   ./git_sh1.sh worktree add <repo_name> -lb <local_branch_name> -rb <remote_branch_name>
+#   Example: ./git_sh1.sh worktree add all -lb local5 -rb origin/master
+#   Example: ./git_sh1.sh worktree add ap_zd_controller -lb local5 -rb origin/master
+
+# Step 3: Pull and rebase worktree
+#   ./git_sh1.sh worktree pull-rebase <repo_name> <local_branch_name>
+#   Example: ./git_sh1.sh worktree pull-rebase controller local5
+#   Example: ./git_sh1.sh worktree pull-rebase all local5
+#   Note : the parameter <local_branch_name> is only the designation of local path, not the branch name of local repository.
+
+# Repository map (repository name:local folder):
 repo_map="
     opensource:opensource
     rks_ap:rks_ap
@@ -257,9 +271,10 @@ pull_rebase_repo() {
     fi
 
     cd "$worktree_dir"
-    echo -e "${CYAN}Pulling and rebasing $repo in $local_branch${NC}"
+    current_branch=$(git rev-parse --abbrev-ref HEAD)
+    echo -e "${CYAN}Pulling and rebasing $repo in $local_branch (current branch: $current_branch)${NC}"
     git pull --rebase --autostash
-    echo -e "${CYAN}Completed pull-rebase for $repo in $local_branch${NC}"
+    echo -e "${CYAN}Completed pull-rebase for $repo in $local_branch (current branch: $current_branch)${NC}"
 }
 
 # Main script logic to handle arguments
