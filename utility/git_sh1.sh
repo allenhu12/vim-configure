@@ -66,6 +66,14 @@ if [[ "${repo_base##*/}" != "git-depot" ]]; then
     exit 1
 fi
 
+# Now that we've found git-depot, find a directory containing "repo_base" in its name
+repo_base=$(find "$repo_base" -maxdepth 1 -type d -name "*repo_base*" -print -quit)
+
+if [ -z "$repo_base" ]; then
+    echo -e "${RED}Error: Could not find a directory containing 'repo_base' in its name${NC}"
+    exit 1
+fi
+
 worktree_base_path="$script_dir"
 ssh_base="ssh://tdc-mirror-git@ruckus-git.ruckuswireless.com:7999/wrls/"
 
