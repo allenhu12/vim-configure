@@ -56,7 +56,11 @@ NC='\033[0m' # No Color
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Define base paths relative to the script's directory
-repo_base="$script_dir/repo_base"
+repo_base=$(find "$script_dir" -type d -name "*repo_base*" -print -quit)
+if [ -z "$repo_base" ]; then
+    echo -e "${RED}Error: Could not find a directory containing 'repo_base' in its name${NC}"
+    exit 1
+fi
 worktree_base_path="$script_dir"
 ssh_base="ssh://tdc-mirror-git@ruckus-git.ruckuswireless.com:7999/wrls/"
 
