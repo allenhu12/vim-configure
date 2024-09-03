@@ -55,26 +55,32 @@ NC='\033[0m' # No Color
 # Determine the script's directory
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Define base paths relative to the script's directory
-repo_base=$(find "$script_dir" -type d -name "*repo_base*" -print -quit)
-if [ -z "$repo_base" ]; then
-    echo -e "${RED}Error: Could not find a directory containing 'repo_base' in its name${NC}"
+# Navigate up the directory tree until we find the git-depot directory
+repo_base="$script_dir"
+while [[ "$repo_base" != "/" && "${repo_base##*/}" != "git-depot" ]]; do
+    repo_base="$(dirname "$repo_base")"
+done
+
+if [[ "${repo_base##*/}" != "git-depot" ]]; then
+    echo -e "${RED}Error: Could not find the git-depot directory${NC}"
     exit 1
 fi
+
 worktree_base_path="$script_dir"
 ssh_base="ssh://tdc-mirror-git@ruckus-git.ruckuswireless.com:7999/wrls/"
 
 # Verify if a specific repository or all repos are ready
 verify_repos() {
+    local existing_repos=0
+    local missing_repos=0
+    local total_repos=0
+
     if [ "$1" == "all" ]; then
+        echo -e "${CYAN}Verifying all repositories:${NC}"
         for pair in $repo_map; do
             IFS=':' read -r repo local_folder <<< "$pair"
-            repo_path="$repo_base/$local_folder"
-            if [ ! -d "$repo_path/.git" ]; then
-                echo -e "${RED}Repository missing or not a Git repository: $repo_path${NC}"
-            else
-                echo -e "${GREEN}Repository exists: $repo_path${NC}"
-            fi
+            verify_single_repo "$repo" "$local_folder"
+            ((total_repos++))
         done
     else
         repo_found=false
@@ -82,18 +88,34 @@ verify_repos() {
             IFS=':' read -r repo local_folder <<< "$pair"
             if [ "$repo" == "$1" ]; then
                 repo_found=true
-                repo_path="$repo_base/$local_folder"
-                if [ ! -d "$repo_path/.git" ]; then
-                    echo -e "${RED}Repository missing or not a Git repository: $repo_path${NC}"
-                else
-                    echo -e "${GREEN}Repository exists: $repo_path${NC}"
-                fi
+                verify_single_repo "$repo" "$local_folder"
+                ((total_repos++))
                 break
             fi
         done
         if ! $repo_found; then
             echo -e "${RED}Repository $1 not found in repo_map${NC}"
+            return
         fi
+    fi
+
+    echo -e "\n${CYAN}Summary:${NC}"
+    echo -e "Total repositories: $total_repos"
+    echo -e "${GREEN}Existing repositories: $existing_repos${NC}"
+    echo -e "${RED}Missing repositories: $missing_repos${NC}"
+}
+
+verify_single_repo() {
+    local repo=$1
+    local local_folder=$2
+    local repo_path="$repo_base/$local_folder"
+    
+    if [ ! -d "$repo_path/.git" ]; then
+        echo -e "${RED}Missing: $repo${NC}"
+        ((missing_repos++))
+    else
+        echo -e "${GREEN}Exists:  $repo${NC}"
+        ((existing_repos++))
     fi
 }
 
@@ -281,6 +303,15 @@ pull_rebase_repo() {
     echo -e "${CYAN}Completed pull-rebase for $repo in $local_branch (current branch: $current_branch)${NC}"
 }
 
+# Function to show all repository names
+show_repos() {
+    echo -e "${CYAN}Available repositories:${NC}"
+    for pair in $repo_map; do
+        IFS=':' read -r repo local_folder <<< "$pair"
+        echo -e "${YELLOW}$repo${NC}"
+    done
+}
+
 # Main script logic to handle arguments
 case "$1" in
     verify)
@@ -312,8 +343,11 @@ case "$1" in
                 ;;
         esac
         ;;
+    show_repos)
+        show_repos
+        ;;
     *)
-        echo -e "${RED}Invalid command. Usage: $0 {verify|fetch|worktree {add|pull-rebase}}${NC}"
+        echo -e "${RED}Invalid command. Usage: $0 {verify|fetch|worktree {add|pull-rebase}|show_repos}${NC}"
         ;;
 esac
 
