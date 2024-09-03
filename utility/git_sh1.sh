@@ -75,34 +75,26 @@ verify_repos() {
     local missing_repos=0
     local total_repos=0
 
-    if [ "$1" == "all" ]; then
-        echo -e "${CYAN}Verifying all repositories:${NC}"
-        for pair in $repo_map; do
-            IFS=':' read -r repo local_folder <<< "$pair"
-            verify_single_repo "$repo" "$local_folder"
-            ((total_repos++))
-        done
-    else
-        repo_found=false
-        for pair in $repo_map; do
-            IFS=':' read -r repo local_folder <<< "$pair"
-            if [ "$repo" == "$1" ]; then
-                repo_found=true
-                verify_single_repo "$repo" "$local_folder"
-                ((total_repos++))
-                break
-            fi
-        done
-        if ! $repo_found; then
-            echo -e "${RED}Repository $1 not found in repo_map${NC}"
-            return
-        fi
-    fi
+    echo -e "${CYAN}Verifying all repositories:${NC}"
+    echo -e "${YELLOW}Script directory: $script_dir${NC}"
+    echo -e "${YELLOW}Using repo_base: $repo_base${NC}"
+    echo ""
+    
+    for pair in $repo_map; do
+        IFS=':' read -r repo local_folder <<< "$pair"
+        verify_single_repo "$repo" "$local_folder"
+        ((total_repos++))
+    done
 
     echo -e "\n${CYAN}Summary:${NC}"
     echo -e "Total repositories: $total_repos"
     echo -e "${GREEN}Existing repositories: $existing_repos${NC}"
     echo -e "${RED}Missing repositories: $missing_repos${NC}"
+
+    if [ $missing_repos -gt 0 ]; then
+        echo -e "\n${YELLOW}Note: To fetch missing repositories, use the following command:${NC}"
+        echo -e "${CYAN}./git_sh1.sh fetch all${NC}"
+    fi
 }
 
 verify_single_repo() {
@@ -110,13 +102,17 @@ verify_single_repo() {
     local local_folder=$2
     local repo_path="$repo_base/$local_folder"
     
-    if [ ! -d "$repo_path/.git" ]; then
-        echo -e "${RED}Missing: $repo${NC}"
-        ((missing_repos++))
-    else
+    echo -e "${CYAN}Checking repo: $repo${NC}"
+    echo -e "${CYAN}Repo path: $repo_path${NC}"
+    
+    if [ -d "$repo_path" ] && ([ -d "$repo_path/.git" ] || [ -f "$repo_path/.git" ]); then
         echo -e "${GREEN}Exists:  $repo${NC}"
         ((existing_repos++))
+    else
+        echo -e "${RED}Missing: $repo${NC}"
+        ((missing_repos++))
     fi
+    echo "" # Add a blank line for better readability
 }
 
 # Fetch metadata for a specific repository or all repositories
