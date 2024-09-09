@@ -156,8 +156,21 @@ fetch_repo() {
     echo -e "${CYAN}Local folder: ${YELLOW}${local_repo_path}${NC}"
     echo -e "${CYAN}Remote URL: ${YELLOW}${repo_url}${NC}"
 
-    if [ ! -d "$local_repo_path/.git" ]; then
-        echo -e "${GREEN}Fetching metadata for repository: ${YELLOW}${repo}${NC}"
+    if [ -d "$local_repo_path/.git" ]; then
+        echo -e "${YELLOW}Repository already exists. Fetching latest updates for: ${repo}${NC}"
+        cd "$local_repo_path" || {
+            echo -e "${RED}Failed to enter directory: ${local_repo_path} for ${repo}${NC}"
+            return
+        }
+
+        git fetch --all --prune || {
+            echo -e "${RED}Failed to fetch updates for repository: ${repo}${NC}"
+            return
+        }
+
+        echo -e "${GREEN}Successfully fetched updates for: ${repo}${NC}"
+    else
+        echo -e "${GREEN}Fetching metadata for new repository: ${YELLOW}${repo}${NC}"
 
         mkdir -p "$local_repo_path" || {
             echo -e "${RED}Failed to create directory: ${local_repo_path} for ${repo}${NC}"
@@ -186,8 +199,7 @@ fetch_repo() {
             return
         }
 
-    else
-        echo -e "${YELLOW}Repository already exists: ${local_repo_path} for ${repo}${NC}"
+        echo -e "${GREEN}Successfully fetched metadata for new repository: ${repo}${NC}"
     fi
 
     echo -e "${CYAN}Completed processing repository: ${YELLOW}${repo}${NC}\n"
