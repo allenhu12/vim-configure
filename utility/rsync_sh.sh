@@ -27,7 +27,7 @@ show_help() {
 
 # Function to perform rsync
 perform_rsync() {
-    local dry_run=$1
+    local dry_run=$1  
     local map_file=$2
     local include_file=$3
     local dry_run_option=""
@@ -58,8 +58,8 @@ perform_rsync() {
 
     while IFS=: read -r source target; do
         echo "Syncing from $source to $target"
-        echo "rsync command: rsync -avi --checksum --itemize-changes $include_option $dry_run_option \"$source\" \"$target\""
-        rsync -avi --checksum --itemize-changes \
+        echo "rsync command: rsync -avi --checksum --no-times --no-perms --no-owner --no-group --itemize-changes $include_option $dry_run_option \"$source\" \"$target\""
+        rsync -avi --checksum --no-times --no-perms --no-owner --no-group --itemize-changes \
               $include_option \
               $dry_run_option \
               "$source" "$target" | while read -r line; do
