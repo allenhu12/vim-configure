@@ -2,15 +2,17 @@
 
 # Default MAP_FILE location
 DEFAULT_MAP_FILE="/Users/hubo/workspace/git-depot/vim-configure/utility/rsync_map.txt"
+INCLUDE_FILE=""
 
 # Function to display help information
 show_help() {
-    echo "Usage: $0 [--dry-run|--run] [--map-file <path_to_map_file>]"
+    echo "Usage: $0 [--dry-run|--run] [--map-file <path_to_map_file>] [--include <path_to_include_file>]"
     echo
     echo "Options:"
     echo "  --dry-run             Perform a trial run with no changes made"
     echo "  --run                 Perform the actual synchronization"
     echo "  --map-file <file>     Specify a custom map file (default: $DEFAULT_MAP_FILE)"
+    echo "  --include <file>      Specify a file containing include patterns (supports regex)"
     echo
     echo "Examples:"
     echo "  # Use default map file"
@@ -19,18 +21,32 @@ show_help() {
     echo "  # Use a custom map file"
     echo "  $0 --dry-run --map-file /path/to/custom/map_file.txt"
     echo
-    echo "  # Perform actual sync with custom map file"
-    echo "  $0 --run --map-file /path/to/custom/map_file.txt"
+    echo "  # Perform actual sync with custom map file and include file"
+    echo "  $0 --run --map-file /path/to/custom/map_file.txt --include /path/to/include_patterns.txt"
 }
 
 # Function to perform rsync
 perform_rsync() {
     local dry_run=$1
     local map_file=$2
+    local include_file=$3
     local dry_run_option=""
+    local include_option=""
     
     if [ "$dry_run" = true ]; then
         dry_run_option="--dry-run"
+    fi
+
+    if [ -n "$include_file" ]; then
+        # Remove leading/trailing whitespace and empty lines from include file
+        sed 's/^[[:space:]]*//;s/[[:space:]]*$//;/^$/d' "$include_file" > "${include_file}.tmp"
+        include_option="--include-from=${include_file}.tmp --exclude=*"
+        echo "Using include patterns from: $include_file"
+        echo "Cleaned include patterns:"
+        cat "${include_file}.tmp"
+        echo "-----------------------------------"
+    else
+        include_option="--include='*/' --include='*.c' --include='*.h' --exclude='*'"
     fi
 
     # Define color codes
@@ -42,8 +58,9 @@ perform_rsync() {
 
     while IFS=: read -r source target; do
         echo "Syncing from $source to $target"
+        echo "rsync command: rsync -avi --checksum --itemize-changes $include_option $dry_run_option \"$source\" \"$target\""
         rsync -avi --checksum --itemize-changes \
-              --include='*/' --include='*.c' --include='*.h' --exclude='*' \
+              $include_option \
               $dry_run_option \
               "$source" "$target" | while read -r line; do
             action="${line:0:1}"
@@ -71,12 +88,17 @@ perform_rsync() {
                     # Ignore attribute changes
                     ;;
                 *)
-                    # Ignore other changes
+                    echo "Other change: $line"
                     ;;
             esac
         done
         echo "-----------------------------------"
     done < "$map_file"
+
+    # Clean up temporary file
+    if [ -n "$include_file" ]; then
+        rm "${include_file}.tmp"
+    fi
 }
 
 # Parse command line arguments
@@ -95,6 +117,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --map-file)
             MAP_FILE="$2"
+            shift 2
+            ;;
+        --include)
+            INCLUDE_FILE="$2"
             shift 2
             ;;
         -h|--help)
@@ -118,12 +144,18 @@ if [ ! -f "$MAP_FILE" ]; then
     exit 1
 fi
 
+# Check if the include file exists
+if [ -n "$INCLUDE_FILE" ] && [ ! -f "$INCLUDE_FILE" ]; then
+    echo "Include file not found: $INCLUDE_FILE"
+    exit 1
+fi
+
 if [ "$DRY_RUN" = true ]; then
     echo "Performing dry run..."
 else
     echo "Performing actual sync..."
 fi
 
-perform_rsync $DRY_RUN "$MAP_FILE"
+perform_rsync $DRY_RUN "$MAP_FILE" "$INCLUDE_FILE"
 
 echo "Sync operation completed."
