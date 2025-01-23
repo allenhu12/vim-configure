@@ -1,11 +1,16 @@
 #!/bin/bash
 
+# Debug control - set to "true" to enable debug output, "false" to disable
+DEBUG="false"
+
 # Exit on any error
 set -e
 
-# Debug logging function
+# Debug logging function with control switch
 debug_log() {
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> ~/Downloads/hazel_log2.txt
+    if [ "$DEBUG" = "true" ]; then
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> ~/Downloads/hazel_log2.txt
+    fi
 }
 
 # Function to extract zip file
@@ -30,6 +35,32 @@ extract_export() {
     ls -la "$extract_dir" >> ~/Downloads/hazel_log2.txt
     
     echo "$extract_dir"
+}
+
+# Function to organize assets
+organize_assets() {
+    local dir_path="$1"
+    local clean_name="$2"
+    
+    debug_log "ASSETS: Starting assets organization"
+    debug_log "ASSETS: Working in directory: $dir_path"
+    
+    # Create assets directory
+    local assets_dir="$dir_path/assets"
+    mkdir -p "$assets_dir"
+    debug_log "ASSETS: Created assets directory: $assets_dir"
+    
+    # Move all image files to assets directory
+    find "$dir_path/$clean_name" -type f \( -iname "*.png" -o -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.gif" -o -iname "*.svg" \) -exec mv {} "$assets_dir/" \;
+    debug_log "ASSETS: Moved image files to assets directory"
+    
+    # Remove original images directory if empty
+    rmdir "$dir_path/$clean_name" 2>/dev/null || true
+    
+    debug_log "ASSETS: Final assets directory contents:"
+    ls -la "$assets_dir" >> ~/Downloads/hazel_log2.txt
+    
+    echo "$assets_dir"
 }
 
 # Function to clean folder names
@@ -89,11 +120,15 @@ fix_markdown_refs() {
         cp "$md_file" "$md_file.bak"
         debug_log "MARKDOWN: Created backup at: $md_file.bak"
         
-        # Fix image references
-        debug_log "MARKDOWN: Replacing folder references with: $clean_name"
+        # First fix the Notion-specific encoding and paths
         sed -i '' -E \
-            -e 's/\(([^)]*%20[[:alnum:]]{32}\/)/\('"$clean_name"'\//' \
+            -e 's/\(([^)]*%20[[:alnum:]]{32}\/)/\(assets\//' \
             -e 's/%20/ /g' \
+            "$md_file"
+            
+        # Then ensure all image references point to assets directory
+        sed -i '' -E \
+            -e 's/\('"$clean_name"'\/([^)]+)\)/\(assets\/\1\)/g' \
             "$md_file"
         
         debug_log "MARKDOWN: Reference fixes completed"
@@ -110,24 +145,32 @@ fix_markdown_refs() {
 }
 
 # Function to move to completed directory
+# Function to move to completed directory
 move_to_complete() {
     local dir_path="$1"
-    local complete_dir=/Users/hubo/obsidian_files/OB_DT/projects/notion_bk
+    local complete_dir="/Users/hubo/obsidian_files/OB_DT/projects/notion_bk"
+    local target_path="$complete_dir/$(basename "$dir_path")"
     
     debug_log "MOVE: Starting move to complete directory"
     debug_log "MOVE: Source directory: $dir_path"
-    debug_log "MOVE: Target directory: $complete_dir"
+    debug_log "MOVE: Target directory: $target_path"
     
-    # Create complete directory if it doesn't exist
+    # Create parent directory if it doesn't exist
     if [ ! -d "$complete_dir" ]; then
-        debug_log "MOVE: Creating complete directory"
+        debug_log "MOVE: Creating parent directory"
         mkdir -p "$complete_dir"
+    fi
+    
+    # Remove existing target if it exists
+    if [ -d "$target_path" ]; then
+        debug_log "MOVE: Removing existing directory: $target_path"
+        rm -rf "$target_path"
     fi
     
     mv "$dir_path" "$complete_dir/"
     debug_log "MOVE: Directory moved successfully"
     debug_log "MOVE: Final location contents:"
-    ls -la "$complete_dir/$(basename "$dir_path")" >> ~/Downloads/hazel_log2.txt
+    ls -la "$target_path" >> ~/Downloads/hazel_log2.txt
 }
 
 # Main process
@@ -156,6 +199,10 @@ main() {
     local clean_name=$(echo "$cleaned_info" | cut -d: -f2)
     debug_log "MAIN: Cleaning completed, final directory: $final_dir"
     debug_log "MAIN: Clean name: $clean_name"
+    
+    # Organize assets
+    debug_log "MAIN: Calling organize_assets"
+    organize_assets "$final_dir" "$clean_name"
     
     # Fix markdown references
     debug_log "MAIN: Calling fix_markdown_refs"
