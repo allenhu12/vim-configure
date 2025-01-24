@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Debug control - set to "true" to enable debug output, "false" to disable
-DEBUG="false"
+DEBUG="true"
 
 # Exit on any error
 set -e
@@ -37,6 +37,47 @@ extract_export() {
     echo "$extract_dir"
 }
 
+# Function to clean folder names
+clean_folders() {
+    local export_dir="$1"
+    
+    debug_log "CLEAN: Starting folder cleanup"
+    debug_log "CLEAN: Working with export directory: $export_dir"
+    
+    # Check if there's a markdown file at root
+    local md_files=("$export_dir"/*.md)
+    local md_file="${md_files[0]}"
+    
+    if [ -f "$md_file" ]; then
+        debug_log "CLEAN: Found markdown file at root: $md_file"
+        local clean_name=$(basename "$md_file" | sed -E 's/[[:space:]][[:alnum:]]{32}\.md$/.md/')
+        clean_name=${clean_name%.md}  # Remove .md extension for folder name
+        debug_log "CLEAN: Cleaned name will be: $clean_name"
+        
+        # Create a folder for the content
+        mkdir -p "$export_dir/$clean_name"
+        debug_log "CLEAN: Created new folder: $export_dir/$clean_name"
+        
+        # Move markdown file
+        mv "$md_file" "$export_dir/$clean_name.md"
+        debug_log "CLEAN: Moved markdown file to: $export_dir/$clean_name.md"
+        
+        # Rename main export folder
+        local final_dir="$(dirname "$export_dir")/$clean_name"
+        debug_log "CLEAN: Renaming main folder to: $final_dir"
+        mv "$export_dir" "$final_dir"
+        debug_log "CLEAN: Main folder renamed successfully"
+        
+        debug_log "CLEAN: Final directory structure:"
+        ls -la "$final_dir" >> ~/Downloads/hazel_log2.txt
+        
+        echo "$final_dir:$clean_name"
+    else
+        debug_log "CLEAN: ERROR - No markdown file found"
+        exit 1
+    fi
+}
+
 # Function to organize assets
 organize_assets() {
     local dir_path="$1"
@@ -50,58 +91,14 @@ organize_assets() {
     mkdir -p "$assets_dir"
     debug_log "ASSETS: Created assets directory: $assets_dir"
     
-    # Move all image files to assets directory
-    find "$dir_path/$clean_name" -type f \( -iname "*.png" -o -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.gif" -o -iname "*.svg" \) -exec mv {} "$assets_dir/" \;
+    # Find any images in the root directory or any subdirectories
+    find "$dir_path" -type f \( -iname "*.png" -o -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.gif" -o -iname "*.svg" \) -not -path "*/assets/*" -exec mv {} "$assets_dir/" \;
     debug_log "ASSETS: Moved image files to assets directory"
     
-    # Remove original images directory if empty
-    rmdir "$dir_path/$clean_name" 2>/dev/null || true
-    
     debug_log "ASSETS: Final assets directory contents:"
-    ls -la "$assets_dir" >> ~/Downloads/hazel_log2.txt
+    ls -la "$assets_dir" >> ~/Downloads/hazel_log2.txt 2>&1 || true
     
     echo "$assets_dir"
-}
-
-# Function to clean folder names
-clean_folders() {
-    local export_dir="$1"
-    
-    debug_log "CLEAN: Starting folder cleanup"
-    debug_log "CLEAN: Working with export directory: $export_dir"
-    
-    # Find and clean the inner folder name
-    local inner_folder=$(find "$export_dir" -mindepth 1 -maxdepth 1 -type d | head -n 1)
-    debug_log "CLEAN: Found inner folder: $inner_folder"
-    
-    local clean_name=$(basename "$inner_folder" | sed -E 's/[[:space:]][[:alnum:]]{32}$//')
-    debug_log "CLEAN: Cleaned name will be: $clean_name"
-    
-    # Rename inner folder
-    debug_log "CLEAN: Renaming inner folder"
-    mv "$inner_folder" "$(dirname "$inner_folder")/$clean_name"
-    debug_log "CLEAN: Inner folder renamed successfully"
-    
-    # Rename markdown file
-    local md_file="${inner_folder}.md"
-    if [ -f "$md_file" ]; then
-        debug_log "CLEAN: Found markdown file: $md_file"
-        mv "$md_file" "$(dirname "$md_file")/$clean_name.md"
-        debug_log "CLEAN: Markdown file renamed to: $clean_name.md"
-    else
-        debug_log "CLEAN: No markdown file found at: $md_file"
-    fi
-    
-    # Rename main export folder
-    local final_dir="$(dirname "$export_dir")/$clean_name"
-    debug_log "CLEAN: Renaming main folder to: $final_dir"
-    mv "$export_dir" "$final_dir"
-    debug_log "CLEAN: Main folder renamed successfully"
-    
-    debug_log "CLEAN: Final directory structure:"
-    ls -la "$final_dir" >> ~/Downloads/hazel_log2.txt
-    
-    echo "$final_dir:$clean_name"
 }
 
 # Function to fix markdown references
