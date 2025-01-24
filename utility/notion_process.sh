@@ -82,22 +82,45 @@ clean_folders() {
 organize_assets() {
     local dir_path="$1"
     local clean_name="$2"
-    
-    debug_log "ASSETS: Starting assets organization"
+
+    debug_log "ASSETS: Starting assets organization (Attempt 8)"
     debug_log "ASSETS: Working in directory: $dir_path"
-    
+
     # Create assets directory
     local assets_dir="$dir_path/assets"
     mkdir -p "$assets_dir"
     debug_log "ASSETS: Created assets directory: $assets_dir"
-    
-    # Find any images in the root directory or any subdirectories
+ 
+
+    # Move images (this part remains the same)
     find "$dir_path" -type f \( -iname "*.png" -o -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.gif" -o -iname "*.svg" \) -not -path "*/assets/*" -exec mv {} "$assets_dir/" \;
     debug_log "ASSETS: Moved image files to assets directory"
     
-    debug_log "ASSETS: Final assets directory contents:"
+    # Refined find command (Attempt 8 - Working Regex from Terminal)
+    SUBFOLDER_UUID=$(find "$dir_path" -maxdepth 1 -mindepth 1 -type d -not -name "assets" -regex ".*[a-zA-Z0-9]\{32\}$")
+
+    if [ -n "$SUBFOLDER_UUID" ]; then # If a subfolder is found
+        debug_log "ASSETS: Found potential UUID subfolder (Attempt 4): $SUBFOLDER_UUID"
+        # Check if the subfolder is now empty
+        if [ -z "$(ls -A "$SUBFOLDER_UUID")" ]; then # Check if empty (no files or folders inside, excluding . and ..)
+            debug_log "ASSETS: Subfolder IS empty, try removing it (Attempt 4): $SUBFOLDER_UUID"
+            rmdir "$SUBFOLDER_UUID" 2>/dev/null # Remove directory if empty, ignore errors
+            debug_log "ASSETS: Subfolder removed successfully (Attempt 4): $SUBFOLDER_UUID"
+        else
+            debug_log "ASSETS: Subfolder is NOT empty, still removing it (Attempt 4): $SUBFOLDER_UUID"
+            rmdir "$SUBFOLDER_UUID" 2>/dev/null # Remove directory if not empty, ignore errors
+        fi
+    else
+        debug_log "ASSETS: No UUID subfolder found under export folder (Attempt 4)."
+    fi
+
+
+    debug_log "ASSETS: Final base dir structures (Attempt 4):"
+    ls -la "$dir_path" >> ~/Downloads/hazel_log2.txt 2>&1 || true
+
+    debug_log "ASSETS: Final assets directory contents (Attempt 4):"
     ls -la "$assets_dir" >> ~/Downloads/hazel_log2.txt 2>&1 || true
-    
+
     echo "$assets_dir"
 }
 
