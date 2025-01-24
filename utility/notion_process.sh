@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Debug control - set to "true" to enable debug output, "false" to disable
-DEBUG="false"
+DEBUG="true"
 
 # Exit on any error
 set -e
@@ -92,9 +92,9 @@ organize_assets() {
     mkdir -p "$assets_dir"
     debug_log "ASSETS: Created assets directory: $assets_dir"
     
-    # First, move all images to assets directory
+    # First, move all assets (csv, png, jpg, jpeg, gif, svg) to assets directory
     debug_log "ASSETS: Moving image files to assets directory"
-    find "$dir_path" -type f \( -iname "*.png" -o -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.gif" -o -iname "*.svg" \) -not -path "*/assets/*" -exec mv {} "$assets_dir/" \;
+    find "$dir_path" -type f \( -iname "*.csv" -o -iname "*.png" -o -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.gif" -o -iname "*.svg" \) -not -path "*/assets/*" -exec mv {} "$assets_dir/" \;
     
     # Log the initial state after moving images
     debug_log "ASSETS: Directory structure after moving images:"
@@ -164,7 +164,6 @@ fix_markdown_refs() {
     fi
 }
 
-# Function to move to completed directory
 # Function to move to completed directory
 move_to_complete() {
     local dir_path="$1"
