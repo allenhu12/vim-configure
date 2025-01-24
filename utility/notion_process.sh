@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Debug control - set to "true" to enable debug output, "false" to disable
-DEBUG="true"
+DEBUG="false"
 
 # Exit on any error
 set -e
@@ -79,48 +79,48 @@ clean_folders() {
 }
 
 # Function to organize assets
+# Function to organize assets and clean up empty folders
 organize_assets() {
     local dir_path="$1"
     local clean_name="$2"
-
-    debug_log "ASSETS: Starting assets organization (Attempt 8)"
+    
+    debug_log "ASSETS: Starting assets organization"
     debug_log "ASSETS: Working in directory: $dir_path"
-
+    
     # Create assets directory
     local assets_dir="$dir_path/assets"
     mkdir -p "$assets_dir"
     debug_log "ASSETS: Created assets directory: $assets_dir"
- 
-
-    # Move images (this part remains the same)
-    find "$dir_path" -type f \( -iname "*.png" -o -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.gif" -o -iname "*.svg" \) -not -path "*/assets/*" -exec mv {} "$assets_dir/" \;
-    debug_log "ASSETS: Moved image files to assets directory"
     
-    # Refined find command (Attempt 8 - Working Regex from Terminal)
-    SUBFOLDER_UUID=$(find "$dir_path" -maxdepth 1 -mindepth 1 -type d -not -name "assets" -regex ".*[a-zA-Z0-9]\{32\}$")
-
-    if [ -n "$SUBFOLDER_UUID" ]; then # If a subfolder is found
-        debug_log "ASSETS: Found potential UUID subfolder (Attempt 4): $SUBFOLDER_UUID"
-        # Check if the subfolder is now empty
-        if [ -z "$(ls -A "$SUBFOLDER_UUID")" ]; then # Check if empty (no files or folders inside, excluding . and ..)
-            debug_log "ASSETS: Subfolder IS empty, try removing it (Attempt 4): $SUBFOLDER_UUID"
-            rmdir "$SUBFOLDER_UUID" 2>/dev/null # Remove directory if empty, ignore errors
-            debug_log "ASSETS: Subfolder removed successfully (Attempt 4): $SUBFOLDER_UUID"
+    # First, move all images to assets directory
+    debug_log "ASSETS: Moving image files to assets directory"
+    find "$dir_path" -type f \( -iname "*.png" -o -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.gif" -o -iname "*.svg" \) -not -path "*/assets/*" -exec mv {} "$assets_dir/" \;
+    
+    # Log the initial state after moving images
+    debug_log "ASSETS: Directory structure after moving images:"
+    ls -la "$dir_path" >> ~/Downloads/hazel_log2.txt
+    
+    # Now clean up any empty folders
+    debug_log "ASSETS: Cleaning up empty folders"
+    
+    # Find all directories except assets and the root directory itself
+    find "$dir_path" -mindepth 1 -type d -not -name "assets" | while read folder; do
+        # Check if folder is empty (no files or hidden files)
+        if [ -z "$(ls -A "$folder")" ]; then
+            debug_log "ASSETS: Removing empty folder: $folder"
+            rmdir "$folder"
         else
-            debug_log "ASSETS: Subfolder is NOT empty, still removing it (Attempt 4): $SUBFOLDER_UUID"
-            rmdir "$SUBFOLDER_UUID" 2>/dev/null # Remove directory if not empty, ignore errors
+            debug_log "ASSETS: Folder not empty, skipping: $folder"
+            ls -la "$folder" >> ~/Downloads/hazel_log2.txt
         fi
-    else
-        debug_log "ASSETS: No UUID subfolder found under export folder (Attempt 4)."
-    fi
-
-
-    debug_log "ASSETS: Final base dir structures (Attempt 4):"
-    ls -la "$dir_path" >> ~/Downloads/hazel_log2.txt 2>&1 || true
-
-    debug_log "ASSETS: Final assets directory contents (Attempt 4):"
-    ls -la "$assets_dir" >> ~/Downloads/hazel_log2.txt 2>&1 || true
-
+    done
+    
+    # Verify final structure
+    debug_log "ASSETS: Final directory structure:"
+    ls -la "$dir_path" >> ~/Downloads/hazel_log2.txt
+    debug_log "ASSETS: Final assets directory contents:"
+    ls -la "$assets_dir" >> ~/Downloads/hazel_log2.txt
+    
     echo "$assets_dir"
 }
 
