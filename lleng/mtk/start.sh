@@ -17,7 +17,7 @@ fi
 #########################################
 
 #name is the contain name
-name=mtk1
+name=web-adapter-openwrt
 OS=ubuntu:18.04
 IMAGE=ruckus/mtk_u_1804
 mount_name=mycompile

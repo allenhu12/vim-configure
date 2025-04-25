@@ -28,16 +28,6 @@ ENTRYPOINT ["/usr/local/bin/docker-entry.sh"]
 
 RUN apt-get install -y patch
 
-# For sudo
-RUN apt-get install -y sudo
-RUN  echo "search video54.local" > /etc/resolv.conf \
-  &&  echo "nameserver 10.10.10.10" >> /etc/resolv.conf \
-  &&  chmod u+s /usr/bin/sudo \
-
-  &&  echo "# pass env variables to CLI" >>/etc/sudoers \
-  &&  echo "lleng        ALL=(ALL)       NOPASSWD: ALL" >>/etc/sudoers \
-  &&  sed -ie 's#requiretty#!requiretty#g' /etc/sudoers \
-  &&  echo "Defaults    !requiretty" >> /etc/sudoer
 
 
 RUN apt-get update &&\
@@ -50,4 +40,15 @@ RUN apt-get update &&\
 # this refer to https://github.com/mwarning/docker-openwrt-builder
 
 
+RUN apt install -y build-essential checkinstall
+RUN apt install -y python golang-go bison flex gettext ant file device-tree-compiler xutils-dev zlib1g-dev gawk gcc zip u-boot-tools texinfo autoconf make time subversion bsdmainutils cpio ctags exuberant-ctags patch m4 bzip2 tar xorriso g++ rpm alien squashfs-tools libtool qemu qemu-system libprotoc-dev libglib2.0-dev libperl-dev libreadline-gplv2-dev libncurses5 libncurses5-dev libncursesw5-dev libssl-dev libsqlite3-dev libgdbm-dev libbz2-dev liblzma-dev libpam0g-dev uuid-dev python3 python3-distutils-extra python3-pip bsdmainutils
+RUN apt install -y clang-6.0 libc6-dev libc6 libsnmp-dev git wget rsync curl
 
+
+# For sudo
+RUN apt-get install -y sudo
+RUN  chmod u+s /usr/bin/sudo \
+  &&  echo "# pass env variables to CLI" >>/etc/sudoers \
+  &&  echo "lleng        ALL=(ALL)       NOPASSWD: ALL" >>/etc/sudoers \
+  &&  sed -ie 's#requiretty#!requiretty#g' /etc/sudoers \
+  &&  echo "Defaults    !requiretty" >> /etc/sudoer

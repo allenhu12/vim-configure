@@ -10,6 +10,7 @@
 #   ./git_sh1.sh worktree add <repo_name> -lb <local_branch_name> -rb <remote_branch_name>
 #   Example: ./git_sh1.sh worktree add all -lb local5 -rb origin/master
 #   Example: ./git_sh1.sh worktree add ap_zd_controller -lb local5 -rb origin/master
+#   Example: ./git_sh1.sh worktree add ap_zd_controller -lb local5 -rb origin/release/unleashed_200.17
 
 # Step 3: Pull and rebase worktree
 #   ./git_sh1.sh worktree pull-rebase <repo_name> <local_branch_name>
@@ -35,10 +36,9 @@ repo_map="
     vendor_qca_11ax:rks_ap/platform_dp/linux/driver/vendor_qca_11ax
     vendor_qca_11ax6e:rks_ap/platform_dp/linux/driver/vendor_qca_11ax6e
     vendor_qca_11be:rks_ap/platform_dp/linux/driver/vendor_qca_11be
-    vendor_mtk_11be:rks_ap/platform_dp/linux/driver/vendor_mtk_11be
     vendor_qca_ref:rks_ap/platform_dp/linux/driver/vendor_qca_ref
     vendor_qca_tools:vendor_qca_tools
-    vendor_mtk:vendor_mtk
+    vendor_mtk_11be:vendor_mtk_11be
     rpoint_handler:rpoint_handler
     rtty:rtty
     rksiot:rksiot
