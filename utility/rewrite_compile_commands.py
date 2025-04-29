@@ -21,7 +21,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s: %(mes
 # Value: Corresponding path in source tree containing the source files (e.g., the 'src' dir)
 
 PATH_MAPPINGS = {
-    "librsm-0.1": "rks_ap/libs/librsm/src",
+    "librsm-0.1": "rks_ap/libs/librsm/src", # Keep '/src' here as base for mtk/qca
     # --- Add mappings for other components ---
     # Example:
     # "some-other-lib-1.2": "vendor_mtk/libs/some-other-lib/source",
@@ -36,11 +36,22 @@ BUILD_DIR_PREFIX = "/home/hubo/workspace/git-depot/unleashed_200.18.7.101_r370/o
 SOURCE_ROOT = "/home/hubo/workspace/git-depot/unleashed_200.18.7.101_r370"
 # --------------------------------------------------------------------
 
-def find_source_mapping(build_dir_str: str, build_file: str) -> typing.Tuple[typing.Optional[str], typing.Optional[str]]:
+# --- Vendor Disambiguation ---
+# Map vendor defines found in compile arguments to subdirectory names
+VENDOR_DEFINES_TO_SUBDIRS = {
+    "-DLIBRSM_VENDOR_MTK": "mtk",
+    "-DLIBRSM_VENDOR_QCA": "qca", # Assuming this define exists for QCA builds
+    # Add more if needed
+}
+# ---------------------------
+
+def find_source_mapping(build_dir_str: str, build_file: str, arguments: typing.List[str]) -> typing.Tuple[typing.Optional[str], typing.Optional[str]]:
     """
     Finds the corresponding source path based on PATH_MAPPINGS.
+    Handles cases where the source file might be in a subdirectory of the mapped path,
+    using compiler arguments to disambiguate if multiple matches are found.
     Returns (source_directory, absolute_source_file_path) or (None, None) if no mapping applies
-    or the source file doesn't exist at the mapped location.
+    or the source file cannot be uniquely located.
     """
     build_dir_path = Path(build_dir_str).resolve()
     source_root_path = Path(SOURCE_ROOT).resolve()
@@ -57,24 +68,82 @@ def find_source_mapping(build_dir_str: str, build_file: str) -> typing.Tuple[typ
 
     if build_component_key in PATH_MAPPINGS:
         source_relative_path_str = PATH_MAPPINGS[build_component_key]
-        mapped_source_dir = source_root_path / source_relative_path_str
-        # Assume build_file is relative to the directory listed in compile_commands
-        # Construct absolute source file path
-        absolute_source_file = mapped_source_dir / build_file
+        mapped_source_dir_base = source_root_path / source_relative_path_str
+        build_file_path_obj = Path(build_file) # Treat build_file as potentially having dirs
 
         logging.debug(f"Mapping found for key '{build_component_key}'.")
         logging.debug(f"  Build Dir: {build_dir_str}")
-        logging.debug(f"  Mapped Source Dir: {mapped_source_dir}")
-        logging.debug(f"  Checking for source file: {absolute_source_file}")
+        logging.debug(f"  Build File: {build_file}")
+        logging.debug(f"  Mapped Source Base Dir: {mapped_source_dir_base}")
 
-        # IMPORTANT: Check if the calculated source file actually exists
-        if absolute_source_file.is_file():
-            logging.debug(f"  Source file exists. Rewriting entry.")
-            # Return the mapped source directory and the absolute path to the source file
-            return str(mapped_source_dir), str(absolute_source_file)
+        # Attempt 1: Check if file exists directly at mapped_dir / build_file
+        absolute_source_file_guess1 = mapped_source_dir_base / build_file_path_obj
+        logging.debug(f"  Attempt 1: Checking direct path: {absolute_source_file_guess1}")
+        if absolute_source_file_guess1.is_file():
+            logging.debug(f"  Source file exists directly. Rewriting entry.")
+            final_source_dir = str(absolute_source_file_guess1.parent)
+            final_source_file = str(absolute_source_file_guess1)
+            return final_source_dir, final_source_file
+
+        # Attempt 2: If build_file is just a filename (no slashes), search recursively
+        elif '/' not in build_file and '\\' not in build_file:
+            logging.debug(f"  Direct path failed. Attempt 2: Recursively searching for '{build_file}' under {mapped_source_dir_base}")
+            try:
+                filename_only = build_file_path_obj.name
+                found_files = list(mapped_source_dir_base.rglob(filename_only))
+                exact_matches = [p for p in found_files if p.name == filename_only and p.is_file()] # Ensure it's a file
+
+                if len(exact_matches) == 1:
+                    found_file_path = exact_matches[0]
+                    logging.debug(f"  Found unique match via rglob: {found_file_path}. Rewriting entry.")
+                    final_source_dir = str(found_file_path.parent)
+                    final_source_file = str(found_file_path)
+                    return final_source_dir, final_source_file
+
+                # --- MODIFICATION START: Handle Multiple Matches ---
+                elif len(exact_matches) > 1:
+                    logging.warning(f"  Found multiple instances of '{filename_only}' under '{mapped_source_dir_base}': {exact_matches}. Attempting disambiguation using compiler arguments.")
+                    potential_subdir = None
+                    for define, subdir in VENDOR_DEFINES_TO_SUBDIRS.items():
+                        if define in arguments:
+                            potential_subdir = subdir
+                            logging.info(f"  Found vendor define '{define}', suggesting subdirectory '{subdir}'.")
+                            break # Found a potential vendor
+
+                    if potential_subdir:
+                        # Filter the matches based on the detected subdirectory
+                        filtered_matches = [
+                            p for p in exact_matches
+                            if f"{os.sep}{potential_subdir}{os.sep}" in str(p) or p.parts[-2] == potential_subdir
+                        ]
+
+                        if len(filtered_matches) == 1:
+                            found_file_path = filtered_matches[0]
+                            logging.info(f"  Successfully disambiguated using vendor define. Using: {found_file_path}. Rewriting entry.")
+                            final_source_dir = str(found_file_path.parent)
+                            final_source_file = str(found_file_path)
+                            return final_source_dir, final_source_file
+                        elif len(filtered_matches) > 1:
+                             logging.error(f"  Disambiguation failed: Found multiple matches even after filtering for subdir '{potential_subdir}': {filtered_matches}. Keeping original entry.")
+                             return None, None
+                        else:
+                             logging.warning(f"  Disambiguation failed: Found vendor define '{define}' but no matching path in {exact_matches} contained subdir '{potential_subdir}'. Keeping original entry.")
+                             return None, None
+                    else:
+                        logging.warning(f"  Disambiguation failed: No known vendor define found in arguments. Cannot uniquely determine path. Keeping original entry.")
+                        return None, None
+                # --- MODIFICATION END ---
+                else: # len(exact_matches) == 0
+                    logging.warning(f"  Could not find '{filename_only}' recursively under '{mapped_source_dir_base}'. Keeping original entry.")
+                    return None, None
+            except Exception as e:
+                logging.error(f"  Error during recursive search for '{build_file}': {e}")
+                return None, None
         else:
-            logging.warning(f"Mapped source file '{absolute_source_file}' not found for build file '{build_file}' in build dir '{build_dir_str}'. Keeping original entry.")
+             # If build_file contained slashes but didn't exist directly
+            logging.warning(f"  Mapped source file '{absolute_source_file_guess1}' (derived from path in 'file' field) not found. Keeping original entry.")
             return None, None
+
     else:
         logging.debug(f"No specific mapping found for component key '{build_component_key}' derived from '{build_dir_str}'. Keeping original entry.")
         return None, None
@@ -124,15 +193,15 @@ def main():
         processed_count += 1
         build_dir = entry.get("directory")
         build_file = entry.get("file") # Often just filename.c
-        arguments = entry.get("arguments")
+        arguments = entry.get("arguments") # Get arguments
 
         if not build_dir or not build_file or not arguments:
             logging.warning(f"Skipping entry {processed_count} with missing fields: {entry}")
             rewritten_db.append(entry)
             continue
 
-        # Try to find mapping and verify source file existence
-        mapped_source_dir, absolute_source_file = find_source_mapping(build_dir, build_file)
+        # --- Pass arguments to the mapping function ---
+        mapped_source_dir, absolute_source_file = find_source_mapping(build_dir, build_file, arguments)
 
         if mapped_source_dir and absolute_source_file:
             # Create a new entry with modified paths but original arguments
@@ -141,19 +210,28 @@ def main():
                 "arguments": arguments,
                 "file": absolute_source_file # Use absolute path here
             }
+            # --- Optional: Clean up arguments list ---
+            # Remove build-path-specific flags like -fmacro-prefix-map if desired
+            # Example (add more sophisticated logic if needed):
+            # clean_arguments = [arg for arg in arguments if not arg.startswith("-fmacro-prefix-map=")]
+            # new_entry["arguments"] = clean_arguments
+            # -----------------------------------------
             rewritten_db.append(new_entry)
-            logging.debug(f"Rewrote entry {processed_count} for {build_file}: build_dir '{build_dir}' -> source_dir '{mapped_source_dir}'")
+            # Use INFO level for successful rewrites for better visibility
+            logging.info(f"Rewrote entry {processed_count} for {Path(absolute_source_file).name}: build_dir '{build_dir}' -> source_dir '{mapped_source_dir}'")
             modified_count += 1
         else:
-            # If no mapping applied or source file didn't exist, keep original
+            # If no mapping applied or source file didn't exist/was ambiguous, keep original
             rewritten_db.append(entry)
             logging.debug(f"Kept original entry {processed_count} for {build_file} in {build_dir}")
 
 
     logging.info(f"Processed {processed_count} entries, modified {modified_count}.")
 
-    if modified_count > 0:
-        logging.info(f"Writing rewritten compile commands to: {output_path} (Readable Format)")
+    # Only write if changes were made or if output is different from input
+    # (Avoids rewriting identical file)
+    if modified_count > 0 or output_path != input_path:
+        logging.info(f"Writing {modified_count} modified entries to: {output_path} (Readable Format)")
         try:
             # Ensure the output directory exists
             output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -164,7 +242,7 @@ def main():
             logging.error(f"Failed to write {output_path}: {e}")
             sys.exit(1)
     else:
-        logging.info("No entries were modified, output file remains unchanged.")
+        logging.info("No entries needed modification, output file identical to input.")
 
     logging.info("Rewrite script finished.")
 
