@@ -1,0 +1,198 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+Okay, this is a crucial step. A good test plan will ensure the "Reference Augmentor" is robust, reliable, and behaves as expected.
+
+Here's a detailed test plan based on the HLDD v0.3.0:
+
+---
+
+**Test Plan: Reference Augmentor (v0.3.0)**
+
+**1. Introduction**
+
+*   **1.1. Purpose:** This document outlines the testing strategy and plan for the Reference Augmentor system. The goal is to verify that the system meets the functional and non-functional requirements defined in HLDD v0.3.0, ensuring its reliability, security (regarding API keys), and usability.
+*   **1.2. Scope of Testing:**
+    *   All functional requirements (FR1-FR10).
+    *   Key non-functional requirements (NFR1-NFR7), particularly modularity, security of API key handling, and LLM-friendly output.
+    *   Core components: Input Handling, Reference Extraction, Configuration Loading, Extractor Interface & Implementations (Jina, Firecrawl, BeautifulSoup), Extractor Factory, Main Orchestration, and Output Formatting.
+    *   Both Python library interface and Command-Line Interface (CLI).
+*   **1.3. Document Version:** Test Plan v1.0
+
+**2. Test Objectives**
+
+*   Verify accurate parsing of input reports and extraction of reference URLs.
+*   Validate the secure loading and handling of API keys for external services.
+*   Confirm the correct functioning of each pluggable content extractor (Jina, Firecrawl, BeautifulSoup).
+*   Ensure the extractor switching mechanism works as configured.
+*   Verify that fetched content is correctly appended with proper LLM-friendly delimiters and attribution.
+*   Test robust error handling for various failure scenarios (network issues, API errors, invalid URLs).
+*   Ensure the Python library interface and CLI are usable and behave as expected.
+*   Confirm that no API keys are hardcoded or exposed insecurely.
+
+**3. Test Strategy**
+
+*   **3.1. Levels of Testing:**
+    *   **Unit Testing:** Individual functions and methods within components will be tested in isolation. Mocks will be used extensively for external dependencies (APIs, file system).
+    *   **Integration Testing:** Interactions between components will be tested (e.g., Parser -> Factory -> Extractor).
+    *   **System Testing (End-to-End):** The entire application flow will be tested from input (report file/string) to output (augmented report string), using both the library and CLI interfaces.
+*   **3.2. Types of Testing:**
+    *   **Functional Testing:** Validating requirements FR1-FR10.
+    *   **Configuration Testing:** Testing different configuration settings, especially extractor selection and API key loading.
+    *   **Error Handling & Negative Testing:** Testing how the system handles invalid inputs, failures, and edge cases.
+    *   **Security Testing (Basic):** Focused on verifying API keys are not hardcoded and are loaded from secure sources (`.env`/environment variables). No deep penetration testing.
+    *   **Usability Testing (Basic):** Ensuring CLI commands are intuitive and output messages (including errors) are clear.
+*   **3.3. Test Environment & Tools:**
+    *   **Python Version:** As specified in HLDD (e.g., Python 3.7+).
+    *   **Operating Systems:** Primarily Linux/macOS (for CLI testing), Windows (for CLI testing if feasible).
+    *   **Key Libraries for Testing:**
+        *   `pytest` (for test framework, fixture management, assertions).
+        *   `requests-mock` (for mocking HTTP requests to external APIs like Jina, Firecrawl, and general web URLs for `BeautifulSoupExtractor`).
+        *   `pytest-mock` (or `unittest.mock`) for patching objects and methods.
+        *   `python-dotenv` (to test loading of `.env` files).
+    *   **Mock Web Server (Optional, for `BeautifulSoupExtractor`):** Python's `http.server` or a more controllable local server for serving test HTML files.
+    *   **Sample Data:**
+        *   Various sample report files (text, Markdown) with different reference link patterns.
+        *   Sample HTML files for local fetching tests.
+        *   Test API keys for Jina, Firecrawl (use dedicated test accounts/keys if possible).
+*   **3.4. Test Data Management:**
+    *   Test input files (reports, HTML) will be stored in a `test_data` directory.
+    *   Expected output files/strings will be defined for comparison.
+    *   Sensitive data like real API keys for testing external services will be managed via local `.env` files (not committed) or secure environment variables in a CI system.
+
+**4. Test Cases**
+
+**4.1. Unit Tests**
+
+*   **4.1.1. Reference Extractor (`reference_extractor.py`)**
+    *   **TC_UNIT_RE_001:** Test `is_valid_url()` with valid HTTP/HTTPS URLs. (Exp: True)
+    *   **TC_UNIT_RE_002:** Test `is_valid_url()` with invalid URLs (FTP, mailto, no scheme, etc.). (Exp: False)
+    *   **TC_UNIT_RE_003:** Test `extract_urls_from_line()` with a line containing one bare URL. (Exp: List with one URL)
+    *   **TC_UNIT_RE_004:** Test `extract_urls_from_line()` with a line containing one Markdown URL. (Exp: List with one URL)
+    *   **TC_UNIT_RE_005:** Test `extract_urls_from_line()` with multiple URLs (mixed). (Exp: List with all URLs)
+    *   **TC_UNIT_RE_006:** Test `extract_urls_from_line()` with no URLs. (Exp: Empty list)
+    *   **TC_UNIT_RE_007:** Test `extract_urls_from_line()` with URL containing trailing punctuation (e.g., `.`, `,`, `)`). (Exp: URL without trailing punctuation)
+    *   **TC_UNIT_RE_008:** Test `parse_report()`: Report with no reference section. (Exp: Original body, empty URL list)
+    *   **TC_UNIT_RE_009:** Test `parse_report()`: Report with references at the very end. (Exp: Correct body & URL list)
+    *   **TC_UNIT_RE_010:** Test `parse_report()`: Report with references separated by blank lines. (Exp: Correct body & URL list)
+    *   **TC_UNIT_RE_011:** Test `parse_report()`: Report with references and then non-URL text before EOF (should not pick up later text). (Exp: Correct body & URL list ending before non-URL text)
+    *   **TC_UNIT_RE_012:** Test `parse_report()`: Deduplication of URLs. (Exp: URL list with unique URLs only)
+*   **4.1.2. Configuration Loader (`config_loader.py` or similar)**
+    *   **TC_UNIT_CL_001:** Test loading API key from environment variable (mock `os.getenv`). (Exp: Key loaded)
+    *   **TC_UNIT_CL_002:** Test loading API key from `.env` file (using `python-dotenv` and mock file). (Exp: Key loaded)
+    *   **TC_UNIT_CL_003:** Test missing API key when required. (Exp: Graceful handling, None, or specific error)
+    *   **TC_UNIT_CL_004:** Test loading extractor type configuration. (Exp: Correct type string loaded)
+*   **4.1.3. Extractor Factory (`extractor_factory.py`)**
+    *   **TC_UNIT_EF_001:** Test factory returns `JinaAIExtractor` instance for "jina" type.
+    *   **TC_UNIT_EF_002:** Test factory returns `FirecrawlExtractor` instance for "firecrawl" type.
+    *   **TC_UNIT_EF_003:** Test factory returns `BeautifulSoupExtractor` instance for "local_bs4" type.
+    *   **TC_UNIT_EF_004:** Test factory raises error or returns default for unknown extractor type.
+*   **4.1.4. BeautifulSoupExtractor (Local)**
+    *   **TC_UNIT_BSE_001:** `extract_text()`: Successful fetch (mock `requests.get`) and parse (sample HTML). (Exp: Correct text, no error)
+    *   **TC_UNIT_BSE_002:** `extract_text()`: `requests.get` raises `RequestException`. (Exp: None, error message)
+    *   **TC_UNIT_BSE_003:** `extract_text()`: `requests.get` returns 404. (Exp: None, error message with 404)
+    *   **TC_UNIT_BSE_004:** `extract_text()`: `requests.get` returns 500. (Exp: None, error message with 500)
+    *   **TC_UNIT_BSE_005:** `extract_text()`: Input HTML has no meaningful text. (Exp: Empty string or minimal boilerplate, no error)
+    *   **TC_UNIT_BSE_006:** `extract_text()`: Input HTML has scripts/styles. (Exp: Text without script/style content)
+*   **4.1.5. JinaAIExtractor (Mocked API)**
+    *   **TC_UNIT_JIN_001:** `extract_text()`: Successful API call (mock `requests.get` to Jina endpoint). (Exp: Correct text from mock response, no error)
+    *   **TC_UNIT_JIN_002:** `extract_text()`: Jina API returns error status (e.g., 401, 403, 500). (Exp: None, error message from API)
+    *   **TC_UNIT_JIN_003:** `extract_text()`: Jina API call times out. (Exp: None, timeout error message)
+    *   **TC_UNIT_JIN_004:** `extract_text()`: Missing API key. (Exp: None, "API key not provided" error)
+    *   **TC_UNIT_JIN_005:** `extract_text()`: Jina API returns unexpected response format. (Exp: None, parsing error message)
+*   **4.1.6. FirecrawlExtractor (Mocked API)**
+    *   **TC_UNIT_FIR_001:** `extract_text()`: Successful API call (mock `requests.get` to Firecrawl endpoint). (Exp: Correct text from mock response, no error)
+    *   **TC_UNIT_FIR_002:** `extract_text()`: Firecrawl API returns error status. (Exp: None, error message from API)
+    *   **TC_UNIT_FIR_003:** `extract_text()`: Firecrawl API call times out. (Exp: None, timeout error message)
+    *   **TC_UNIT_FIR_004:** `extract_text()`: Missing API key. (Exp: None, "API key not provided" error)
+*   **4.1.7. Output Formatter (`output_formatter.py` or within main orchestrator)**
+    *   **TC_UNIT_OF_001:** Format output with one successful reference. (Exp: Correct delimiters, source URL, content)
+    *   **TC_UNIT_OF_002:** Format output with one failed reference. (Exp: Correct delimiters, source URL, error message)
+    *   **TC_UNIT_OF_003:** Format output with multiple references (mixed success/failure). (Exp: Correct structure for all)
+    *   **TC_UNIT_OF_004:** Format output with no references appended. (Exp: Only original content)
+
+**4.2. Integration Tests**
+
+*   **TC_INT_001:** Full flow with `BeautifulSoupExtractor`: Parse report, fetch (from mock local server), append.
+*   **TC_INT_002:** Full flow with `JinaAIExtractor` (mocked Jina API): Parse report, "fetch" via mock Jina, append. (Verify API key is passed to Jina mock).
+*   **TC_INT_003:** Full flow with `FirecrawlExtractor` (mocked Firecrawl API): Parse report, "fetch" via mock Firecrawl, append. (Verify API key is passed).
+*   **TC_INT_004:** Test extractor selection: Configure "jina", ensure `JinaAIExtractor` is called. Configure "local_bs4", ensure `BeautifulSoupExtractor` is called.
+*   **TC_INT_005:** API key propagation: Ensure API key loaded from config is correctly passed to the chosen external API extractor.
+*   **TC_INT_006:** Report with no URLs: Ensure orchestrator handles empty URL list gracefully and returns only original content.
+
+**4.3. System / End-to-End Tests**
+
+*   **4.3.1. Library Interface (`augment_research_report()` function)**
+    *   **TC_SYS_LIB_001:** Valid report string, `BeautifulSoupExtractor`, one valid fetchable (mocked) URL. (Exp: Correct augmented string)
+    *   **TC_SYS_LIB_002:** Valid report string, `BeautifulSoupExtractor`, one 404 URL. (Exp: Augmented string with error for that URL)
+    *   **TC_SYS_LIB_003:** Valid report string, `JinaAIExtractor` (mocked or *carefully* with real test key if necessary), valid URL. (Exp: Correct augmented string)
+    *   **TC_SYS_LIB_004:** Valid report string, `JinaAIExtractor`, missing Jina API key in config. (Exp: Augmented string with API key error for URL)
+    *   **TC_SYS_LIB_005:** Valid report string, `FirecrawlExtractor` (mocked or *carefully* with real test key), valid URL. (Exp: Correct augmented string)
+    *   **TC_SYS_LIB_006:** Report with multiple URLs, mixed results (success, 404, API error). (Exp: Correctly formatted output reflecting all cases)
+    *   **TC_SYS_LIB_007:** Report with no reference links. (Exp: Returns original report text unmodified)
+    *   **TC_SYS_LIB_008:** Empty report string input. (Exp: Empty string or appropriate error/handling)
+*   **4.3.2. CLI Interface (`reference_augmenter.py`)**
+    *   **TC_SYS_CLI_001:** Basic run: `python reference_augmenter.py test_data/report1.txt --extractor local_bs4` (using mock server for URLs in report1). (Exp: Correct output to stdout)
+    *   **TC_SYS_CLI_002:** Output to file: `... --output output.txt`. (Exp: `output.txt` created with correct content)
+    *   **TC_SYS_CLI_003:** Select Jina extractor: `... --extractor jina` (mocked/test Jina API key via `.env`). (Exp: Correct output using Jina logic)
+    *   **TC_SYS_CLI_004:** Select Firecrawl extractor: `... --extractor firecrawl` (mocked/test Firecrawl API key via `.env`). (Exp: Correct output using Firecrawl logic)
+    *   **TC_SYS_CLI_005:** Invalid input file path. (Exp: Graceful error message to stderr, non-zero exit code)
+    *   **TC_SYS_CLI_006:** Missing required API key for selected extractor (e.g., Jina, but no `JINA_API_KEY` in env). (Exp: Error message related to missing key, content for URL shows failure)
+    *   **TC_SYS_CLI_007:** Test `--timeout` argument. (Requires a way to test timeout with mock server).
+    *   **TC_SYS_CLI_008:** Test help message: `python reference_augmenter.py --help`. (Exp: Displays usage info)
+    *   **TC_SYS_CLI_009:** Invalid extractor name: `... --extractor non_existent_extractor`. (Exp: Error message, non-zero exit code)
+
+**4.4. Security Tests (Basic)**
+
+*   **TC_SEC_001:** Verify no API keys are present in the source code (manual code review + automated checks if possible).
+*   **TC_SEC_002:** Confirm `.env` file (if used for testing keys) is in `.gitignore`.
+*   **TC_SEC_003:** Test that external API calls (mocked) for Jina/Firecrawl include the API key in the correct header (`Authorization: Bearer <key>` or `x-api-key: <key>`) and not in the URL query parameters if the API doesn't specify that.
+*   **TC_SEC_004:** Ensure that if an API key is logged (which it shouldn't be), it's masked. (Check logging output during tests).
+
+**4.5. Usability Tests (Basic)**
+
+*   **TC_USA_001:** Review clarity of error messages for common failures (file not found, URL fetch error, API key missing).
+*   **TC_USA_002:** Review clarity and correctness of CLI help messages and argument names.
+*   **TC_USA_003:** Verify documentation for setting up API keys (`.env.example`) is clear.
+
+**5. Test Execution & Reporting**
+
+*   Unit tests will be automated using `pytest` and run frequently during development and in CI.
+*   Integration and System tests will also be automated where possible. Tests involving real external APIs (if any are run beyond mocks) should be tagged and run cautiously to avoid costs/flakiness.
+*   Test results (pass/fail, logs) will be recorded.
+*   Bugs found will be tracked in an issue tracker.
+
+**6. Entry/Exit Criteria (Simplified)**
+
+*   **Entry Criteria:**
+    *   HLDD v0.3.0 is stable.
+    *   Core modules are code-complete.
+    *   Test environment is set up.
+*   **Exit Criteria (for a release):**
+    *   All planned high-priority test cases pass.
+    *   Critical and Major bugs are fixed and verified.
+    *   Code coverage by unit tests meets a defined threshold (e.g., 80%).
+    *   Documentation (including API key setup) is complete.
+
+**7. Risks & Assumptions**
+
+*   **Risks:**
+    *   Changes in external API (Jina, Firecrawl) contracts breaking extractors. (Mitigation: Mock APIs for most tests, versioned API usage if possible).
+    *   Test API keys becoming invalid or rate-limited.
+    *   Complexity in accurately mocking diverse web content for `BeautifulSoupExtractor`.
+    *   Network instability affecting tests that use real external APIs (if any).
+*   **Assumptions:**
+    *   Testers have access to valid (test) API keys for external services where needed.
+    *   The structure of reference links in reports is relatively consistent as per HLDD assumptions.
+
+---
+
+This test plan provides a comprehensive starting point. Specific test cases will need to be fleshed out with exact input data and expected output strings during the test implementation phase.
+
+
+
+---
+This is version @ 2025-05-11
+
