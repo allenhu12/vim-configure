@@ -1,0 +1,352 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+# Milestone Marker
+
+- **Version:** `HLDD v0.3.0`
+- **Date:** May 10, 2025
+- **Description:** This version of the High-Level Design Document for the "Reference Augmentor" solidifies a modular architecture centered around pluggable content extractors. It allows for easy switching between different web content scraping services (e.g., Jina AI, Firecrawl) or local methods (e.g., BeautifulSoup). A critical focus is placed on **secure API key management**, mandating the use of environment variables or external configuration files (`.env`) to prevent hardcoding credentials. The system is designed to be easy to implement and produce LLM-friendly output, combining original research text with clearly demarcated and attributed fetched reference content. Error handling and clear interface definitions are also key components.
+
+---
+
+Now, here is the full and complete High-Level Design Document based on our discussion:
+
+---
+
+# High-Level Design Document: Reference Augmentor
+
+**HLDD Version: 0.3.0**  
+**Date: May 10, 2025**
+
+## 1. Introduction
+
+- **1.1. Purpose:**
+  The Reference Augmentor system is designed to enhance research reports (provided as plain text or Markdown) by automatically fetching content from URLs listed in their reference section using a configurable extraction method. This fetched content is then appended to the original report, creating a consolidated document intended to serve as comprehensive contextual knowledge for Large Language Models (LLMs).
+- **1.2. Scope:**
+  - **In Scope:**
+    - Processing plain text and Markdown formatted input reports.
+    - Identifying HTTP/HTTPS URLs in the reference section.
+    - Separating original report content from reference links.
+    - Providing a pluggable architecture for content extraction, allowing use of different external APIs (e.g., Jina AI, Firecrawl) or local methods (e.g., BeautifulSoup).
+    - Securely managing API keys for external services (via environment variables or `.env` files, **NO hardcoding**).
+    - Extracting primary textual content from web pages via the chosen extractor.
+    - Appending fetched content to the original report using clear, LLM-friendly delimiters and source attribution.
+    - Basic error handling for unreachable URLs, API errors, or content extraction failures.
+  - **Out of Scope:**
+    - Processing non-text/Markdown formats (e.g., PDF, DOCX directly).
+    - Advanced Natural Language Processing (NLP) for summarization or semantic analysis of fetched content beyond what the chosen extractor provides.
+    - Fetching content requiring complex authentication flows (e.g., OAuth beyond simple API keys), heavy JavaScript rendering not handled by the chosen extractor, or CAPTCHAs.
+    - Graphical User Interface (GUI).
+- **1.3. Target Users:**
+  Researchers, content analysts, developers, or anyone needing to provide LLMs with augmented contextual information derived from research reports and their cited web sources, with flexibility in choosing the content extraction mechanism.
+
+## 2. Requirements
+
+- **2.1. Functional Requirements (FR):**
+  - **FR1:** The system shall accept a research report as input (string or file).
+  - **FR2:** The system shall parse the input to identify and isolate a block of reference links.
+  - **FR3:** The system shall extract valid HTTP/HTTPS URLs from the reference section.
+  - **FR4:** The system shall allow selection of a content extraction strategy (e.g., "jina", "firecrawl", "local_bs4") via configuration.
+  - **FR5:** The system shall securely load and use API keys for external extraction services if required by the chosen strategy, without hardcoding them.
+  - **FR6:** For each unique URL, the system shall attempt to fetch and extract its main textual content using the selected strategy.
+  - **FR7:** The system shall append the extracted text from each reference URL to the original report content.
+  - **FR8:** Appended content shall be clearly demarcated with headers indicating the source URL.
+  - **FR9:** If content fetching/extraction fails, a notification of failure (including the source URL and reason, if possible) shall be included.
+  - **FR10:** The final output shall be a single text block suitable for LLM consumption.
+- **2.2. Non-Functional Requirements (NFR):**
+  - **NFR1: Ease of Implementation:** The core solution should be straightforward to develop, leveraging common Python libraries. Adding new extractors should follow a clear pattern.
+  - **NFR2: LLM-Friendly Output:** Output format must be easily parsable by LLMs.
+  - **NFR3: Modularity & Extensibility:** The content extraction mechanism must be pluggable to easily add new APIs or change methods.
+  - **NFR4: Security:** API keys and sensitive configurations **must not** be hardcoded. Secure loading mechanisms (environment variables, `.env` files) are mandatory.
+  - **NFR5: Robustness:** Graceful handling of common errors (network, API, parsing).
+  - **NFR6: Performance:** Reasonable fetching time, with understanding that external APIs have their own latencies.
+  - **NFR7: Usability:** Easy to use as a Python library function or a simple CLI tool. Clear instructions for configuration, especially API keys.
+- **2.3. Assumptions:**
+  - **A1:** Reference links are primarily grouped at the report's end.
+  - **A2:** URLs are standard HTTP/HTTPS links.
+  - **A3:** Chosen external APIs (Jina, Firecrawl, etc.) are accessible and their API contracts are stable or versioned.
+  - **A4:** The system has internet access.
+  - **A5:** Users are responsible for obtaining and securely configuring any necessary API keys for chosen external services.
+
+## 3. System Architecture & Design
+
+- **3.1. High-Level Architecture:**
+  A modular Python application following a pipeline:
+  Input Report -> [**1. Parser & Separator**] -> (Original Content, List of URLs) -> [**2. Pluggable Content Extractor (per URL, chosen by config)**] -> (Fetched Text/Error) -> [**3. Output Assembler**] -> Augmented Report
+- **3.2. Components:**
+  1. **Input Handler:** Accepts report (string/file path), reads content.
+  2. **Reference Extractor:** Identifies reference section, extracts unique URLs.
+  3. **Configuration Loader:** Securely loads settings, including extractor choice and API keys (from environment variables or `.env` files).
+  4. **Content Extractor Interface (Abstract Base Class - ABC):**
+     - Defines `extract_text(self, url: str, api_key: Optional[str] = None, **kwargs) -> Tuple[Optional[str], Optional[str]]`.
+  5. **Concrete Content Extractor Implementations (Plugins):**
+     - `JinaAIExtractor(ContentExtractorInterface)`: Uses Jina AI Reader API.
+     - `FirecrawlExtractor(ContentExtractorInterface)`: Uses Firecrawl API.
+     - `BeautifulSoupExtractor(ContentExtractorInterface)`: Local fetching with `requests` and parsing with `BeautifulSoup4`.
+     - *(Future extractors to be added here, adhering to the interface).*
+  6. **Extractor Factory/Selector:** Instantiates the chosen `ContentExtractorImplementation` based on loaded configuration.
+  7. **Main Orchestrator (`process_report` function):** Manages workflow, uses Factory to get extractor, iterates URLs, calls `extractor.extract_text()`.
+  8. **Output Formatter:** Assembles the final report string with delimiters and attributions.
+- **3.3. Data Flow:**
+  1. User provides report and configuration (implicitly via environment or explicitly).
+  2. Configuration Loader fetches settings (extractor choice, API keys).
+  3. Input Handler provides report content to Reference Extractor.
+  4. Reference Extractor yields `original_content` and `list_of_urls`.
+  5. Main Orchestrator gets chosen `extractor_instance` via Extractor Factory.
+  6. For each `url`, Orchestrator calls `extractor_instance.extract_text(url, api_key=loaded_api_key, **kwargs)`.
+  7. The chosen extractor performs its specific logic, returning `(text, error_message)`.
+  8. Output Formatter combines `original_content` with all fetched data/errors.
+  9. Final `augmented_report_string` is returned.
+
+## 4. Technology Stack
+
+- **Programming Language:** Python (Version 3.7+)
+- **Core Libraries (Common):**
+  - `requests`: For HTTP/HTTPS requests.
+  - Python Standard Library: `re`, `urllib.parse`, `json`, `logging`, `argparse`, `os`, `abc`.
+- **Configuration Management (Security Critical):**
+  - **`python-dotenv`:** To load configurations (especially API keys) from `.env` files. This file **MUST NOT** be committed to version control if it contains secrets.
+- **Extractor-Specific Technologies:**
+  - `JinaAIExtractor`: Jina AI Reader API knowledge.
+  - `FirecrawlExtractor`: Firecrawl API knowledge.
+  - `BeautifulSoupExtractor`: `beautifulsoup4` library.
+- **API Keys:** **MUST NOT BE HARDCODED.** To be managed via environment variables or `.env` files.
+
+## 5. Implementation Steps (Phased Approach)
+
+1. **Phase 1: Environment & Core Utilities**
+   - Setup virtual environment. Install `requests`, `python-dotenv`.
+   - Develop URL validation and extraction utilities.
+2. **Phase 2: Reference Parsing & Separation**
+   - Implement `parse_report(report_text)` to get `original_body` and `list_of_urls`.
+3. **Phase 3: Configuration & Extractor Interface**
+   - Implement secure loading of config (extractor choice, API keys from `.env`/environment variables).
+   - Define `ContentExtractorInterface(ABC)` with `extract_text` abstract method.
+   - Implement `ExtractorFactory` to return correct extractor instance.
+4. **Phase 4: Concrete Extractor Implementations**
+   - `BeautifulSoupExtractor`: Baseline local implementation.
+   - `JinaAIExtractor`: Implement API calls, header management (including `Authorization: Bearer <API_KEY>` or `x-jina-api-key` as per Jina's docs), response parsing.
+   - `FirecrawlExtractor`: Implement API calls, header management, response parsing.
+   - Ensure each handles its specific errors and API key usage.
+5. **Phase 5: Main Orchestration & Output Assembly**
+   - Implement main `process_report` function coordinating parsing, factory, iteration over URLs with chosen extractor, and output assembly.
+   - Implement `OutputFormatter` logic.
+6. **Phase 6: Interface (Python function & CLI)**
+   - Refine main Python function signature to accept `extractor_config` for API keys.
+   - (Optional) Develop CLI ensuring API keys are not passed directly as insecure arguments; prefer environment variables.
+7. **Phase 7: Documentation & Testing**
+   - Document setup, configuration (especially `.env.example` for API keys), and usage.
+   - Write unit tests for utilities, individual extractors (mocking API calls), and integration tests.
+
+## 6. Interface Design
+
+- **6.1. Programmatic Interface (Python Function):**
+  ```python
+  import os # For robust environment variable access
+  
+  def augment_research_report(
+      report_text: str,
+      extractor_type: str = "local_bs4",  # Default extractor
+      extractor_config: Optional[dict] = None, # For API keys, other params
+      request_timeout: int = 15
+  ) -> str:
+      """
+      Augments a research report with content fetched from its reference links
+      using a specified content extraction strategy.
+  
+      Args:
+          report_text: The full text of the research report.
+          extractor_type: Identifier for the content extraction method
+                          (e.g., "jina", "firecrawl", "local_bs4").
+          extractor_config: Configuration dictionary for the chosen extractor.
+                            CALLER IS RESPONSIBLE for populating this securely
+                            with API keys if needed (e.g., from os.getenv()).
+                            Example: {'api_key': os.getenv('JINA_API_KEY')}
+          request_timeout: Timeout in seconds for HTTP requests.
+  
+      Returns:
+          A string containing the original report followed by appended content.
+      """
+      # Implementation details:
+      # 1. Load API key from extractor_config or directly via os.getenv()
+      #    if extractor_config is None or api_key not in it, as a fallback.
+      #    Clearly document precedence.
+      # 2. Instantiate chosen extractor via factory.
+      # 3. Process URLs and assemble output.
+      pass
+  ```
+- **6.2. Command-Line Interface (CLI) (Optional):**
+  - **Usage Example:**
+    `export JINA_API_KEY="your_key_here"` (or set in `.env` file)
+    `python reference_augmenter.py report.txt --extractor jina --output augmented_report.txt`
+  - **Arguments:**
+    - `input_file_path`: Path to the report.
+    - `--extractor <name>`: (e.g., `jina`, `firecrawl`, `local_bs4`). Defaults to `local_bs4`.
+    - `--output <file_path>`: Optional output file. Prints to stdout if omitted.
+    - `--timeout <seconds>`: Optional request timeout.
+  - **API Key Handling for CLI:** The script will internally attempt to load necessary API keys from pre-set environment variables (e.g., `JINA_API_KEY`, `FIRECRAWL_API_KEY`) based on the chosen `--extractor`. **Direct CLI arguments for API keys (e.g., `--api-key XXXXX`) should be avoided due to security risks (command history).**
+
+## 7. Error Handling & Logging
+
+- **Error Handling:**
+  - Each `ContentExtractorImplementation` is responsible for handling API-specific errors (rate limits, authentication failures, bad responses) and network errors, returning `(None, error_message)`.
+  - The main orchestrator will catch general exceptions during the process.
+  - Clear error messages in the final report for failed URLs: `[Content for URL_X could not be retrieved via EXTRACTOR_Y: ERROR_DETAILS]`.
+- **Logging (Internal):**
+  - Use Python's `logging` module.
+  - Log INFO for operations (e.g., "Using extractor: jina", "Fetching URL X...").
+  - Log WARNING for recoverable issues (e.g., "Failed to fetch URL Y, skipping.").
+  - Log ERROR for critical failures in components.
+  - **Security Note on Logging:** Avoid logging full API keys or overly sensitive parts of responses.
+  - 
+
+## 8. Deployment & Usage
+
+* **Deployment:** Standalone Python script/small package. Install dependencies (`requests`, `python-dotenv`, `beautifulsoup4`, etc.).
+
+*   **API Key Management (User Responsibility):**
+    *   Users **MUST** set API keys as environment variables or in a `.env` file in the script's root directory.
+    *   A `.env.example` file **MUST** be provided:
+        ```
+        # .env.example - Copy to .env and fill in your API keys.
+        # This .env file MUST be in .gitignore and NOT committed with actual keys.
+        JINA_API_KEY=YOUR_JINA_API_KEY_HERE
+        FIRECRAWL_API_KEY=YOUR_FIRECRAWL_API_KEY_HERE
+        # Add other configurations if needed, e.g., specific extractor modes
+        # DEFAULT_EXTRACTOR=local_bs4
+        ```
+    *   Documentation must clearly list environment variables for each supported extractor.
+    
+*   **Usage:**
+    *   As Python library: Import and call `augment_research_report()`.
+    *   As CLI tool: Execute script with appropriate arguments after setting up environment variables.
+
+
+### 8.1 ** flow diagram **
+
+Okay, here's a text-based diagram to demonstrate the core process flow of the Reference Augmentor:
+
+```
+      +------------------------------------------+
+| START: Input Research Report             |
+| (Text or File Path)                      |
++------------------------------------------+
+             |
+             v
++------------------------------------------+
+| 1. Load Configuration                    |
+|    - Extractor Type (e.g., "jina", "local")|
+|    - API Keys (Securely from .env/Env Vars)|
+|      [Note: .env for JINA_API_KEY, etc.] |
++------------------------------------------+
+             |
+             v
++------------------------------------------+
+| 2. Parse Report                          |
+|    - Identify Reference Section          |
+|    - Extract Original Content            |
+|    - Extract List of Unique URLs         |
++------------------------------------------+
+             |
+             |--> [Original Content]
+             |
+             v
++------------------------------------------+
+| 3. Instantiate Content Extractor         |
+|    (Based on configured Extractor Type)  |
+|    - JinaAIExtractor                     |
+|    - FirecrawlExtractor                  |
+|    - BeautifulSoupExtractor (local)      |
+|    - ... (other pluggable extractors)    |
+|      [Selected_Extractor_Instance]       |
++------------------------------------------+
+             |
+             v
++------------------------------------------+
+| 4. For Each URL in [List of Unique URLs]:|
++------------------------------------------+
+      |
+      |----YES (URL available) -->
+      |
+      v
++------------------------------------------+
+|   4a. Call Selected_Extractor_Instance   |
+|       .extract_text(URL, API_Key, Config)|
++------------------------------------------+
+                |
+                v
+      +-----------------------+
+      | 4b. Content Extracted?|
+      +-----------------------+
+          |          |
+   (YES)  |          | (NO / Error)
+          v          v
++-----------------+  +-------------------+
+| 4c. Store       |  | 4d. Store         |
+| Extracted Text  |  | Error Message     |
+| & Source URL    |  | & Source URL      |
++-----------------+  +-------------------+
+          |          |
+          ---------|-----------
+                     |
+                     v
+      +---------------------------------+
+      | 4e. Prepare Data for Appending  |
+      |    (Text or Error for this URL)|
+      +---------------------------------+
+                     |
+(Loop back to 4. for next URL) |
+                     |
+NO (All URLs processed) <----|
+                     |
+                     v
++------------------------------------------+
+| 5. Assemble Final Report                 |
+|    - Start with [Original Content]       |
+|    - For each processed URL:             |
+|      - Add Delimiter (--- Source: URL ---)|
+|      - Add [Fetched Text] or [Error Msg] |
+|      - Add End Delimiter                 |
+|    - Add Main Appendix End Delimiter     |
++------------------------------------------+
+             |
+             v
++------------------------------------------+
+| END: Output Augmented Report String      |
++------------------------------------------+
+    
+```
+
+### 8.2 How to Read the Diagram:
+
+- 
+
+- +-----+ boxes represent stages or components.
+
+- | and v indicate the flow of control or data.
+
+- --> indicates a direct transition.
+
+- Indentation within a stage (like step 4) shows sub-steps.
+
+- Notes like [Original Content] indicate data being passed or used.
+
+- ##### The loop for processing URLs is shown by the arrow going back up from "Loop back to 4." to the start of step 4.
+
+This text-based representation should clearly outline the sequence of operations and the interaction between the different parts of the design.
+
+
+
+## 10.  Future Considerations**
+
+*   **Asynchronous Fetching:** For performance with many links (`asyncio`, `aiohttp`).
+*   **Advanced Local Content Extraction:** Integrate more sophisticated local libraries like `trafilatura` or `readability-lxml` into a new `AdvancedLocalExtractor`.
+*   **Content Caching:** Implement caching for fetched content to avoid re-fetching.
+*   **More Granular Configuration:** Allow passing specific parameters to extractors (e.g., Jina's `target_selector`, Firecrawl's `pageOptions`).
+*   **Support for Other Input Formats:** (e.g., parsing URLs from PDFs - significantly more complex).
+*   **GUI:** A simple web interface (e.g., using Flask/Streamlit) for ease of use by non-developers.
+
+---
