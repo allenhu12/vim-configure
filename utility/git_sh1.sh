@@ -328,8 +328,48 @@ show_repos() {
     done
 }
 
+# ------------------------------------------------------------------
+# NEW: Show help / usage information
+# ------------------------------------------------------------------
+show_help() {
+    cat <<'EOF'
+Usage:
+  ./git_sh1.sh verify
+      Verify that all local repositories exist.
+
+  ./git_sh1.sh fetch <repo_name|all>
+      Fetch repository metadata.
+      Examples:
+        ./git_sh1.sh fetch all
+        ./git_sh1.sh fetch controller
+
+  ./git_sh1.sh worktree add <repo_name|all> -lb <local_branch_name> -rb <remote_branch_name>
+      Add a git worktree for the specified repository and branch.
+      Examples:
+        ./git_sh1.sh worktree add all -lb local5 -rb origin/master
+        ./git_sh1.sh worktree add ap_zd_controller -lb local5 -rb origin/release/unleashed_200.17
+
+  ./git_sh1.sh worktree pull-rebase <repo_name|all> <local_branch_name>
+      Pull and rebase the given worktree branch.
+      Examples:
+        ./git_sh1.sh worktree pull-rebase controller local5
+        ./git_sh1.sh worktree pull-rebase all local5
+
+  ./git_sh1.sh show_repos
+      List every repository key configured in this script.
+
+  ./git_sh1.sh -h | ./git_sh1.sh --help
+      Display this help and exit.
+EOF
+}
+
+# ------------------------------------------------------------------
 # Main script logic to handle arguments
+# ------------------------------------------------------------------
 case "$1" in
+    -h|--help)
+        show_help
+        ;;
     verify)
         verify_repos "$2"
         ;;
@@ -363,7 +403,8 @@ case "$1" in
         show_repos
         ;;
     *)
-        echo -e "${RED}Invalid command. Usage: $0 {verify|fetch|worktree {add|pull-rebase}|show_repos}${NC}"
+        echo -e "${RED}Invalid command.${NC}"
+        show_help
         ;;
 esac
 
