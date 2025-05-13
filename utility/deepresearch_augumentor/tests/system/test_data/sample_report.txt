@@ -1,0 +1,15 @@
+Test Research Report
+================
+
+This is a sample research report used for testing the CLI interface
+of the Reference Augmentor.
+
+Introduction
+-----------
+The purpose of this document is to test how the Reference Augmentor
+handles report files through its command-line interface.
+
+References
+---------
+https://example.com/article1
+https://example.com/article2 

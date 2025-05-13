@@ -7,7 +7,7 @@ the Reference Augmentor. It captures detailed information about the extraction
 process, saves artifacts for inspection, and provides verbose logging.
 
 Usage:
-    python debug_wrapper.py input_file [--extractor jina|firecrawl|local_bs4] [--output output_file]
+    python debug_wrapper.py input_file [--extractor jina|firecrawl|local_bs4] [--mode default|body-only|article|main-content] [--output output_file] [--timeout seconds]
 """
 
 import os
@@ -26,7 +26,7 @@ logging.basicConfig(
 logger = logging.getLogger('debug_wrapper')
 
 # Import the main module
-from main import augment_research_report
+from main import augment_research_report, EXTRACTION_MODES
 
 
 def create_debug_dir(extractor_type):
@@ -38,7 +38,7 @@ def create_debug_dir(extractor_type):
     return debug_dir
 
 
-def run_with_debug(input_file, extractor_type, output_file=None, timeout=15):
+def run_with_debug(input_file, extractor_type, output_file=None, timeout=15, extraction_mode="default"):
     """Run the augmentation with debugging enabled."""
     # Create debug directory
     debug_dir = create_debug_dir(extractor_type)
@@ -87,7 +87,7 @@ def run_with_debug(input_file, extractor_type, output_file=None, timeout=15):
         
         # Track timing
         start_time = time.time()
-        logger.info(f"Starting augmentation with {extractor_type} extractor")
+        logger.info(f"Starting augmentation with {extractor_type} extractor using mode {extraction_mode}")
         
         try:
             # Monkey patch the extractors to capture API responses
@@ -106,6 +106,11 @@ def run_with_debug(input_file, extractor_type, output_file=None, timeout=15):
                 # Create a wrapper that logs the response
                 def extract_text_with_logging(self, url, api_key=None, **kwargs):
                     logger.info(f"Calling {extractor_type} API for URL: {url}")
+                    if kwargs.get('target_selector'):
+                        logger.info(f"Using target_selector: {kwargs.get('target_selector')}")
+                    if kwargs.get('remove_selector'):
+                        logger.info(f"Using remove_selector: {kwargs.get('remove_selector')}")
+                    
                     start = time.time()
                     
                     try:
@@ -133,6 +138,7 @@ def run_with_debug(input_file, extractor_type, output_file=None, timeout=15):
             result = augment_research_report(
                 report_text=report_text,
                 extractor_type=extractor_type,
+                extraction_mode=extraction_mode,
                 request_timeout=timeout
             )
             
@@ -207,6 +213,9 @@ def main():
                         default="local_bs4", help="Content extraction method")
     parser.add_argument("--output", help="Output file path (default: print to stdout)")
     parser.add_argument("--timeout", type=int, default=15, help="HTTP request timeout in seconds")
+    # Add extraction mode argument with choices from predefined modes
+    parser.add_argument("--mode", choices=list(EXTRACTION_MODES.keys()), default="default",
+                      help="Content extraction mode (Jina API only)")
     
     args = parser.parse_args()
     
@@ -215,7 +224,8 @@ def main():
             args.input_file,
             args.extractor,
             args.output,
-            args.timeout
+            args.timeout,
+            args.mode
         )
         
         if not args.output:

@@ -1,0 +1,10 @@
+# Test artifacts
+__pycache__/
+.pytest_cache/
+*.pyc
+.coverage
+htmlcov/
+coverage.xml
+
+# Local test data that might contain sensitive info
+test_data/local/ 
