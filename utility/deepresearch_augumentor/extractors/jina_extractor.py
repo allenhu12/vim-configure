@@ -19,6 +19,12 @@ class JinaAIExtractor(ContentExtractorInterface):
                 - timeout: Request timeout in seconds
                 - target_selector: CSS selector to target specific elements
                 - remove_selector: CSS selector to exclude elements
+                - links_handling: How to handle links, options:
+                   * "default": Standard link handling (default)
+                   * "discarded": Remove all links but keep the text
+                   * "referenced": Show links as numbered references
+                   * "none": Don't include links summary at all
+                - links_summary: Whether to include a links summary section (true/false/all)
         
         Returns:
             Tuple of (extracted_text, error_message)
@@ -32,6 +38,8 @@ class JinaAIExtractor(ContentExtractorInterface):
         timeout = kwargs.get('timeout', 10)
         target_selector = kwargs.get('target_selector', None)
         remove_selector = kwargs.get('remove_selector', None)
+        links_handling = kwargs.get('links_handling', 'default')
+        links_summary = kwargs.get('links_summary', None)
         
         headers = {
             "Authorization": f"Bearer {api_key}",
@@ -46,6 +54,22 @@ class JinaAIExtractor(ContentExtractorInterface):
             headers["X-Target-Selector"] = target_selector
         if remove_selector:
             headers["X-Remove-Selector"] = remove_selector
+        
+        # Handle links differently based on user preference
+        if links_handling == 'discarded':
+            headers["X-Md-Link-Style"] = "discarded"  # Replace links with anchor text only
+        elif links_handling == 'referenced':
+            headers["X-Md-Link-Style"] = "referenced"  # Show links as numbered references
+        
+        # Control the links summary section
+        if links_summary is not None:
+            if links_summary is False or links_summary == 'none':
+                # Don't include a links summary section
+                headers["X-With-Links-Summary"] = "false"
+            elif links_summary == 'all':
+                headers["X-With-Links-Summary"] = "all"
+            else:
+                headers["X-With-Links-Summary"] = "true"
         
         try:
             response = requests.post(
