@@ -17,6 +17,8 @@ import time
 import logging
 import traceback
 from datetime import datetime
+from pathlib import Path
+from typing import Optional, Dict
 
 # Configure logging
 logging.basicConfig(
@@ -32,13 +34,22 @@ from main import augment_research_report, EXTRACTION_MODES
 def create_debug_dir(extractor_type):
     """Create a debug directory for this run."""
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    debug_dir = f"debug/run_{extractor_type}_{timestamp}"
+    
+    # Use a consistent location for debug files
+    if os.name == 'nt':  # Windows
+        base_dir = os.path.join(os.environ['APPDATA'], "ReferenceAugmentor")
+    else:  # macOS/Linux
+        base_dir = os.path.join(str(Path.home()), ".referenceaugmentor")
+        
+    debug_dir = os.path.join(base_dir, f"debug/run_{extractor_type}_{timestamp}")
+    
     if not os.path.exists(debug_dir):
         os.makedirs(debug_dir)
+        
     return debug_dir
 
 
-def run_with_debug(input_file, extractor_type, output_file=None, timeout=15, extraction_mode="default"):
+def run_with_debug(input_file, extractor_type, output_file=None, timeout=15, extraction_mode="default", extractor_config=None):
     """Run the augmentation with debugging enabled."""
     # Create debug directory
     debug_dir = create_debug_dir(extractor_type)
@@ -73,6 +84,16 @@ def run_with_debug(input_file, extractor_type, output_file=None, timeout=15, ext
     logging.getLogger().addHandler(file_handler)
     
     logger.info(f"Logging debug information to {log_file}")
+    
+    # Log extractor configuration details
+    if extractor_config:
+        # Log API key presence (not the actual key)
+        if 'api_key' in extractor_config:
+            logger.info(f"API key provided for {extractor_type}")
+        # Log other configuration parameters
+        for key, value in extractor_config.items():
+            if key != 'api_key':
+                logger.info(f"Configuration: {key} = {value}")
     
     # Capture stdout and stderr
     stdout_file = os.path.join(debug_dir, "stdout.txt")
@@ -138,8 +159,10 @@ def run_with_debug(input_file, extractor_type, output_file=None, timeout=15, ext
             result = augment_research_report(
                 report_text=report_text,
                 extractor_type=extractor_type,
+                extractor_config=extractor_config,
                 extraction_mode=extraction_mode,
-                request_timeout=timeout
+                request_timeout=timeout,
+                verbose=True  # Always verbose in debug mode
             )
             
             # Save the result
@@ -203,8 +226,9 @@ def run_with_debug(input_file, extractor_type, output_file=None, timeout=15, ext
 
 
 def main():
-    """CLI entry point."""
+    """CLI entry point for standalone debug usage."""
     import argparse
+    from config_manager import ConfigManager
     
     parser = argparse.ArgumentParser(description="Debug Wrapper for Reference Augmentor")
     
@@ -220,12 +244,32 @@ def main():
     args = parser.parse_args()
     
     try:
+        # Initialize config manager to get API keys
+        config = ConfigManager()
+        extractor_config = {}
+        
+        if args.extractor == "jina":
+            api_key = config.get_api_key("JINA_API_KEY")
+            if not api_key:
+                print("Jina API key not found in configuration.")
+                print("Please set it using: python main.py --set-jina-key YOUR_API_KEY")
+                return
+            extractor_config['api_key'] = api_key
+        elif args.extractor == "firecrawl":
+            api_key = config.get_api_key("FIRECRAWL_API_KEY")
+            if not api_key:
+                print("Firecrawl API key not found in configuration.")
+                print("Please set it using: python main.py --set-firecrawl-key YOUR_API_KEY")
+                return
+            extractor_config['api_key'] = api_key
+            
         result, debug_dir = run_with_debug(
             args.input_file,
             args.extractor,
             args.output,
             args.timeout,
-            args.mode
+            args.mode,
+            extractor_config
         )
         
         if not args.output:

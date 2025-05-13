@@ -1,0 +1,19 @@
+# Temporary and backup files
+*_backup.py
+tmp_*.py
+*_updated.py
+extraction_mode_*.py
+modify_*.py
+
+# Result and test files
+result*.txt
+test_*.txt
+augmented_report*.txt
+
+# Environment and coverage files
+.coverage
+.env*
+!.env.sample
+
+# Debug artifacts
+debug/ 
