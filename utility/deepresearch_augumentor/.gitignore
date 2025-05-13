@@ -2,7 +2,6 @@
 *_backup.py
 tmp_*.py
 *_updated.py
-extraction_mode_*.py
 modify_*.py
 
 # Result and test files
