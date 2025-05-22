@@ -35,6 +35,7 @@ def build_app(one_file=False):
         "pyinstaller",
         "--name", "ReferenceAugmentor",
         "--add-data", "extractors:extractors",
+        "--paths", ".",
     ]
     
     # Add --onefile if requested
@@ -43,14 +44,17 @@ def build_app(one_file=False):
     else:
         cmd.append("--onedir")
     
-    # Add main script and other modules
+    # Add main script and other essential modules
     cmd.extend([
         "main.py",
         "config_manager.py",
+        "debug_wrapper.py",
+        "utils.py"
     ])
     
     # Execute PyInstaller
     print(f"Building {'single file executable' if one_file else 'directory'} with PyInstaller...")
+    print(f"Command: {' '.join(cmd)}")
     subprocess.check_call(cmd)
     
     # Report success

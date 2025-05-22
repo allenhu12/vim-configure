@@ -91,7 +91,12 @@ The Reference Augmentor enhances research reports by automatically fetching
 content from URLs listed in their reference section.
 
 BASIC USAGE:
-    python main.py input_file [options]
+    For development/testing (using python directly):
+        python main.py input_file [options]
+    
+    For packaged executable (e.g., on macOS/Linux):
+        ./ReferenceAugmentor input_file [options]
+    (On Windows, use ReferenceAugmentor.exe)
 
 ARGUMENTS:
     input_file                Path to the report file with references to process
@@ -124,52 +129,53 @@ OPTIONS:
     --quiet                   Suppress progress information (show only errors)
 
 API KEY MANAGEMENT:
-    The Jina and Firecrawl extractors require API keys. You can manage these
-    with the following commands:
+    API keys are required for Jina and Firecrawl extractors.
+    Manage them with the packaged executable (./ReferenceAugmentor or ReferenceAugmentor.exe):
 
-    --set-jina-key KEY        Store your Jina API key for future use
-    --set-firecrawl-key KEY   Store your Firecrawl API key for future use
-    --show-keys               Display currently stored API keys (masked)
-    --clear-keys              Remove all stored API keys
+    ./ReferenceAugmentor --set-jina-key YOUR_JINA_API_KEY
+    ./ReferenceAugmentor --set-firecrawl-key YOUR_FIRECRAWL_API_KEY
+    ./ReferenceAugmentor --show-keys
+    ./ReferenceAugmentor --clear-keys
+
+    (Or use `python main.py --set-jina-key ...` during development)
 
     API keys are stored in a configuration file:
     - Windows: %APPDATA%\\ReferenceAugmentor\\config.json
     - macOS/Linux: ~/.referenceaugmentor/config.json
 
 EXAMPLES:
-    # Basic usage with local extraction
-    python main.py report.txt
+    Using Python directly:
+        # Basic usage with local extraction
+        python main.py report.txt
 
-    # Use Jina extractor with body-only mode to focus on main content
-    python main.py report.txt --extractor jina --mode body-only
+        # Use Jina extractor with body-only mode to focus on main content
+        python main.py report.txt --extractor jina --mode body-only
 
-    # Save output to a file
-    python main.py report.txt --extractor jina --mode article --output augmented_report.txt
+        # Save output to a file
+        python main.py report.txt --extractor jina --mode article --output augmented_report.txt
 
-    # Increase timeout for slow connections
-    python main.py report.txt --extractor jina --timeout 30
+        # Increase timeout for slow connections
+        python main.py report.txt --extractor jina --timeout 30
+
+    Using the packaged executable (macOS/Linux):
+        # Basic usage with local extraction
+        ./ReferenceAugmentor report.txt
+
+        # Use Jina extractor with body-only mode
+        ./ReferenceAugmentor report.txt --extractor jina --mode body-only
+
+        # Save output to a file
+        ./ReferenceAugmentor report.txt --extractor jina --mode article --output augmented_report.txt
 
 DEBUGGING:
-    For troubleshooting issues, use the debug_wrapper.py script instead of main.py:
+    For troubleshooting issues, use the --debug flag with the main script or executable:
     
-    python debug_wrapper.py input_file [same options as main.py]
+    python main.py report.txt --extractor jina --mode body-only --debug
+    ./ReferenceAugmentor report.txt --extractor jina --mode body-only --debug
     
-    The debug wrapper provides:
-    - Detailed logging with timestamps
-    - Tracking of API calls and responses
-    - Time measurements for each operation
-    - Storage of input, output, and intermediate results
-    
-    Debug artifacts are saved to debug/run_[extractor]_[timestamp]/ and include:
-    - input.txt: Copy of the input report
-    - output.txt: The generated augmented report
-    - debug.log: Detailed logs including API calls and selectors used
-    - timing.json: Performance metrics and timing information
-    - stdout.txt, stderr.txt: Captured console output
-    - error.txt: Detailed error information if something fails
-    
-    Example debugging command:
-    python debug_wrapper.py report.txt --extractor jina --mode body-only
+    This provides detailed logging, API call tracking, and stores debug artifacts in:
+    - Windows: %APPDATA%\\ReferenceAugmentor\\debug\\run_[extractor]_[timestamp]\
+    - macOS/Linux: ~/.referenceaugmentor/debug/run_[extractor]_[timestamp]/
 
 NOTES:
     - The extraction modes feature only works with the Jina extractor
