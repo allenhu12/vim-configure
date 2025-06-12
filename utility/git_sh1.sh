@@ -74,7 +74,19 @@ if [ -z "$repo_base" ]; then
     exit 1
 fi
 
-worktree_base_path="$script_dir"
+# Worktree base path should be the git-depot directory
+worktree_base_path="$repo_base/.."
+if [[ "${worktree_base_path##*/}" != "git-depot" ]]; then
+    # If we're not in git-depot, try to find it
+    temp_path="$script_dir"
+    while [[ "$temp_path" != "/" && "${temp_path##*/}" != "git-depot" ]]; do
+        temp_path="$(dirname "$temp_path")"
+    done
+    if [[ "${temp_path##*/}" == "git-depot" ]]; then
+        worktree_base_path="$temp_path"
+    fi
+fi
+
 ssh_base="ssh://tdc-mirror-git@ruckus-git.ruckuswireless.com:7999/wrls/"
 
 # Verify if a specific repository or all repos are ready
@@ -329,6 +341,889 @@ show_repos() {
 }
 
 # ------------------------------------------------------------------
+# FEATURE BRANCH MANAGEMENT FUNCTIONS
+# ------------------------------------------------------------------
+
+# Feature metadata directory
+features_dir="$script_dir/.git_sh1_features"
+
+# Initialize features directory if it doesn't exist
+init_features_dir() {
+    if [ ! -d "$features_dir" ]; then
+        mkdir -p "$features_dir"
+        echo -e "${GREEN}Initialized features directory at: $features_dir${NC}"
+    fi
+}
+
+# Create or switch to a feature branch
+feature_create() {
+    local feature_name=""
+    local worktree=""
+    local repos=()
+    
+    # Parse arguments
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -w)
+                shift
+                worktree="$1"
+                shift
+                ;;
+            *)
+                if [ -z "$feature_name" ]; then
+                    feature_name="$1"
+                    shift
+                else
+                    repos+=("$1")
+                    shift
+                fi
+                ;;
+        esac
+    done
+    
+    if [ -z "$feature_name" ] || [ ${#repos[@]} -eq 0 ]; then
+        echo -e "${RED}Usage: $0 feature create -w <worktree> <feature_name> <repo1> [repo2] ...${NC}"
+        echo -e "${YELLOW}  -w <worktree>: Required. Specify which worktree to create the feature in${NC}"
+        return 1
+    fi
+
+    if [ -z "$worktree" ]; then
+        echo -e "${RED}Error: Worktree (-w) is required for feature creation${NC}"
+        echo -e "${YELLOW}Usage: $0 feature create -w <worktree> <feature_name> <repo1> [repo2] ...${NC}"
+        return 1
+    fi
+    
+    init_features_dir
+    
+    local feature_dir="$features_dir/$feature_name"
+    mkdir -p "$feature_dir"
+    
+    # Save the repository list
+    printf "%s\n" "${repos[@]}" > "$feature_dir/repos.txt"
+    
+    # Save worktree info
+    echo "$worktree" > "$feature_dir/worktree.txt"
+    echo -e "${CYAN}Using worktree: $worktree${NC}"
+    
+    # Save current branches for each repo
+    local branches_json="{"
+    local first=true
+    
+    for repo in "${repos[@]}"; do
+        # Find the local folder for this repo
+        local local_folder=""
+        for pair in $repo_map; do
+            IFS=':' read -r r f <<< "$pair"
+            if [ "$r" == "$repo" ]; then
+                local_folder="$f"
+                break
+            fi
+        done
+        
+        if [ -z "$local_folder" ]; then
+            echo -e "${RED}Repository $repo not found in repo_map${NC}"
+            continue
+        fi
+        
+        # Determine the repository path based on worktree
+        local repo_path="$worktree_base_path/$worktree/$local_folder"
+        
+        if [ ! -d "$repo_path/.git" ] && [ ! -f "$repo_path/.git" ]; then
+            echo -e "${RED}Repository not found: $repo_path${NC}"
+            continue
+        fi
+        
+        cd "$repo_path"
+        local current_branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
+        
+        if [ "$first" = true ]; then
+            first=false
+        else
+            branches_json+=","
+        fi
+        
+        # Save branch and location info
+        branches_json+="\"$repo\":{\"branch\":\"$current_branch\",\"path\":\"$repo_path\"}"
+        
+        # Create or switch to feature branch
+        local feature_branch="feature/$feature_name"
+        
+        # Check if we're already on the feature branch
+        if [ "$current_branch" == "$feature_branch" ]; then
+            echo -e "${GREEN}Already on feature branch $feature_branch in $repo${NC}"
+        elif git show-ref --verify --quiet "refs/heads/$feature_branch"; then
+            # Try to switch to existing feature branch
+            echo -e "${YELLOW}Switching to existing feature branch $feature_branch in $repo${NC}"
+            if ! git checkout "$feature_branch" 2>/dev/null; then
+                # If checkout fails, check if it's due to branch being in use by another worktree
+                local worktree_info=$(git worktree list --porcelain | grep -B 2 "branch refs/heads/$feature_branch" | grep "worktree" | cut -d' ' -f2)
+                if [ -n "$worktree_info" ]; then
+                    echo -e "${CYAN}Feature branch $feature_branch is already checked out in worktree: $worktree_info${NC}"
+                    echo -e "${CYAN}Adding $repo to feature tracking without switching branches${NC}"
+                else
+                    echo -e "${RED}Failed to checkout $feature_branch in $repo${NC}"
+                fi
+            fi
+        else
+            echo -e "${GREEN}Creating new feature branch $feature_branch in $repo${NC}"
+            git checkout -b "$feature_branch"
+        fi
+    done
+    
+    branches_json+="}"
+    echo "$branches_json" > "$feature_dir/branches.json"
+    
+    echo -e "${GREEN}Feature '$feature_name' created/updated with repositories: ${repos[*]}${NC}"
+}
+
+# List all features
+feature_list() {
+    init_features_dir
+    
+    if [ ! -d "$features_dir" ] || [ -z "$(ls -A "$features_dir" 2>/dev/null)" ]; then
+        echo -e "${YELLOW}No features found.${NC}"
+        return
+    fi
+    
+    echo -e "${CYAN}Available features:${NC}"
+    for feature_dir in "$features_dir"/*; do
+        if [ -d "$feature_dir" ]; then
+            local feature_name=$(basename "$feature_dir")
+            echo -e "\n${GREEN}Feature: $feature_name${NC}"
+            
+            if [ -f "$feature_dir/repos.txt" ]; then
+                echo -e "${CYAN}  Repositories:${NC}"
+                while IFS= read -r repo; do
+                    echo -e "    - ${YELLOW}$repo${NC}"
+                done < "$feature_dir/repos.txt"
+            fi
+            
+            if [ -f "$feature_dir/worktree.txt" ]; then
+                echo -e "${CYAN}  Worktree:${NC} $(cat "$feature_dir/worktree.txt")"
+            fi
+            
+            if [ -f "$feature_dir/comment.txt" ]; then
+                echo -e "${CYAN}  Comment:${NC} $(cat "$feature_dir/comment.txt")"
+            fi
+        fi
+    done
+}
+
+# Show details of a specific feature
+feature_show() {
+    local feature_name=""
+    local worktree_override=""
+    
+    # Parse arguments
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -w)
+                shift
+                worktree_override="$1"
+                shift
+                ;;
+            *)
+                if [ -z "$feature_name" ]; then
+                    feature_name="$1"
+                    shift
+                else
+                    echo -e "${RED}Unknown argument: $1${NC}"
+                    return 1
+                fi
+                ;;
+        esac
+    done
+    
+    if [ -z "$feature_name" ]; then
+        echo -e "${RED}Usage: $0 feature show [-w <worktree>] <feature_name>${NC}"
+        return 1
+    fi
+    
+    local feature_dir="$features_dir/$feature_name"
+    if [ ! -d "$feature_dir" ]; then
+        echo -e "${RED}Feature '$feature_name' not found${NC}"
+        return 1
+    fi
+    
+    echo -e "${GREEN}Feature: $feature_name${NC}"
+    
+    if [ -f "$feature_dir/comment.txt" ]; then
+        echo -e "${CYAN}Comment:${NC} $(cat "$feature_dir/comment.txt")"
+    fi
+    
+    # Check if feature uses a worktree
+    local worktree=""
+    if [ -n "$worktree_override" ]; then
+        worktree="$worktree_override"
+        echo -e "${CYAN}Using override worktree:${NC} $worktree"
+    elif [ -f "$feature_dir/worktree.txt" ]; then
+        worktree=$(cat "$feature_dir/worktree.txt")
+        echo -e "${CYAN}Worktree:${NC} $worktree"
+    elif [ -f "$feature_dir/detected_worktree.txt" ]; then
+        worktree=$(cat "$feature_dir/detected_worktree.txt")
+        echo -e "${CYAN}Detected Worktree:${NC} $worktree"
+    fi
+    
+    if [ -f "$feature_dir/repos.txt" ]; then
+        echo -e "\n${CYAN}Repository Status:${NC}"
+        while IFS= read -r repo; do
+            # Find the local folder for this repo
+            local local_folder=""
+            for pair in $repo_map; do
+                IFS=':' read -r r f <<< "$pair"
+                if [ "$r" == "$repo" ]; then
+                    local_folder="$f"
+                    break
+                fi
+            done
+            
+            if [ -z "$local_folder" ]; then
+                echo -e "  ${YELLOW}$repo${NC}: ${RED}Not found in repo_map${NC}"
+                continue
+            fi
+            
+            # Determine the repository path based on worktree
+            local repo_path
+            if [ -n "$worktree" ]; then
+                repo_path="$worktree_base_path/$worktree/$local_folder"
+            else
+                repo_path="$repo_base/$local_folder"
+            fi
+            
+            if [ ! -d "$repo_path/.git" ] && [ ! -f "$repo_path/.git" ]; then
+                echo -e "  ${YELLOW}$repo${NC}: ${RED}Repository not found${NC}"
+                continue
+            fi
+            
+            cd "$repo_path"
+            local current_branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
+            local feature_branch="feature/$feature_name"
+            
+            echo -e "  ${YELLOW}$repo${NC}:"
+            echo -e "    Current branch: ${CYAN}$current_branch${NC}"
+            echo -e "    Repository path: ${CYAN}$repo_path${NC}"
+            
+            if git show-ref --verify --quiet "refs/heads/$feature_branch"; then
+                # Check if the feature branch is checked out in any worktree
+                local worktree_info=$(git worktree list --porcelain | grep -B 2 "branch refs/heads/$feature_branch" | grep "worktree" | cut -d' ' -f2)
+                
+                if [ "$current_branch" == "$feature_branch" ]; then
+                    # Get the default remote branch
+                    local default_branch=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@')
+                    if [ -n "$default_branch" ]; then
+                        # Calculate commits ahead of the default branch
+                        local commit_count=$(git rev-list --count HEAD ^origin/$default_branch 2>/dev/null || echo "0")
+                        echo -e "    Feature branch: ${GREEN}$feature_branch (active)${NC} ($commit_count commits ahead)"
+                    else
+                        echo -e "    Feature branch: ${GREEN}$feature_branch (active)${NC}"
+                    fi
+                elif [ -n "$worktree_info" ]; then
+                    echo -e "    Feature branch: ${GREEN}$feature_branch exists${NC}"
+                    echo -e "    ${CYAN}Checked out in: $worktree_info${NC}"
+                else
+                    echo -e "    Feature branch: ${GREEN}$feature_branch exists${NC} (not checked out)"
+                fi
+            else
+                echo -e "    Feature branch: ${RED}$feature_branch does not exist${NC}"
+            fi
+        done < "$feature_dir/repos.txt"
+    fi
+}
+
+# Add or update comment for a feature
+feature_comment() {
+    local feature_name=$1
+    shift
+    local comment="$*"
+    
+    if [ -z "$feature_name" ] || [ -z "$comment" ]; then
+        echo -e "${RED}Usage: $0 feature comment <feature_name> <comment>${NC}"
+        return 1
+    fi
+    
+    local feature_dir="$features_dir/$feature_name"
+    if [ ! -d "$feature_dir" ]; then
+        echo -e "${RED}Feature '$feature_name' not found${NC}"
+        return 1
+    fi
+    
+    echo "$comment" > "$feature_dir/comment.txt"
+    echo -e "${GREEN}Comment added to feature '$feature_name'${NC}"
+}
+
+# Switch to feature branches for all repos in a feature
+feature_switch() {
+    local feature_name=""
+    local worktree_override=""
+    
+    # Parse arguments
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -w)
+                shift
+                worktree_override="$1"
+                shift
+                ;;
+            *)
+                if [ -z "$feature_name" ]; then
+                    feature_name="$1"
+                    shift
+                else
+                    echo -e "${RED}Unknown argument: $1${NC}"
+                    return 1
+                fi
+                ;;
+        esac
+    done
+    
+    if [ -z "$feature_name" ]; then
+        echo -e "${RED}Usage: $0 feature switch [-w <worktree>] <feature_name>${NC}"
+        return 1
+    fi
+    
+    local feature_dir="$features_dir/$feature_name"
+    if [ ! -d "$feature_dir" ]; then
+        echo -e "${RED}Feature '$feature_name' not found${NC}"
+        return 1
+    fi
+    
+    if [ ! -f "$feature_dir/repos.txt" ]; then
+        echo -e "${RED}No repositories found for feature '$feature_name'${NC}"
+        return 1
+    fi
+    
+    # Check if feature uses a worktree
+    local worktree=""
+    if [ -n "$worktree_override" ]; then
+        worktree="$worktree_override"
+        echo -e "${CYAN}Using override worktree: $worktree${NC}"
+    elif [ -f "$feature_dir/worktree.txt" ]; then
+        worktree=$(cat "$feature_dir/worktree.txt")
+        echo -e "${CYAN}Using worktree: $worktree${NC}"
+    elif [ -f "$feature_dir/detected_worktree.txt" ]; then
+        worktree=$(cat "$feature_dir/detected_worktree.txt")
+        echo -e "${CYAN}Using detected worktree: $worktree${NC}"
+    fi
+    
+    echo -e "${CYAN}Switching to feature branches for '$feature_name'...${NC}"
+    
+    while IFS= read -r repo; do
+        # Find the local folder for this repo
+        local local_folder=""
+        for pair in $repo_map; do
+            IFS=':' read -r r f <<< "$pair"
+            if [ "$r" == "$repo" ]; then
+                local_folder="$f"
+                break
+            fi
+        done
+        
+        if [ -z "$local_folder" ]; then
+            echo -e "${RED}Repository $repo not found in repo_map${NC}"
+            continue
+        fi
+        
+        # Determine the repository path based on worktree
+        local repo_path
+        if [ -n "$worktree" ]; then
+            repo_path="$worktree_base_path/$worktree/$local_folder"
+        else
+            repo_path="$repo_base/$local_folder"
+        fi
+        
+        if [ ! -d "$repo_path/.git" ] && [ ! -f "$repo_path/.git" ]; then
+            echo -e "${RED}Repository not found: $repo_path${NC}"
+            continue
+        fi
+        
+        cd "$repo_path"
+        local current_branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
+        local feature_branch="feature/$feature_name"
+        
+        # Check if we're already on the feature branch
+        if [ "$current_branch" == "$feature_branch" ]; then
+            echo -e "${GREEN}Already on feature branch $feature_branch in $repo${NC}"
+        elif git show-ref --verify --quiet "refs/heads/$feature_branch"; then
+            echo -e "${GREEN}Switching $repo to $feature_branch${NC}"
+            if ! git checkout "$feature_branch" 2>/dev/null; then
+                # If checkout fails, check if it's due to branch being in use by another worktree
+                local worktree_info=$(git worktree list --porcelain | grep -B 2 "branch refs/heads/$feature_branch" | grep "worktree" | cut -d' ' -f2)
+                if [ -n "$worktree_info" ]; then
+                    echo -e "${CYAN}Feature branch $feature_branch is already checked out in worktree: $worktree_info${NC}"
+                    echo -e "${YELLOW}Cannot switch to this branch in the current worktree${NC}"
+                else
+                    echo -e "${RED}Failed to checkout $feature_branch in $repo${NC}"
+                fi
+            fi
+        else
+            echo -e "${YELLOW}Feature branch $feature_branch does not exist in $repo${NC}"
+        fi
+    done < "$feature_dir/repos.txt"
+}
+
+# Check for required dependencies
+check_dependencies() {
+    local missing_deps=()
+    
+    # Check for jq
+    if ! command -v jq &> /dev/null; then
+        missing_deps+=("jq")
+    fi
+    
+    # Add more dependency checks here if needed
+    
+    if [ ${#missing_deps[@]} -gt 0 ]; then
+        echo -e "${RED}Error: Missing required dependencies:${NC}"
+        for dep in "${missing_deps[@]}"; do
+            echo -e "  - ${YELLOW}$dep${NC}"
+        done
+        echo -e "\nPlease install the missing dependencies:"
+        echo -e "  ${CYAN}sudo apt-get install ${missing_deps[*]}${NC}"
+        return 1
+    fi
+    
+    return 0
+}
+
+# Repair malformed branches.json file
+repair_branches_json() {
+    local feature_dir="$1"
+    local branches_file="$feature_dir/branches.json"
+    local feature_name=$(basename "$feature_dir")
+    
+    echo -e "${YELLOW}Attempting to repair malformed branches.json...${NC}"
+    
+    # Create a temporary file
+    local temp_file=$(mktemp)
+    
+    # Start with an empty JSON object
+    echo "{}" > "$temp_file"
+    
+    # Determine the worktree to use
+    local worktree=""
+    if [ -f "$feature_dir/worktree.txt" ]; then
+        worktree=$(cat "$feature_dir/worktree.txt")
+    elif [ -f "$feature_dir/detected_worktree.txt" ]; then
+        worktree=$(cat "$feature_dir/detected_worktree.txt")
+    fi
+    
+    # Read repos.txt and add each repo with its original branch
+    if [ -f "$feature_dir/repos.txt" ]; then
+        while IFS= read -r repo; do
+            # Find the local folder for this repo
+            local local_folder=""
+            for pair in $repo_map; do
+                IFS=':' read -r r f <<< "$pair"
+                if [ "$r" == "$repo" ]; then
+                    local_folder="$f"
+                    break
+                fi
+            done
+            
+            if [ -n "$local_folder" ]; then
+                # Determine the repository path
+                local repo_path
+                if [ -n "$worktree" ]; then
+                    repo_path="$worktree_base_path/$worktree/$local_folder"
+                else
+                    repo_path="$repo_base/$local_folder"
+                fi
+                
+                # Get the original branch from git reflog or default branches
+                if [ -d "$repo_path/.git" ] || [ -f "$repo_path/.git" ]; then
+                    cd "$repo_path"
+                    
+                    # Try multiple methods to find the original branch
+                    local original_branch=""
+                    
+                    # Method 1: Check reflog for checkout operations before feature branch
+                    original_branch=$(git reflog | grep "checkout: moving from" | grep -v "feature/$feature_name" | head -n 1 | awk '{print $NF}')
+                    
+                    # Method 2: If no reflog entry, try to find the default branch
+                    if [ -z "$original_branch" ]; then
+                        original_branch=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@')
+                    fi
+                    
+                    # Method 3: If still no branch, use common defaults based on repository
+                    if [ -z "$original_branch" ]; then
+                        case "$repo" in
+                            controller)
+                                if [ -n "$worktree" ]; then
+                                    original_branch="$worktree"
+                                else
+                                    original_branch="master"
+                                fi
+                                ;;
+                            opensource)
+                                original_branch="master"
+                                ;;
+                            *)
+                                original_branch="master"
+                                ;;
+                        esac
+                    fi
+                    
+                    if [ -n "$original_branch" ]; then
+                        # Verify the branch exists
+                        if git show-ref --verify --quiet "refs/heads/$original_branch" || \
+                           git show-ref --verify --quiet "refs/remotes/origin/$original_branch"; then
+                            # Add to JSON
+                            jq --arg repo "$repo" \
+                               --arg branch "$original_branch" \
+                               --arg path "$repo_path" \
+                               '.[$repo] = {"branch": $branch, "path": $path}' "$temp_file" > "${temp_file}.new" && \
+                            mv "${temp_file}.new" "$temp_file"
+                            echo -e "${CYAN}Added $repo: $original_branch at $repo_path${NC}"
+                        else
+                            echo -e "${YELLOW}Warning: Branch $original_branch not found for $repo, skipping${NC}"
+                        fi
+                    else
+                        echo -e "${YELLOW}Warning: Could not determine original branch for $repo${NC}"
+                    fi
+                else
+                    echo -e "${YELLOW}Warning: Repository $repo_path not found${NC}"
+                fi
+            else
+                echo -e "${YELLOW}Warning: Local folder not found for repo $repo${NC}"
+            fi
+        done < "$feature_dir/repos.txt"
+    else
+        echo -e "${RED}Error: repos.txt not found in feature directory${NC}"
+        rm -f "$temp_file"
+        return 1
+    fi
+    
+    # Check if we have any repositories in the repaired file
+    local repo_count=$(jq 'keys | length' "$temp_file")
+    if [ "$repo_count" -eq 0 ]; then
+        echo -e "${RED}Error: No repositories could be added to branches.json${NC}"
+        rm -f "$temp_file"
+        return 1
+    fi
+    
+    # Replace the original file
+    mv "$temp_file" "$branches_file"
+    echo -e "${GREEN}Repaired branches.json file with $repo_count repositories${NC}"
+}
+
+# Switch back to original branches
+feature_switchback() {
+    local feature_name="$1"
+    local feature_dir="$features_dir/$feature_name"
+    
+    # Check dependencies first
+    if ! check_dependencies; then
+        return 1
+    fi
+    
+    if [ ! -d "$feature_dir" ]; then
+        echo -e "${RED}Feature '$feature_name' not found${NC}"
+        return 1
+    fi
+    
+    # Check for detected worktree
+    local detected_worktree=""
+    if [ -f "$feature_dir/detected_worktree.txt" ]; then
+        detected_worktree=$(cat "$feature_dir/detected_worktree.txt")
+        echo -e "${CYAN}Using detected worktree: $detected_worktree${NC}"
+    fi
+    
+    echo -e "${YELLOW}Switching back to original branches...${NC}"
+    
+    # Read the branches.json file
+    if [ ! -f "$feature_dir/branches.json" ]; then
+        echo -e "${RED}Error: branches.json not found in feature directory${NC}"
+        return 1
+    fi
+    
+    # Function to validate JSON structure
+    validate_branches_json() {
+        local json_file="$1"
+        
+        # Check if it's valid JSON
+        if ! jq empty "$json_file" 2>/dev/null; then
+            return 1
+        fi
+        
+        # Check if it has any keys
+        local repo_count=$(jq 'keys | length' "$json_file" 2>/dev/null)
+        if [ "$repo_count" -eq 0 ]; then
+            return 1
+        fi
+        
+        # Check each repository entry
+        local repos=$(jq -r 'keys[]' "$json_file" 2>/dev/null)
+        for repo in $repos; do
+            local entry=$(jq -r ".[\"$repo\"]" "$json_file" 2>/dev/null)
+            # Check if entry is an object with both branch and path
+            if ! echo "$entry" | jq -e 'type == "object" and has("branch") and has("path")' >/dev/null 2>&1; then
+                return 1
+            fi
+        done
+        
+        return 0
+    }
+    
+    # Validate the JSON file and repair if needed
+    if ! validate_branches_json "$feature_dir/branches.json"; then
+        echo -e "${YELLOW}branches.json needs repair${NC}"
+        if ! repair_branches_json "$feature_dir"; then
+            echo -e "${RED}Failed to repair branches.json${NC}"
+            return 1
+        fi
+        
+        # Validate again after repair
+        if ! validate_branches_json "$feature_dir/branches.json"; then
+            echo -e "${RED}branches.json is still invalid after repair${NC}"
+            return 1
+        fi
+    fi
+    
+    local branches_json
+    if ! branches_json=$(cat "$feature_dir/branches.json"); then
+        echo -e "${RED}Error: Failed to read branches.json${NC}"
+        return 1
+    fi
+    
+    # Process each repository
+    local switch_success=true
+    
+    # Use a different approach to handle the loop and success tracking
+    local repo_list=$(echo "$branches_json" | jq -r 'keys[]' 2>/dev/null)
+    if [ -z "$repo_list" ]; then
+        echo -e "${RED}Error: No repositories found in branches.json${NC}"
+        return 1
+    fi
+    
+    for repo in $repo_list; do
+        local branch_info
+        if ! branch_info=$(echo "$branches_json" | jq -r ".[\"$repo\"]" 2>/dev/null); then
+            echo -e "${RED}Error: Failed to parse branch info for $repo${NC}"
+            switch_success=false
+            continue
+        fi
+        
+        local original_branch
+        local repo_path
+        if ! original_branch=$(echo "$branch_info" | jq -r '.branch' 2>/dev/null) || \
+           ! repo_path=$(echo "$branch_info" | jq -r '.path' 2>/dev/null) || \
+           [ "$original_branch" = "null" ] || [ "$repo_path" = "null" ]; then
+            echo -e "${RED}Error: Failed to get branch or path info for $repo${NC}"
+            switch_success=false
+            continue
+        fi
+        
+        echo -e "${CYAN}Processing $repo: switching to $original_branch${NC}"
+        
+        if [ ! -d "$repo_path/.git" ] && [ ! -f "$repo_path/.git" ]; then
+            echo -e "${RED}Repository not found: $repo_path${NC}"
+            switch_success=false
+            continue
+        fi
+        
+        cd "$repo_path" || {
+            echo -e "${RED}Error: Failed to change to directory $repo_path${NC}"
+            switch_success=false
+            continue
+        }
+        
+        local current_branch
+        if ! current_branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null); then
+            echo -e "${RED}Error: Failed to get current branch in $repo${NC}"
+            switch_success=false
+            continue
+        fi
+        
+        local feature_branch="feature/$feature_name"
+        
+        # Check for uncommitted changes
+        if ! git diff --quiet || ! git diff --cached --quiet; then
+            echo -e "${YELLOW}Found uncommitted changes in $repo. Creating temporary stash...${NC}"
+            local stash_name="feature_${feature_name}_$(date +%Y%m%d_%H%M%S)"
+            if ! git stash push -m "$stash_name"; then
+                echo -e "${RED}Failed to stash changes in $repo. Aborting switchback.${NC}"
+                echo -e "${YELLOW}Please commit or stash your changes manually and try again.${NC}"
+                switch_success=false
+                continue
+            fi
+            echo -e "${GREEN}Changes stashed as: $stash_name${NC}"
+            echo -e "${YELLOW}To recover these changes later, use: git stash list | grep '$stash_name'${NC}"
+        fi
+        
+        # Check if we're on the feature branch
+        if [ "$current_branch" == "$feature_branch" ]; then
+            echo -e "${YELLOW}Switching $repo back to $original_branch in $repo_path${NC}"
+            if ! git checkout "$original_branch"; then
+                echo -e "${RED}Failed to switch to $original_branch in $repo${NC}"
+                switch_success=false
+                continue
+            fi
+            echo -e "${GREEN}Successfully switched $repo to $original_branch${NC}"
+        else
+            # Check if the feature branch exists
+            if git show-ref --verify --quiet "refs/heads/$feature_branch"; then
+                local worktree_info
+                if ! worktree_info=$(git worktree list --porcelain 2>/dev/null | grep -B 2 "branch refs/heads/$feature_branch" | grep "worktree" | cut -d' ' -f2); then
+                    echo -e "${CYAN}Feature branch $feature_branch exists but is not checked out in any worktree${NC}"
+                else
+                    if [ -n "$worktree_info" ]; then
+                        echo -e "${CYAN}Feature branch $feature_branch is checked out in: $worktree_info${NC}"
+                        if [ "$worktree_info" = "$repo_path" ]; then
+                            echo -e "${YELLOW}Switching $repo back to $original_branch in $repo_path${NC}"
+                            if ! git checkout "$original_branch"; then
+                                echo -e "${RED}Failed to switch to $original_branch in $repo${NC}"
+                                switch_success=false
+                                continue
+                            fi
+                            echo -e "${GREEN}Successfully switched $repo to $original_branch${NC}"
+                        fi
+                    fi
+                fi
+            else
+                echo -e "${CYAN}Feature branch $feature_branch does not exist in $repo (already on $current_branch)${NC}"
+            fi
+        fi
+    done
+    
+    if [ "$switch_success" = true ]; then
+        echo -e "${GREEN}Successfully switched back to original branches for feature '$feature_name'${NC}"
+        echo -e "${YELLOW}Note: If you had any uncommitted changes, they were stashed.${NC}"
+        echo -e "${YELLOW}Use 'git stash list' to see your stashed changes.${NC}"
+    else
+        echo -e "${RED}Some repositories failed to switch back. Please check the errors above.${NC}"
+        return 1
+    fi
+}
+
+# Cherry-pick feature commits to target branch
+feature_pick() {
+    local feature_name=""
+    local target_branch=""
+    local worktree_override=""
+    
+    # Parse arguments
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -w)
+                shift
+                worktree_override="$1"
+                shift
+                ;;
+            *)
+                if [ -z "$feature_name" ]; then
+                    feature_name="$1"
+                    shift
+                elif [ -z "$target_branch" ]; then
+                    target_branch="$1"
+                    shift
+                else
+                    echo -e "${RED}Unknown argument: $1${NC}"
+                    return 1
+                fi
+                ;;
+        esac
+    done
+    
+    if [ -z "$feature_name" ] || [ -z "$target_branch" ]; then
+        echo -e "${RED}Usage: $0 feature pick [-w <worktree>] <feature_name> <target_branch>${NC}"
+        return 1
+    fi
+    
+    local feature_dir="$features_dir/$feature_name"
+    if [ ! -d "$feature_dir" ]; then
+        echo -e "${RED}Feature '$feature_name' not found${NC}"
+        return 1
+    fi
+    
+    if [ ! -f "$feature_dir/repos.txt" ]; then
+        echo -e "${RED}No repositories found for feature '$feature_name'${NC}"
+        return 1
+    fi
+    
+    # Check if feature uses a worktree
+    local worktree=""
+    if [ -n "$worktree_override" ]; then
+        worktree="$worktree_override"
+        echo -e "${CYAN}Using override worktree: $worktree${NC}"
+    elif [ -f "$feature_dir/worktree.txt" ]; then
+        worktree=$(cat "$feature_dir/worktree.txt")
+        echo -e "${CYAN}Using worktree: $worktree${NC}"
+    elif [ -f "$feature_dir/detected_worktree.txt" ]; then
+        worktree=$(cat "$feature_dir/detected_worktree.txt")
+        echo -e "${CYAN}Using detected worktree: $worktree${NC}"
+    fi
+    
+    echo -e "${CYAN}Cherry-picking feature commits to $target_branch...${NC}"
+    
+    while IFS= read -r repo; do
+        # Find the local folder for this repo
+        local local_folder=""
+        for pair in $repo_map; do
+            IFS=':' read -r r f <<< "$pair"
+            if [ "$r" == "$repo" ]; then
+                local_folder="$f"
+                break
+            fi
+        done
+        
+        if [ -z "$local_folder" ]; then
+            echo -e "${RED}Repository $repo not found in repo_map${NC}"
+            continue
+        fi
+        
+        # Determine the repository path based on worktree
+        local repo_path
+        if [ -n "$worktree" ]; then
+            repo_path="$worktree_base_path/$worktree/$local_folder"
+        else
+            repo_path="$repo_base/$local_folder"
+        fi
+        
+        if [ ! -d "$repo_path/.git" ] && [ ! -f "$repo_path/.git" ]; then
+            echo -e "${RED}Repository not found: $repo_path${NC}"
+            continue
+        fi
+        
+        cd "$repo_path"
+        local feature_branch="feature/$feature_name"
+        
+        if ! git show-ref --verify --quiet "refs/heads/$feature_branch"; then
+            echo -e "${YELLOW}Feature branch $feature_branch does not exist in $repo, skipping${NC}"
+            continue
+        fi
+        
+        echo -e "${GREEN}Processing $repo...${NC}"
+        
+        # Checkout target branch
+        if ! git checkout "$target_branch"; then
+            echo -e "${RED}Failed to checkout $target_branch in $repo${NC}"
+            continue
+        fi
+        
+        # Find commits that are only on the feature branch
+        local merge_base=$(git merge-base "$target_branch" "$feature_branch")
+        local commits=$(git rev-list --reverse "$merge_base".."$feature_branch")
+        
+        if [ -z "$commits" ]; then
+            echo -e "${YELLOW}No commits to cherry-pick from $feature_branch in $repo${NC}"
+            continue
+        fi
+        
+        echo -e "${CYAN}Cherry-picking commits...${NC}"
+        for commit in $commits; do
+            echo -e "  Picking: $(git log --oneline -1 $commit)"
+            if ! git cherry-pick "$commit"; then
+                echo -e "${RED}Cherry-pick failed for commit $commit${NC}"
+                echo -e "${YELLOW}Resolve conflicts manually and run 'git cherry-pick --continue'${NC}"
+                return 1
+            fi
+        done
+        
+        echo -e "${GREEN}Successfully cherry-picked feature commits to $target_branch in $repo${NC}"
+    done < "$feature_dir/repos.txt"
+}
+
+# ------------------------------------------------------------------
 # NEW: Show help / usage information
 # ------------------------------------------------------------------
 show_help() {
@@ -357,6 +1252,49 @@ Usage:
 
   ./git_sh1.sh show_repos
       List every repository key configured in this script.
+
+  ./git_sh1.sh feature create [-w <worktree>] <feature_name> <repo1> [repo2] ...
+      Create or switch to feature branches across multiple repositories.
+      -w <worktree>: Optional. Specify which worktree to create the feature in.
+      Examples:
+        ./git_sh1.sh feature create dropbear_replacement controller openssh_rks
+        ./git_sh1.sh feature create -w unleashed_200.18.7.101_r370 dropbear_replacement controller openssh_rks
+
+  ./git_sh1.sh feature list
+      List all features with their associated repositories and comments.
+
+  ./git_sh1.sh feature show [-w <worktree>] <feature_name>
+      Show detailed status of a specific feature across all its repositories.
+      -w <worktree>: Optional. Override the worktree to check status in.
+      Examples:
+        ./git_sh1.sh feature show dropbear_replacement
+        ./git_sh1.sh feature show -w unleashed_200.18.7.101_r370 dropbear_replacement
+
+  ./git_sh1.sh feature comment <feature_name> <comment>
+      Add or update a comment for a feature.
+      Example:
+        ./git_sh1.sh feature comment dropbear_replacement "Replacing dropbear with openssh for enhanced security"
+
+  ./git_sh1.sh feature switch [-w <worktree>] <feature_name>
+      Switch to feature branches for all repositories in a feature.
+      -w <worktree>: Optional. Override the worktree to switch branches in.
+      Examples:
+        ./git_sh1.sh feature switch dropbear_replacement
+        ./git_sh1.sh feature switch -w unleashed_200.18.7.101_r370 dropbear_replacement
+
+  ./git_sh1.sh feature switchback [-w <worktree>] <feature_name>
+      Switch back to original branches that were active before creating the feature.
+      -w <worktree>: Optional. Override the worktree to switch branches in.
+      Examples:
+        ./git_sh1.sh feature switchback dropbear_replacement
+        ./git_sh1.sh feature switchback -w unleashed_200.18.7.101_r370 dropbear_replacement
+
+  ./git_sh1.sh feature pick [-w <worktree>] <feature_name> <target_branch>
+      Cherry-pick all feature commits to a target branch across all repositories.
+      -w <worktree>: Optional. Override the worktree to perform cherry-pick in.
+      Examples:
+        ./git_sh1.sh feature pick dropbear_replacement main
+        ./git_sh1.sh feature pick -w unleashed_200.18.7.101_r370 dropbear_replacement main
 
   ./git_sh1.sh -h | ./git_sh1.sh --help
       Display this help and exit.
@@ -401,6 +1339,64 @@ case "$1" in
         ;;
     show_repos)
         show_repos
+        ;;
+    feature)
+        case "$2" in
+                         create)
+                 if [ -n "$3" ]; then
+                     feature_create "${@:3}"
+                 else
+                     echo -e "${RED}Invalid arguments for feature create command${NC}"
+                     echo "Usage: $0 feature create [-w <worktree>] <feature_name> <repo1> [repo2] ..."
+                 fi
+                 ;;
+            list)
+                feature_list
+                ;;
+            show)
+                if [ -n "$3" ]; then
+                    feature_show "${@:3}"
+                else
+                    echo -e "${RED}Invalid arguments for feature show command${NC}"
+                    echo "Usage: $0 feature show [-w <worktree>] <feature_name>"
+                fi
+                ;;
+                         comment)
+                 if [ -n "$3" ] && [ -n "$4" ]; then
+                     feature_comment "$3" "${@:4}"
+                 else
+                     echo -e "${RED}Invalid arguments for feature comment command${NC}"
+                     echo "Usage: $0 feature comment <feature_name> <comment>"
+                 fi
+                 ;;
+            switch)
+                if [ -n "$3" ]; then
+                    feature_switch "${@:3}"
+                else
+                    echo -e "${RED}Invalid arguments for feature switch command${NC}"
+                    echo "Usage: $0 feature switch [-w <worktree>] <feature_name>"
+                fi
+                ;;
+            switchback)
+                if [ -n "$3" ]; then
+                    feature_switchback "$3"
+                else
+                    echo -e "${RED}Invalid arguments for feature switchback command${NC}"
+                    echo "Usage: $0 feature switchback [-w <worktree>] <feature_name>"
+                fi
+                ;;
+            pick)
+                if [ -n "$3" ] && [ -n "$4" ]; then
+                    feature_pick "${@:3}"
+                else
+                    echo -e "${RED}Invalid arguments for feature pick command${NC}"
+                    echo "Usage: $0 feature pick [-w <worktree>] <feature_name> <target_branch>"
+                fi
+                ;;
+            *)
+                echo -e "${RED}Invalid feature command. Usage: $0 feature {create|list|show|comment|switch|switchback|pick}${NC}"
+                ;;
+        esac
         ;;
     *)
         echo -e "${RED}Invalid command.${NC}"
