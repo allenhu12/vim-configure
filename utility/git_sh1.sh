@@ -1100,6 +1100,7 @@ feature_pick() {
     local feature_name=""
     local target_branch=""
     local worktree_override=""
+    local dry_run=false
     
     # Parse arguments
     while [[ $# -gt 0 ]]; do
@@ -1107,6 +1108,10 @@ feature_pick() {
             -w)
                 shift
                 worktree_override="$1"
+                shift
+                ;;
+            --dry-run)
+                dry_run=true
                 shift
                 ;;
             *)
@@ -1125,7 +1130,7 @@ feature_pick() {
     done
     
     if [ -z "$feature_name" ] || [ -z "$target_branch" ]; then
-        echo -e "${RED}Usage: $0 feature pick [-w <worktree>] <feature_name> <target_branch>${NC}"
+        echo -e "${RED}Usage: $0 feature pick [-w <worktree>] [--dry-run] <feature_name> <target_branch>${NC}"
         return 1
     fi
     
@@ -1153,7 +1158,11 @@ feature_pick() {
         echo -e "${CYAN}Using detected worktree: $worktree${NC}"
     fi
     
-    echo -e "${CYAN}Cherry-picking feature commits to $target_branch...${NC}"
+    if [ "$dry_run" = true ]; then
+        echo -e "${CYAN}DRY RUN: Would cherry-pick feature commits to $target_branch...${NC}"
+    else
+        echo -e "${CYAN}Cherry-picking feature commits to $target_branch...${NC}"
+    fi
     
     while IFS= read -r repo; do
         # Find the local folder for this repo
@@ -1194,10 +1203,17 @@ feature_pick() {
         
         echo -e "${GREEN}Processing $repo...${NC}"
         
-        # Checkout target branch
-        if ! git checkout "$target_branch"; then
-            echo -e "${RED}Failed to checkout $target_branch in $repo${NC}"
-            continue
+        # Store current branch for dry run
+        local current_branch=""
+        if [ "$dry_run" = true ]; then
+            current_branch=$(git symbolic-ref --short HEAD)
+            echo -e "${CYAN}Current branch: $current_branch${NC}"
+        else
+            # Checkout target branch
+            if ! git checkout "$target_branch"; then
+                echo -e "${RED}Failed to checkout $target_branch in $repo${NC}"
+                continue
+            fi
         fi
         
         # Find commits that are only on the feature branch
@@ -1209,18 +1225,30 @@ feature_pick() {
             continue
         fi
         
-        echo -e "${CYAN}Cherry-picking commits...${NC}"
-        for commit in $commits; do
-            echo -e "  Picking: $(git log --oneline -1 $commit)"
-            if ! git cherry-pick "$commit"; then
-                echo -e "${RED}Cherry-pick failed for commit $commit${NC}"
-                echo -e "${YELLOW}Resolve conflicts manually and run 'git cherry-pick --continue'${NC}"
-                return 1
-            fi
-        done
-        
-        echo -e "${GREEN}Successfully cherry-picked feature commits to $target_branch in $repo${NC}"
+        if [ "$dry_run" = true ]; then
+            echo -e "${CYAN}Would cherry-pick the following commits in $repo:${NC}"
+            for commit in $commits; do
+                echo -e "  $(git log --oneline -1 $commit)"
+            done
+            echo -e "${CYAN}Would switch to branch: $target_branch${NC}"
+        else
+            echo -e "${CYAN}Cherry-picking commits...${NC}"
+            for commit in $commits; do
+                echo -e "  Picking: $(git log --oneline -1 $commit)"
+                if ! git cherry-pick "$commit"; then
+                    echo -e "${RED}Cherry-pick failed for commit $commit${NC}"
+                    echo -e "${YELLOW}Resolve conflicts manually and run 'git cherry-pick --continue'${NC}"
+                    return 1
+                fi
+            done
+            
+            echo -e "${GREEN}Successfully cherry-picked feature commits to $target_branch in $repo${NC}"
+        fi
     done < "$feature_dir/repos.txt"
+    
+    if [ "$dry_run" = true ]; then
+        echo -e "${GREEN}Dry run completed. No changes were made.${NC}"
+    fi
 }
 
 # ------------------------------------------------------------------
