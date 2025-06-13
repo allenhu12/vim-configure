@@ -52,110 +52,429 @@ YELLOW='\033[1;33m'
 CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
+# Global configuration
+DRY_RUN=${DRY_RUN:-false}
+VERBOSE=${VERBOSE:-false}
+LOG_FILE=""
+LOCK_FILE="/tmp/git_sh1_$$.lock"
+TEMP_DIR=""
+
+# Initialize logging
+init_logging() {
+    LOG_FILE="${script_dir}/git_sh1_$(date '+%Y%m%d_%H%M%S').log"
+    if [ "$VERBOSE" = "true" ]; then
+        echo -e "${CYAN}Logging to: $LOG_FILE${NC}"
+    fi
+}
+
+# Logging function
+log() {
+    local level=$1; shift
+    local message="$*"
+    local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+    echo "[$timestamp] [$level] $message" >> "$LOG_FILE"
+    if [ "$VERBOSE" = "true" ] || [ "$level" = "ERROR" ]; then
+        echo -e "${CYAN}[$level]${NC} $message"
+    fi
+}
+
+# Cleanup function
+cleanup() {
+    if [ -n "$TEMP_DIR" ] && [ -d "$TEMP_DIR" ]; then
+        rm -rf "$TEMP_DIR"
+        log "INFO" "Cleaned up temporary directory: $TEMP_DIR"
+    fi
+    if [ -f "$LOCK_FILE" ]; then
+        rm -f "$LOCK_FILE"
+        log "INFO" "Removed lock file: $LOCK_FILE"
+    fi
+}
+
+# Set up signal handlers
+trap cleanup EXIT INT TERM
+
+# Process locking
+acquire_lock() {
+    if [ -f "$LOCK_FILE" ]; then
+        local lock_pid=$(cat "$LOCK_FILE" 2>/dev/null)
+        if [ -n "$lock_pid" ] && kill -0 "$lock_pid" 2>/dev/null; then
+            echo -e "${RED}Error: Another instance is running (PID: $lock_pid)${NC}"
+            return 1
+        else
+            log "INFO" "Removing stale lock file"
+            rm -f "$LOCK_FILE"
+        fi
+    fi
+    echo $$ > "$LOCK_FILE"
+    log "INFO" "Acquired lock with PID: $$"
+    return 0
+}
+
+# Input sanitization
+sanitize_input() {
+    local input="$1"
+    # Remove dangerous characters, keep alphanumeric, dots, dashes, underscores, slashes
+    echo "$input" | sed 's/[^a-zA-Z0-9._/-]//g'
+}
+
+# Path validation
+validate_path() {
+    local path="$1"
+    local base_path="$2"
+    
+    # Convert to absolute path
+    if [[ "$path" != /* ]]; then
+        path="$base_path/$path"
+    fi
+    
+    # Normalize path (remove .. and .)
+    path=$(cd "$(dirname "$path")" 2>/dev/null && pwd)/$(basename "$path") || {
+        log "ERROR" "Invalid path: $1"
+        return 1
+    }
+    
+    # Check if path is within allowed boundaries
+    if [[ "$path" != "$base_path"* ]]; then
+        log "ERROR" "Path outside allowed boundaries: $path"
+        return 1
+    fi
+    
+    echo "$path"
+    return 0
+}
+
+# Enhanced execute command with dry-run support
+execute_command() {
+    local cmd="$*"
+    log "INFO" "Executing: $cmd"
+    
+    if [ "$DRY_RUN" = "true" ]; then
+        echo -e "${YELLOW}[DRY-RUN] Would execute: $cmd${NC}"
+        return 0
+    else
+        eval "$cmd"
+        local exit_code=$?
+        if [ $exit_code -ne 0 ]; then
+            log "ERROR" "Command failed with exit code $exit_code: $cmd"
+        fi
+        return $exit_code
+    fi
+}
+
+# Progress indicator
+show_progress() {
+    local current=$1
+    local total=$2
+    local operation="$3"
+    local percent=$((current * 100 / total))
+    printf "\r${CYAN}[%d/%d] (%d%%) %s...${NC}" "$current" "$total" "$percent" "$operation"
+    if [ "$current" -eq "$total" ]; then
+        echo
+    fi
+}
+
 # Determine the script's directory
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Navigate up the directory tree until we find the git-depot directory
-repo_base="$script_dir"
-while [[ "$repo_base" != "/" && "${repo_base##*/}" != "git-depot" ]]; do
-    repo_base="$(dirname "$repo_base")"
-done
+# Initialize logging and acquire lock
+init_logging
+log "INFO" "Starting git_sh1.sh from directory: $script_dir"
 
-if [[ "${repo_base##*/}" != "git-depot" ]]; then
-    echo -e "${RED}Error: Could not find the git-depot directory${NC}"
+if ! acquire_lock; then
     exit 1
 fi
 
-# Now that we've found git-depot, find a directory containing "repo_base" in its name
-repo_base=$(find "$repo_base" -maxdepth 1 -type d -name "*repo_base*" -print -quit)
-
-if [ -z "$repo_base" ]; then
-    echo -e "${RED}Error: Could not find a directory containing 'repo_base' in its name${NC}"
-    exit 1
-fi
-
-# Worktree base path should be the git-depot directory
-worktree_base_path="$repo_base/.."
-if [[ "${worktree_base_path##*/}" != "git-depot" ]]; then
-    # If we're not in git-depot, try to find it
-    temp_path="$script_dir"
-    while [[ "$temp_path" != "/" && "${temp_path##*/}" != "git-depot" ]]; do
-        temp_path="$(dirname "$temp_path")"
+# Improved path resolution with better error handling
+find_git_depot() {
+    local search_path="$1"
+    local max_depth=10
+    local current_depth=0
+    
+    while [[ "$search_path" != "/" && $current_depth -lt $max_depth ]]; do
+        if [[ "${search_path##*/}" == "git-depot" ]]; then
+            echo "$search_path"
+            return 0
+        fi
+        search_path="$(dirname "$search_path")"
+        ((current_depth++))
     done
-    if [[ "${temp_path##*/}" == "git-depot" ]]; then
-        worktree_base_path="$temp_path"
-    fi
+    
+    log "ERROR" "Could not find git-depot directory within $max_depth levels from $1"
+    return 1
+}
+
+# Find git-depot directory
+if ! git_depot_dir=$(find_git_depot "$script_dir"); then
+    echo -e "${RED}Error: Could not find the git-depot directory${NC}"
+    echo -e "${YELLOW}Please ensure this script is run from within a git-depot directory structure${NC}"
+    exit 1
 fi
+
+log "INFO" "Found git-depot directory: $git_depot_dir"
+
+# Find repo_base directory with better error handling
+find_repo_base() {
+    local git_depot="$1"
+    local repo_base_candidates=()
+    
+    # Look for directories containing "repo_base" in their name
+    while IFS= read -r -d '' dir; do
+        repo_base_candidates+=("$dir")
+    done < <(find "$git_depot" -maxdepth 2 -type d -name "*repo_base*" -print0 2>/dev/null)
+    
+    if [ ${#repo_base_candidates[@]} -eq 0 ]; then
+        log "ERROR" "No directories containing 'repo_base' found in $git_depot"
+        return 1
+    elif [ ${#repo_base_candidates[@]} -eq 1 ]; then
+        echo "${repo_base_candidates[0]}"
+        return 0
+    else
+        log "WARN" "Multiple repo_base candidates found, using first: ${repo_base_candidates[0]}"
+        echo "${repo_base_candidates[0]}"
+        return 0
+    fi
+}
+
+# Find repo_base directory
+if ! repo_base=$(find_repo_base "$git_depot_dir"); then
+    echo -e "${RED}Error: Could not find a directory containing 'repo_base' in its name${NC}"
+    echo -e "${YELLOW}Expected to find a directory like 'my_repo_base' or 'repo_base_main' in $git_depot_dir${NC}"
+    exit 1
+fi
+
+log "INFO" "Using repo_base directory: $repo_base"
+
+# Set worktree base path to git-depot directory
+worktree_base_path="$git_depot_dir"
+log "INFO" "Using worktree_base_path: $worktree_base_path"
 
 ssh_base="ssh://tdc-mirror-git@ruckus-git.ruckuswireless.com:7999/wrls/"
 
-# Verify if a specific repository or all repos are ready
+# Repository validation
+validate_repo_name() {
+    local repo_name="$1"
+    local repo_name_clean=$(sanitize_input "$repo_name")
+    
+    if [ "$repo_name" != "$repo_name_clean" ]; then
+        log "ERROR" "Invalid repository name: $repo_name"
+        return 1
+    fi
+    
+    # Check if repo exists in repo_map
+    local found=false
+    for pair in $repo_map; do
+        IFS=':' read -r repo local_folder <<< "$pair"
+        if [ "$repo" == "$repo_name" ]; then
+            found=true
+            break
+        fi
+    done
+    
+    if [ "$found" = "false" ] && [ "$repo_name" != "all" ]; then
+        log "ERROR" "Repository '$repo_name' not found in configuration"
+        return 1
+    fi
+    
+    return 0
+}
+
+# Enhanced repository verification with better error handling
 verify_repos() {
+    local target_repo="$1"
     local existing_repos=0
     local missing_repos=0
     local total_repos=0
+    local failed_repos=()
 
-    echo -e "${CYAN}Verifying all repositories:${NC}"
+    log "INFO" "Starting repository verification"
+    echo -e "${CYAN}Verifying repositories:${NC}"
     echo -e "${YELLOW}Script directory: $script_dir${NC}"
     echo -e "${YELLOW}Using repo_base: $repo_base${NC}"
     echo ""
     
+    # Validate target repository if specified
+    if [ -n "$target_repo" ] && [ "$target_repo" != "all" ]; then
+        if ! validate_repo_name "$target_repo"; then
+            return 1
+        fi
+    fi
+    
     for pair in $repo_map; do
         IFS=':' read -r repo local_folder <<< "$pair"
-        verify_single_repo "$repo" "$local_folder"
+        
+        # Skip if specific repo requested and this isn't it
+        if [ -n "$target_repo" ] && [ "$target_repo" != "all" ] && [ "$target_repo" != "$repo" ]; then
+            continue
+        fi
+        
+        if verify_single_repo "$repo" "$local_folder"; then
+            ((existing_repos++))
+        else
+            ((missing_repos++))
+            failed_repos+=("$repo")
+        fi
         ((total_repos++))
+        
+        show_progress $((existing_repos + missing_repos)) "$total_repos" "Verifying $repo"
     done
 
     echo -e "\n${CYAN}Summary:${NC}"
-    echo -e "Total repositories: $total_repos"
+    echo -e "Total repositories checked: $total_repos"
     echo -e "${GREEN}Existing repositories: $existing_repos${NC}"
     echo -e "${RED}Missing repositories: $missing_repos${NC}"
+    
+    if [ ${#failed_repos[@]} -gt 0 ]; then
+        echo -e "\n${RED}Missing repositories:${NC}"
+        for repo in "${failed_repos[@]}"; do
+            echo -e "  - ${YELLOW}$repo${NC}"
+        done
+    fi
 
     if [ $missing_repos -gt 0 ]; then
-        echo -e "\n${YELLOW}Note: To fetch missing repositories, use the following command:${NC}"
+        echo -e "\n${YELLOW}Note: To fetch missing repositories, use:${NC}"
         echo -e "${CYAN}./git_sh1.sh fetch all${NC}"
     fi
+    
+    log "INFO" "Repository verification completed: $existing_repos existing, $missing_repos missing"
+    return $missing_repos
 }
 
 verify_single_repo() {
-    local repo=$1
-    local local_folder=$2
-    local repo_path="$repo_base/$local_folder"
+    local repo="$1"
+    local local_folder="$2"
+    local repo_path
     
-    echo -e "${CYAN}Checking repo: $repo${NC}"
-    echo -e "${CYAN}Repo path: $repo_path${NC}"
-    
-    if [ -d "$repo_path" ] && ([ -d "$repo_path/.git" ] || [ -f "$repo_path/.git" ]); then
-        echo -e "${GREEN}Exists:  $repo${NC}"
-        ((existing_repos++))
-    else
-        echo -e "${RED}Missing: $repo${NC}"
-        ((missing_repos++))
+    # Validate and construct repository path
+    if ! repo_path=$(validate_path "$repo_base/$local_folder" "$repo_base"); then
+        echo -e "${RED}Invalid path for repo: $repo${NC}"
+        log "ERROR" "Invalid repository path for $repo: $repo_base/$local_folder"
+        return 1
     fi
-    echo "" # Add a blank line for better readability
+    
+    if [ "$VERBOSE" = "true" ]; then
+        echo -e "${CYAN}Checking repo: $repo${NC}"
+        echo -e "${CYAN}Repo path: $repo_path${NC}"
+    fi
+    
+    # Check if directory exists and is a git repository
+    if [ -d "$repo_path" ] && ([ -d "$repo_path/.git" ] || [ -f "$repo_path/.git" ]); then
+        echo -e "${GREEN}✓ Exists:  $repo${NC}"
+        log "INFO" "Repository exists: $repo at $repo_path"
+        
+        # Additional validation: check if it's a valid git repo
+        if ! (cd "$repo_path" && git rev-parse --git-dir >/dev/null 2>&1); then
+            echo -e "${YELLOW}  Warning: Directory exists but may not be a valid git repository${NC}"
+            log "WARN" "Directory exists but not a valid git repo: $repo_path"
+        fi
+        
+        return 0
+    else
+        echo -e "${RED}✗ Missing: $repo${NC}"
+        log "INFO" "Repository missing: $repo at $repo_path"
+        return 1
+    fi
 }
 
-# Fetch metadata for a specific repository or all repositories
+# Enhanced repository fetching with better validation and error handling
 fetch_repos() {
-    if [ "$1" == "all" ]; then
+    local target_repo="$1"
+    local success_count=0
+    local fail_count=0
+    local total_count=0
+    
+    if [ -z "$target_repo" ]; then
+        echo -e "${RED}Error: Repository name required${NC}"
+        echo "Usage: $0 fetch <repo_name|all>"
+        return 1
+    fi
+    
+    # Validate repository name
+    if ! validate_repo_name "$target_repo"; then
+        return 1
+    fi
+    
+    log "INFO" "Starting repository fetch for: $target_repo"
+    
+    # Check SSH connectivity before proceeding
+    if ! check_ssh_connectivity; then
+        echo -e "${RED}Error: SSH connectivity check failed${NC}"
+        return 1
+    fi
+    
+    if [ "$target_repo" == "all" ]; then
+        echo -e "${CYAN}Fetching all repositories...${NC}"
+        
+        # Count total repositories first
         for pair in $repo_map; do
-            IFS=':' read -r repo local_folder <<< "$pair"
-            fetch_repo "$repo" "$local_folder"
+            ((total_count++))
         done
-    else
-        repo_found=false
+        
+        local current=0
         for pair in $repo_map; do
             IFS=':' read -r repo local_folder <<< "$pair"
-            if [ "$repo" == "$1" ]; then
+            ((current++))
+            show_progress "$current" "$total_count" "Fetching $repo"
+            
+            if fetch_repo "$repo" "$local_folder"; then
+                ((success_count++))
+            else
+                ((fail_count++))
+                log "ERROR" "Failed to fetch repository: $repo"
+            fi
+        done
+        
+        echo -e "\n${CYAN}Fetch Summary:${NC}"
+        echo -e "${GREEN}Success: $success_count${NC}"
+        echo -e "${RED}Failed: $fail_count${NC}"
+        
+    else
+        local repo_found=false
+        for pair in $repo_map; do
+            IFS=':' read -r repo local_folder <<< "$pair"
+            if [ "$repo" == "$target_repo" ]; then
                 repo_found=true
-                fetch_repo "$repo" "$local_folder"
+                if fetch_repo "$repo" "$local_folder"; then
+                    ((success_count++))
+                else
+                    ((fail_count++))
+                fi
                 break
             fi
         done
-        if ! $repo_found; then
-            echo -e "${RED}Repository $1 not found in repo_map${NC}"
+        
+        if [ "$repo_found" = "false" ]; then
+            echo -e "${RED}Repository '$target_repo' not found in configuration${NC}"
+            log "ERROR" "Repository not found in repo_map: $target_repo"
+            return 1
         fi
     fi
+    
+    log "INFO" "Repository fetch completed: $success_count success, $fail_count failed"
+    return $fail_count
+}
+
+# SSH connectivity check
+check_ssh_connectivity() {
+    local ssh_host="ruckus-git.ruckuswireless.com"
+    local ssh_port="7999"
+    
+    log "INFO" "Checking SSH connectivity to $ssh_host:$ssh_port"
+    
+    if command -v nc >/dev/null 2>&1; then
+        if ! nc -z "$ssh_host" "$ssh_port" 2>/dev/null; then
+            log "ERROR" "Cannot connect to $ssh_host:$ssh_port"
+            return 1
+        fi
+    elif command -v timeout >/dev/null 2>&1; then
+        if ! timeout 5 bash -c "cat < /dev/null > /dev/tcp/$ssh_host/$ssh_port" 2>/dev/null; then
+            log "ERROR" "Cannot connect to $ssh_host:$ssh_port"
+            return 1
+        fi
+    else
+        log "WARN" "Cannot check SSH connectivity - neither nc nor timeout available"
+    fi
+    
+    return 0
 }
 
 fetch_repo() {
@@ -245,45 +564,125 @@ add_worktree() {
 }
 
 add_worktree_for_repo() {
-    repo=$1
-    local_folder=$2
-    local_branch=$3
-    remote_branch=$4
-
-    repo_dir="$repo_base/$local_folder"
-    worktree_dir="$worktree_base_path/$local_branch/$local_folder"
+    local repo="$1"
+    local local_folder="$2"
+    local local_branch="$3"
+    local remote_branch="$4"
+    local repo_dir
+    local worktree_dir
+    
+    # Validate inputs
+    if [ -z "$repo" ] || [ -z "$local_folder" ] || [ -z "$local_branch" ] || [ -z "$remote_branch" ]; then
+        echo -e "${RED}Error: Missing required parameters for worktree creation${NC}"
+        log "ERROR" "Missing parameters: repo=$repo, folder=$local_folder, local_branch=$local_branch, remote_branch=$remote_branch"
+        return 1
+    fi
+    
+    # Sanitize inputs
+    local_branch=$(sanitize_input "$local_branch")
+    
+    # Validate and construct paths
+    if ! repo_dir=$(validate_path "$repo_base/$local_folder" "$repo_base"); then
+        echo -e "${RED}Invalid repository path for: $repo${NC}"
+        return 1
+    fi
+    
+    if ! worktree_dir=$(validate_path "$worktree_base_path/$local_branch/$local_folder" "$worktree_base_path"); then
+        echo -e "${RED}Invalid worktree path for: $repo${NC}"
+        return 1
+    fi
 
     if [ ! -d "$repo_dir/.git" ]; then
         echo -e "${RED}Repository not found or not a Git repository: $repo_dir${NC}"
-        return
+        log "ERROR" "Repository not found: $repo_dir"
+        return 1
     fi
 
-    cd "$repo_dir"
+    if ! cd "$repo_dir"; then
+        echo -e "${RED}Failed to enter repository directory: $repo_dir${NC}"
+        log "ERROR" "Failed to enter repository directory: $repo_dir for $repo"
+        return 1
+    fi
+
+    # Validate git repository
+    if ! git rev-parse --git-dir >/dev/null 2>&1; then
+        echo -e "${RED}Invalid git repository: $repo_dir${NC}"
+        log "ERROR" "Invalid git repository: $repo_dir"
+        return 1
+    fi
 
     # Prune any stale worktree entries
-    git worktree prune
+    log "INFO" "Pruning stale worktree entries for $repo"
+    git worktree prune 2>/dev/null || true
 
     # Remove the worktree directory if it already exists
     if [ -d "$worktree_dir" ]; then
         echo -e "${YELLOW}Removing existing worktree directory: $worktree_dir${NC}"
-        git worktree remove --force "$worktree_dir" || true
-        rm -rf "$worktree_dir"
+        log "INFO" "Removing existing worktree: $worktree_dir"
+        
+        # Try to remove via git first, then force remove
+        if ! git worktree remove --force "$worktree_dir" 2>/dev/null; then
+            log "WARN" "Git worktree remove failed, force removing directory"
+            if ! rm -rf "$worktree_dir"; then
+                echo -e "${RED}Failed to remove existing worktree directory: $worktree_dir${NC}"
+                log "ERROR" "Failed to remove worktree directory: $worktree_dir"
+                return 1
+            fi
+        fi
     fi
 
     echo -e "${CYAN}Processing repository: ${YELLOW}$repo${NC}"
+    log "INFO" "Creating worktree for $repo: $local_branch from $remote_branch"
+
+    # Validate remote branch exists
+    if ! git show-ref --verify --quiet "refs/remotes/$remote_branch" && 
+       ! git ls-remote --heads origin "${remote_branch#origin/}" | grep -q .; then
+        echo -e "${RED}Remote branch $remote_branch does not exist${NC}"
+        log "ERROR" "Remote branch $remote_branch does not exist for $repo"
+        return 1
+    fi
+
+    # Create parent directory for worktree
+    local worktree_parent=$(dirname "$worktree_dir")
+    if ! mkdir -p "$worktree_parent"; then
+        echo -e "${RED}Failed to create worktree parent directory: $worktree_parent${NC}"
+        log "ERROR" "Failed to create worktree parent directory: $worktree_parent"
+        return 1
+    fi
 
     # Check if the local branch exists
     if git show-ref --verify --quiet "refs/heads/$local_branch"; then
         echo -e "${YELLOW}Branch $local_branch already exists, reusing it.${NC}"
+        log "INFO" "Reusing existing branch $local_branch for $repo"
+        
         # If the branch exists, just add the worktree with the existing branch
-        git worktree add -f "$worktree_dir" "$local_branch"
+        if ! git worktree add -f "$worktree_dir" "$local_branch" 2>/dev/null; then
+            echo -e "${RED}Failed to add worktree for existing branch $local_branch${NC}"
+            log "ERROR" "Failed to add worktree for existing branch $local_branch in $repo"
+            return 1
+        fi
     else
         echo -e "${GREEN}Creating new branch $local_branch from $remote_branch.${NC}"
+        log "INFO" "Creating new branch $local_branch from $remote_branch for $repo"
+        
         # If the branch doesn't exist, create it and add it as a worktree
-        git worktree add --checkout -b "$local_branch" "$worktree_dir" "$remote_branch"
+        if ! git worktree add --checkout -b "$local_branch" "$worktree_dir" "$remote_branch" 2>/dev/null; then
+            echo -e "${RED}Failed to create worktree with new branch $local_branch${NC}"
+            log "ERROR" "Failed to create worktree with new branch $local_branch in $repo"
+            return 1
+        fi
     fi
 
-    echo -e "${CYAN}Worktree added for $repo at $worktree_dir${NC}"
+    # Verify worktree was created successfully
+    if [ ! -d "$worktree_dir/.git" ] && [ ! -f "$worktree_dir/.git" ]; then
+        echo -e "${RED}Worktree creation failed - directory not found: $worktree_dir${NC}"
+        log "ERROR" "Worktree creation failed for $repo"
+        return 1
+    fi
+
+    echo -e "${GREEN}Successfully added worktree for $repo at $worktree_dir${NC}"
+    log "INFO" "Successfully created worktree for $repo at $worktree_dir"
+    return 0
 }
 
 # Pull and rebase each repository in the worktree
@@ -347,19 +746,111 @@ show_repos() {
 # Feature metadata directory
 features_dir="$script_dir/.git_sh1_features"
 
+# Configuration validation
+validate_configuration() {
+    log "INFO" "Validating configuration"
+    
+    # Check required tools
+    local missing_tools=()
+    for tool in git jq; do
+        if ! command -v "$tool" >/dev/null 2>&1; then
+            missing_tools+=("$tool")
+        fi
+    done
+    
+    if [ ${#missing_tools[@]} -gt 0 ]; then
+        echo -e "${RED}Error: Missing required tools:${NC}"
+        for tool in "${missing_tools[@]}"; do
+            echo -e "  - ${YELLOW}$tool${NC}"
+        done
+        echo -e "\nPlease install missing tools and try again."
+        return 1
+    fi
+    
+    # Validate repo_map format
+    local repo_count=0
+    for pair in $repo_map; do
+        if [[ ! "$pair" =~ ^[^:]+:[^:]+$ ]]; then
+            echo -e "${RED}Error: Invalid repo_map entry format: $pair${NC}"
+            log "ERROR" "Invalid repo_map entry: $pair"
+            return 1
+        fi
+        ((repo_count++))
+    done
+    
+    if [ $repo_count -eq 0 ]; then
+        echo -e "${RED}Error: No repositories configured in repo_map${NC}"
+        return 1
+    fi
+    
+    log "INFO" "Configuration validation completed: $repo_count repositories configured"
+    return 0
+}
+
 # Initialize features directory if it doesn't exist
 init_features_dir() {
     if [ ! -d "$features_dir" ]; then
-        mkdir -p "$features_dir"
+        if ! mkdir -p "$features_dir"; then
+            echo -e "${RED}Error: Failed to create features directory: $features_dir${NC}"
+            log "ERROR" "Failed to create features directory: $features_dir"
+            return 1
+        fi
         echo -e "${GREEN}Initialized features directory at: $features_dir${NC}"
+        log "INFO" "Initialized features directory: $features_dir"
+    fi
+    return 0
+}
+
+# Rollback function for failed operations
+rollback_feature_creation() {
+    local feature_name="$1"
+    local feature_dir="$features_dir/$feature_name"
+    
+    log "INFO" "Rolling back feature creation: $feature_name"
+    
+    if [ -d "$feature_dir" ]; then
+        echo -e "${YELLOW}Rolling back incomplete feature: $feature_name${NC}"
+        rm -rf "$feature_dir"
+        log "INFO" "Removed incomplete feature directory: $feature_dir"
     fi
 }
 
-# Create or switch to a feature branch
+# Backup feature metadata
+backup_feature_metadata() {
+    local feature_name="$1"
+    local feature_dir="$features_dir/$feature_name"
+    local backup_dir="$features_dir/.backups"
+    local backup_file="$backup_dir/${feature_name}_$(date +%Y%m%d_%H%M%S).tar.gz"
+    
+    if [ ! -d "$feature_dir" ]; then
+        return 0
+    fi
+    
+    if ! mkdir -p "$backup_dir"; then
+        log "WARN" "Failed to create backup directory: $backup_dir"
+        return 1
+    fi
+    
+    if tar -czf "$backup_file" -C "$features_dir" "$feature_name" 2>/dev/null; then
+        log "INFO" "Created feature backup: $backup_file"
+        return 0
+    else
+        log "WARN" "Failed to create feature backup for: $feature_name"
+        return 1
+    fi
+}
+
+# Enhanced feature creation with better validation and error handling
 feature_create() {
     local feature_name=""
     local worktree=""
     local repos=()
+    local force=false
+    
+    # Validate configuration first
+    if ! validate_configuration; then
+        return 1
+    fi
     
     # Parse arguments
     while [[ $# -gt 0 ]]; do
@@ -367,6 +858,10 @@ feature_create() {
             -w)
                 shift
                 worktree="$1"
+                shift
+                ;;
+            --force)
+                force=true
                 shift
                 ;;
             *)
@@ -381,29 +876,89 @@ feature_create() {
         esac
     done
     
+    # Input validation
     if [ -z "$feature_name" ] || [ ${#repos[@]} -eq 0 ]; then
-        echo -e "${RED}Usage: $0 feature create -w <worktree> <feature_name> <repo1> [repo2] ...${NC}"
-        echo -e "${YELLOW}  -w <worktree>: Required. Specify which worktree to create the feature in${NC}"
+        echo -e "${RED}Usage: $0 feature create [-w <worktree>] [--force] <feature_name> <repo1> [repo2] ...${NC}"
+        echo -e "${YELLOW}  -w <worktree>: Optional. Specify which worktree to create the feature in${NC}"
+        echo -e "${YELLOW}  --force: Overwrite existing feature${NC}"
+        return 1
+    fi
+    
+    # Sanitize feature name
+    local original_feature_name="$feature_name"
+    feature_name=$(sanitize_input "$feature_name")
+    if [ "$feature_name" != "$original_feature_name" ]; then
+        echo -e "${YELLOW}Feature name sanitized: $original_feature_name -> $feature_name${NC}"
+    fi
+    
+    # Validate feature name format
+    if [[ ! "$feature_name" =~ ^[a-zA-Z0-9_-]+$ ]]; then
+        echo -e "${RED}Error: Invalid feature name. Use only letters, numbers, underscores, and hyphens.${NC}"
         return 1
     fi
 
-    if [ -z "$worktree" ]; then
-        echo -e "${RED}Error: Worktree (-w) is required for feature creation${NC}"
-        echo -e "${YELLOW}Usage: $0 feature create -w <worktree> <feature_name> <repo1> [repo2] ...${NC}"
+    # Validate repositories
+    for repo in "${repos[@]}"; do
+        if ! validate_repo_name "$repo"; then
+            echo -e "${RED}Error: Invalid repository name: $repo${NC}"
+            return 1
+        fi
+    done
+    
+    # Sanitize worktree if provided
+    if [ -n "$worktree" ]; then
+        local original_worktree="$worktree"
+        worktree=$(sanitize_input "$worktree")
+        if [ "$worktree" != "$original_worktree" ]; then
+            echo -e "${YELLOW}Worktree name sanitized: $original_worktree -> $worktree${NC}"
+        fi
+    fi
+    
+    if ! init_features_dir; then
         return 1
     fi
     
-    init_features_dir
-    
     local feature_dir="$features_dir/$feature_name"
-    mkdir -p "$feature_dir"
     
-    # Save the repository list
-    printf "%s\n" "${repos[@]}" > "$feature_dir/repos.txt"
+    # Check if feature already exists
+    if [ -d "$feature_dir" ] && [ "$force" = "false" ]; then
+        echo -e "${RED}Error: Feature '$feature_name' already exists${NC}"
+        echo -e "${YELLOW}Use --force to overwrite or choose a different name${NC}"
+        return 1
+    fi
+    
+    # Backup existing feature if force is used
+    if [ -d "$feature_dir" ] && [ "$force" = "true" ]; then
+        backup_feature_metadata "$feature_name"
+        echo -e "${YELLOW}Overwriting existing feature: $feature_name${NC}"
+    fi
+    
+    # Create feature directory atomically
+    local temp_feature_dir="$features_dir/.tmp_${feature_name}_$$"
+    if ! mkdir -p "$temp_feature_dir"; then
+        echo -e "${RED}Error: Failed to create temporary feature directory${NC}"
+        log "ERROR" "Failed to create temporary feature directory: $temp_feature_dir"
+        return 1
+    fi
+    
+    log "INFO" "Creating feature: $feature_name with repositories: ${repos[*]}"
+    
+    # Save the repository list to temp directory
+    if ! printf "%s\n" "${repos[@]}" > "$temp_feature_dir/repos.txt"; then
+        echo -e "${RED}Error: Failed to save repository list${NC}"
+        rm -rf "$temp_feature_dir"
+        return 1
+    fi
     
     # Save worktree info
-    echo "$worktree" > "$feature_dir/worktree.txt"
-    echo -e "${CYAN}Using worktree: $worktree${NC}"
+    if [ -n "$worktree" ]; then
+        if ! echo "$worktree" > "$temp_feature_dir/worktree.txt"; then
+            echo -e "${RED}Error: Failed to save worktree information${NC}"
+            rm -rf "$temp_feature_dir"
+            return 1
+        fi
+        echo -e "${CYAN}Using worktree: $worktree${NC}"
+    fi
     
     # Save current branches for each repo
     local branches_json="{"
@@ -471,9 +1026,29 @@ feature_create() {
     done
     
     branches_json+="}"
-    echo "$branches_json" > "$feature_dir/branches.json"
     
-    echo -e "${GREEN}Feature '$feature_name' created/updated with repositories: ${repos[*]}${NC}"
+    # Save branches info to temp directory
+    if ! echo "$branches_json" > "$temp_feature_dir/branches.json"; then
+        echo -e "${RED}Error: Failed to save branches information${NC}"
+        rollback_feature_creation "$feature_name"
+        rm -rf "$temp_feature_dir"
+        return 1
+    fi
+    
+    # Atomically move temp directory to final location
+    if [ -d "$feature_dir" ]; then
+        rm -rf "$feature_dir"
+    fi
+    
+    if ! mv "$temp_feature_dir" "$feature_dir"; then
+        echo -e "${RED}Error: Failed to create feature directory${NC}"
+        rm -rf "$temp_feature_dir"
+        return 1
+    fi
+    
+    echo -e "${GREEN}Feature '$feature_name' created successfully with repositories: ${repos[*]}${NC}"
+    log "INFO" "Feature created successfully: $feature_name"
+    return 0
 }
 
 # List all features
@@ -1329,9 +1904,181 @@ Usage:
 EOF
 }
 
+# Usage validation
+check_usage() {
+    if [ $# -eq 0 ]; then
+        echo -e "${RED}Error: No command specified${NC}"
+        show_help
+        return 1
+    fi
+    return 0
+}
+
+# Main execution wrapper with error handling
+main() {
+    local exit_code=0
+    
+    # Check basic usage
+    if ! check_usage "$@"; then
+        return 1
+    fi
+    
+    # Set up dry-run and verbose modes from environment
+    if [ "$DRY_RUN" = "true" ]; then
+        echo -e "${YELLOW}Running in DRY-RUN mode - no changes will be made${NC}"
+    fi
+    
+    case "$1" in
+        -h|--help)
+            show_help
+            return 0
+            ;;
+        verify)
+            if ! verify_repos "$2"; then
+                exit_code=$?
+            fi
+            ;;
+        fetch)
+            if [ -z "$2" ]; then
+                echo -e "${RED}Error: Repository name required for fetch command${NC}"
+                echo "Usage: $0 fetch <repo_name|all>"
+                return 1
+            fi
+            if ! fetch_repos "$2"; then
+                exit_code=$?
+            fi
+            ;;
+        worktree)
+            case "$2" in
+                add)
+                    if [ "$4" == "-lb" ] && [ "$6" == "-rb" ] && [ -n "$3" ] && [ -n "$5" ] && [ -n "$7" ]; then
+                        if ! add_worktree "$3" "$5" "$7"; then
+                            exit_code=$?
+                        fi
+                    else
+                        echo -e "${RED}Invalid arguments for worktree add command${NC}"
+                        echo "Usage: $0 worktree add <repo_name> -lb <local-branch-name> -rb <remote-branch-name>"
+                        return 1
+                    fi
+                    ;;
+                pull-rebase)
+                    if [ -n "$3" ] && [ -n "$4" ]; then
+                        if ! pull_rebase_worktree "$3" "$4"; then
+                            exit_code=$?
+                        fi
+                    else
+                        echo -e "${RED}Invalid arguments for worktree pull-rebase command${NC}"
+                        echo "Usage: $0 worktree pull-rebase <repo_name> <local-branch-name>"
+                        return 1
+                    fi
+                    ;;
+                *)
+                    echo -e "${RED}Invalid worktree command. Usage: $0 worktree {add|pull-rebase}${NC}"
+                    return 1
+                    ;;
+            esac
+            ;;
+        show_repos)
+            show_repos
+            ;;
+        feature)
+            case "$2" in
+                create)
+                    if [ -n "$3" ]; then
+                        if ! feature_create "${@:3}"; then
+                            exit_code=$?
+                        fi
+                    else
+                        echo -e "${RED}Invalid arguments for feature create command${NC}"
+                        echo "Usage: $0 feature create [-w <worktree>] [--force] <feature_name> <repo1> [repo2] ..."
+                        return 1
+                    fi
+                    ;;
+                list)
+                    feature_list
+                    ;;
+                show)
+                    if [ -n "$3" ]; then
+                        if ! feature_show "${@:3}"; then
+                            exit_code=$?
+                        fi
+                    else
+                        echo -e "${RED}Invalid arguments for feature show command${NC}"
+                        echo "Usage: $0 feature show [-w <worktree>] <feature_name>"
+                        return 1
+                    fi
+                    ;;
+                comment)
+                    if [ -n "$3" ] && [ -n "$4" ]; then
+                        if ! feature_comment "$3" "${@:4}"; then
+                            exit_code=$?
+                        fi
+                    else
+                        echo -e "${RED}Invalid arguments for feature comment command${NC}"
+                        echo "Usage: $0 feature comment <feature_name> <comment>"
+                        return 1
+                    fi
+                    ;;
+                switch)
+                    if [ -n "$3" ]; then
+                        if ! feature_switch "${@:3}"; then
+                            exit_code=$?
+                        fi
+                    else
+                        echo -e "${RED}Invalid arguments for feature switch command${NC}"
+                        echo "Usage: $0 feature switch [-w <worktree>] <feature_name>"
+                        return 1
+                    fi
+                    ;;
+                switchback)
+                    if [ -n "$3" ]; then
+                        if ! feature_switchback "$3"; then
+                            exit_code=$?
+                        fi
+                    else
+                        echo -e "${RED}Invalid arguments for feature switchback command${NC}"
+                        echo "Usage: $0 feature switchback <feature_name>"
+                        return 1
+                    fi
+                    ;;
+                pick)
+                    if [ -n "$3" ] && [ -n "$4" ]; then
+                        if ! feature_pick "${@:3}"; then
+                            exit_code=$?
+                        fi
+                    else
+                        echo -e "${RED}Invalid arguments for feature pick command${NC}"
+                        echo "Usage: $0 feature pick [-w <worktree>] [--dry-run] <feature_name> <target_branch>"
+                        return 1
+                    fi
+                    ;;
+                *)
+                    echo -e "${RED}Invalid feature command. Usage: $0 feature {create|list|show|comment|switch|switchback|pick}${NC}"
+                    return 1
+                    ;;
+            esac
+            ;;
+        *)
+            echo -e "${RED}Invalid command: $1${NC}"
+            show_help
+            return 1
+            ;;
+    esac
+    
+    if [ $exit_code -ne 0 ]; then
+        log "ERROR" "Command failed with exit code: $exit_code"
+        echo -e "${RED}Command completed with errors. Check the log for details.${NC}"
+    else
+        log "INFO" "Command completed successfully"
+    fi
+    
+    return $exit_code
+}
+
 # ------------------------------------------------------------------
-# Main script logic to handle arguments
+# Legacy main script logic (preserved for compatibility)
 # ------------------------------------------------------------------
+legacy_main() {
 case "$1" in
     -h|--help)
         show_help
@@ -1431,4 +2178,11 @@ case "$1" in
         show_help
         ;;
 esac
+}
+
+# Execute main function with all arguments
+if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
+    main "$@"
+    exit $?
+fi
 
