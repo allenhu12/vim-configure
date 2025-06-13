@@ -1901,6 +1901,23 @@ Usage:
 
   ./git_sh1.sh -h | ./git_sh1.sh --help
       Display this help and exit.
+
+  ./git_sh1.sh --install-completion
+      Install bash tab completion for this script.
+      This enables auto-completion when you press [TAB].
+      Example: ./git_sh1.sh fetch [TAB] shows repository names
+
+  ./git_sh1.sh --clear-cache
+      Clear the completion cache.
+      Use this if repository or feature names are not showing correctly.
+
+COMPLETION USAGE:
+  After installing completion, you can use [TAB] to auto-complete:
+    ./git_sh1.sh [TAB]                    # Shows available commands
+    ./git_sh1.sh fetch [TAB]              # Shows repository names
+    ./git_sh1.sh feature create [TAB]     # Shows flags and options
+    ./git_sh1.sh feature show [TAB]       # Shows existing features
+
 EOF
 }
 
@@ -1910,6 +1927,61 @@ check_usage() {
         echo -e "${RED}Error: No command specified${NC}"
         show_help
         return 1
+    fi
+    return 0
+}
+
+# Install bash completion
+install_bash_completion() {
+    local completion_script="${script_dir}/git_sh1_completion.bash"
+    local install_script="${script_dir}/install_completion.sh"
+    
+    echo -e "${CYAN}Installing git_sh1.sh bash completion...${NC}"
+    
+    # Check if completion script exists
+    if [ ! -f "$completion_script" ]; then
+        echo -e "${RED}Error: Completion script not found: $completion_script${NC}"
+        echo -e "${YELLOW}Please ensure git_sh1_completion.bash is in the same directory as this script${NC}"
+        return 1
+    fi
+    
+    # Check if install script exists and is executable
+    if [ -f "$install_script" ] && [ -x "$install_script" ]; then
+        echo -e "${CYAN}Running installation script...${NC}"
+        "$install_script" "$@"
+        return $?
+    else
+        # Fallback: simple installation
+        echo -e "${CYAN}Using simple installation method...${NC}"
+        
+        local bashrc="$HOME/.bashrc"
+        local source_line="source \"$completion_script\""
+        
+        if [ -f "$bashrc" ] && ! grep -q "$completion_script" "$bashrc"; then
+            echo "" >> "$bashrc"
+            echo "# Git SH1 completion" >> "$bashrc"
+            echo "$source_line" >> "$bashrc"
+            echo -e "${GREEN}✓ Added completion to $bashrc${NC}"
+            echo -e "${YELLOW}Note: Run 'source ~/.bashrc' or restart your shell to enable completion${NC}"
+            return 0
+        elif grep -q "$completion_script" "$bashrc"; then
+            echo -e "${YELLOW}Completion already installed in $bashrc${NC}"
+            return 0
+        else
+            echo -e "${RED}Error: Could not install completion${NC}"
+            return 1
+        fi
+    fi
+}
+
+# Clear completion cache
+clear_completion_cache() {
+    local cache_dir="$HOME/.cache/git_sh1"
+    if [ -d "$cache_dir" ]; then
+        rm -rf "$cache_dir"
+        echo -e "${GREEN}Completion cache cleared: $cache_dir${NC}"
+    else
+        echo -e "${YELLOW}No completion cache found${NC}"
     fi
     return 0
 }
@@ -1932,6 +2004,14 @@ main() {
         -h|--help)
             show_help
             return 0
+            ;;
+        --install-completion)
+            install_bash_completion
+            return $?
+            ;;
+        --clear-cache)
+            clear_completion_cache
+            return $?
             ;;
         verify)
             if ! verify_repos "$2"; then
