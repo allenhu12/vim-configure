@@ -1226,6 +1226,215 @@ feature_comment() {
     echo -e "${GREEN}Comment added to feature '$feature_name'${NC}"
 }
 
+# Add a repository to an existing feature
+feature_add() {
+    local feature_name=""
+    local repo_name=""
+    local worktree=""
+    
+    # Parse arguments
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -w)
+                shift
+                worktree="$1"
+                shift
+                ;;
+            *)
+                if [ -z "$feature_name" ]; then
+                    feature_name="$1"
+                    shift
+                elif [ -z "$repo_name" ]; then
+                    repo_name="$1"
+                    shift
+                else
+                    echo -e "${RED}Unknown argument: $1${NC}"
+                    return 1
+                fi
+                ;;
+        esac
+    done
+    
+    # Input validation
+    if [ -z "$feature_name" ] || [ -z "$repo_name" ]; then
+        echo -e "${RED}Usage: $0 feature add [-w <worktree>] <feature_name> <repo_name>${NC}"
+        echo -e "${YELLOW}  -w <worktree>: Optional. Specify which worktree to add the feature in${NC}"
+        return 1
+    fi
+    
+    # Sanitize inputs
+    local original_feature_name="$feature_name"
+    feature_name=$(sanitize_input "$feature_name")
+    if [ "$feature_name" != "$original_feature_name" ]; then
+        echo -e "${YELLOW}Feature name sanitized: $original_feature_name -> $feature_name${NC}"
+    fi
+    
+    local original_repo_name="$repo_name"
+    repo_name=$(sanitize_input "$repo_name")
+    if [ "$repo_name" != "$original_repo_name" ]; then
+        echo -e "${YELLOW}Repository name sanitized: $original_repo_name -> $repo_name${NC}"
+    fi
+    
+    # Validate repository name
+    if ! validate_repo_name "$repo_name"; then
+        echo -e "${RED}Error: Invalid repository name: $repo_name${NC}"
+        return 1
+    fi
+    
+    # Sanitize worktree if provided
+    if [ -n "$worktree" ]; then
+        local original_worktree="$worktree"
+        worktree=$(sanitize_input "$worktree")
+        if [ "$worktree" != "$original_worktree" ]; then
+            echo -e "${YELLOW}Worktree name sanitized: $original_worktree -> $worktree${NC}"
+        fi
+    fi
+    
+    if ! init_features_dir; then
+        return 1
+    fi
+    
+    local feature_dir="$features_dir/$feature_name"
+    
+    # Check if feature exists
+    if [ ! -d "$feature_dir" ]; then
+        echo -e "${RED}Error: Feature '$feature_name' not found${NC}"
+        echo -e "${YELLOW}Available features:${NC}"
+        feature_list
+        return 1
+    fi
+    
+    # Check if feature already contains this repository
+    if [ -f "$feature_dir/repos.txt" ] && grep -q "^$repo_name$" "$feature_dir/repos.txt"; then
+        echo -e "${RED}Error: Repository '$repo_name' is already part of feature '$feature_name'${NC}"
+        return 1
+    fi
+    
+    log "INFO" "Adding repository $repo_name to feature: $feature_name"
+    
+    # Find the local folder for this repo
+    local local_folder=""
+    for pair in $repo_map; do
+        IFS=':' read -r r f <<< "$pair"
+        if [ "$r" == "$repo_name" ]; then
+            local_folder="$f"
+            break
+        fi
+    done
+    
+    if [ -z "$local_folder" ]; then
+        echo -e "${RED}Repository $repo_name not found in repo_map${NC}"
+        return 1
+    fi
+    
+    # Use worktree from feature if not specified
+    if [ -z "$worktree" ] && [ -f "$feature_dir/worktree.txt" ]; then
+        worktree=$(cat "$feature_dir/worktree.txt")
+        echo -e "${CYAN}Using feature's worktree: $worktree${NC}"
+    fi
+    
+    # Determine the repository path based on worktree
+    local repo_path
+    if [ -n "$worktree" ]; then
+        repo_path="$worktree_base_path/$worktree/$local_folder"
+    else
+        repo_path="$repo_base/$local_folder"
+    fi
+    
+    if [ ! -d "$repo_path/.git" ] && [ ! -f "$repo_path/.git" ]; then
+        echo -e "${RED}Repository not found: $repo_path${NC}"
+        echo -e "${YELLOW}Make sure the repository is cloned and the worktree path is correct${NC}"
+        return 1
+    fi
+    
+    cd "$repo_path" || {
+        echo -e "${RED}Failed to enter repository directory: $repo_path${NC}"
+        return 1
+    }
+    
+    # Validate git repository
+    if ! git rev-parse --git-dir >/dev/null 2>&1; then
+        echo -e "${RED}Invalid git repository: $repo_path${NC}"
+        return 1
+    fi
+    
+    local current_branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
+    local feature_branch="feature/$feature_name"
+    
+    echo -e "${CYAN}Processing repository: ${YELLOW}$repo_name${NC}"
+    echo -e "${CYAN}Repository path: ${YELLOW}$repo_path${NC}"
+    echo -e "${CYAN}Current branch: ${YELLOW}$current_branch${NC}"
+    
+    # Create or switch to feature branch
+    if [ "$current_branch" == "$feature_branch" ]; then
+        echo -e "${GREEN}Already on feature branch $feature_branch in $repo_name${NC}"
+    elif git show-ref --verify --quiet "refs/heads/$feature_branch"; then
+        echo -e "${YELLOW}Switching to existing feature branch $feature_branch in $repo_name${NC}"
+        if ! git checkout "$feature_branch" 2>/dev/null; then
+            # Check if it's due to branch being in use by another worktree
+            local worktree_info=$(git worktree list --porcelain | grep -B 2 "branch refs/heads/$feature_branch" | grep "worktree" | cut -d' ' -f2)
+            if [ -n "$worktree_info" ]; then
+                echo -e "${CYAN}Feature branch $feature_branch is already checked out in worktree: $worktree_info${NC}"
+                echo -e "${CYAN}Adding $repo_name to feature tracking without switching branches${NC}"
+            else
+                echo -e "${RED}Failed to checkout $feature_branch in $repo_name${NC}"
+                return 1
+            fi
+        fi
+    else
+        echo -e "${GREEN}Creating new feature branch $feature_branch in $repo_name${NC}"
+        if ! git checkout -b "$feature_branch"; then
+            echo -e "${RED}Failed to create feature branch $feature_branch in $repo_name${NC}"
+            return 1
+        fi
+    fi
+    
+    # Add repository to repos.txt
+    echo "$repo_name" >> "$feature_dir/repos.txt"
+    echo -e "${GREEN}Added $repo_name to feature repositories list${NC}"
+    
+    # Update worktree.txt if worktree specified and doesn't exist
+    if [ -n "$worktree" ] && [ ! -f "$feature_dir/worktree.txt" ]; then
+        echo "$worktree" > "$feature_dir/worktree.txt"
+        echo -e "${GREEN}Set feature worktree to: $worktree${NC}"
+    fi
+    
+    # Update branches.json
+    if [ -f "$feature_dir/branches.json" ]; then
+        # Check dependencies first
+        if ! check_dependencies; then
+            echo -e "${YELLOW}Warning: Cannot update branches.json - jq not available${NC}"
+        else
+            # Read current branches.json and add new repository
+            local branches_json
+            if branches_json=$(cat "$feature_dir/branches.json"); then
+                # Add the new repository to the JSON
+                local updated_json
+                if updated_json=$(echo "$branches_json" | jq --arg repo "$repo_name" \
+                                                              --arg branch "$current_branch" \
+                                                              --arg path "$repo_path" \
+                                                              '.[$repo] = {"branch": $branch, "path": $path}'); then
+                    echo "$updated_json" > "$feature_dir/branches.json"
+                    echo -e "${GREEN}Updated branches.json with $repo_name${NC}"
+                else
+                    echo -e "${YELLOW}Warning: Failed to update branches.json${NC}"
+                fi
+            fi
+        fi
+    else
+        # Create new branches.json if it doesn't exist
+        if check_dependencies; then
+            local branches_json="{\"$repo_name\":{\"branch\":\"$current_branch\",\"path\":\"$repo_path\"}}"
+            echo "$branches_json" > "$feature_dir/branches.json"
+            echo -e "${GREEN}Created branches.json with $repo_name${NC}"
+        fi
+    fi
+    
+    echo -e "${GREEN}Successfully added repository '$repo_name' to feature '$feature_name'${NC}"
+    log "INFO" "Successfully added repository $repo_name to feature $feature_name"
+    return 0
+}
+
 # Switch to feature branches for all repos in a feature
 feature_switch() {
     local feature_name=""
@@ -1863,6 +2072,13 @@ Usage:
         ./git_sh1.sh feature create dropbear_replacement controller openssh_rks
         ./git_sh1.sh feature create -w unleashed_200.18.7.101_r370 dropbear_replacement controller openssh_rks
 
+  ./git_sh1.sh feature add [-w <worktree>] <feature_name> <repo_name>
+      Add a repository to an existing feature.
+      -w <worktree>: Optional. Specify which worktree to add the repository in.
+      Examples:
+        ./git_sh1.sh feature add dropbear_replacement opensource
+        ./git_sh1.sh feature add -w unleashed_200.18.7.101_r370 dropbear_replacement opensource
+
   ./git_sh1.sh feature list
       List all features with their associated repositories and comments.
 
@@ -2074,6 +2290,17 @@ main() {
                         return 1
                     fi
                     ;;
+                add)
+                    if [ -n "$3" ] && [ -n "$4" ]; then
+                        if ! feature_add "${@:3}"; then
+                            exit_code=$?
+                        fi
+                    else
+                        echo -e "${RED}Invalid arguments for feature add command${NC}"
+                        echo "Usage: $0 feature add [-w <worktree>] <feature_name> <repo_name>"
+                        return 1
+                    fi
+                    ;;
                 list)
                     feature_list
                     ;;
@@ -2133,7 +2360,7 @@ main() {
                     fi
                     ;;
                 *)
-                    echo -e "${RED}Invalid feature command. Usage: $0 feature {create|list|show|comment|switch|switchback|pick}${NC}"
+                    echo -e "${RED}Invalid feature command. Usage: $0 feature {create|add|list|show|comment|switch|switchback|pick}${NC}"
                     return 1
                     ;;
             esac
@@ -2205,6 +2432,14 @@ case "$1" in
                      echo "Usage: $0 feature create [-w <worktree>] <feature_name> <repo1> [repo2] ..."
                  fi
                  ;;
+            add)
+                if [ -n "$3" ] && [ -n "$4" ]; then
+                    feature_add "${@:3}"
+                else
+                    echo -e "${RED}Invalid arguments for feature add command${NC}"
+                    echo "Usage: $0 feature add [-w <worktree>] <feature_name> <repo_name>"
+                fi
+                ;;
             list)
                 feature_list
                 ;;
@@ -2249,7 +2484,7 @@ case "$1" in
                 fi
                 ;;
             *)
-                echo -e "${RED}Invalid feature command. Usage: $0 feature {create|list|show|comment|switch|switchback|pick}${NC}"
+                echo -e "${RED}Invalid feature command. Usage: $0 feature {create|add|list|show|comment|switch|switchback|pick}${NC}"
                 ;;
         esac
         ;;
