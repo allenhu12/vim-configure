@@ -746,6 +746,9 @@ show_repos() {
 # Feature metadata directory
 features_dir="$script_dir/.git_sh1_features"
 
+# Profile management directory
+profiles_dir="$git_depot_dir/.git_sh1_profiles"
+
 # Configuration validation
 validate_configuration() {
     log "INFO" "Validating configuration"
@@ -2036,6 +2039,257 @@ feature_pick() {
 }
 
 # ------------------------------------------------------------------
+# PROFILE MANAGEMENT FUNCTIONS
+# ------------------------------------------------------------------
+
+# Initialize profiles directory
+init_profiles_dir() {
+    if [ ! -d "$profiles_dir" ]; then
+        if ! mkdir -p "$profiles_dir"; then
+            echo -e "${RED}Error: Failed to create profiles directory: $profiles_dir${NC}"
+            log "ERROR" "Failed to create profiles directory: $profiles_dir"
+            return 1
+        fi
+        echo -e "${GREEN}Initialized profiles directory at: $profiles_dir${NC}"
+        log "INFO" "Initialized profiles directory: $profiles_dir"
+    fi
+    return 0
+}
+
+# Parse manifest.xml and generate repo_map.txt
+parse_manifest_xml() {
+    local manifest_file="$1"
+    local output_file="$2"
+    
+    if [ ! -f "$manifest_file" ]; then
+        echo -e "${RED}Error: Manifest file not found: $manifest_file${NC}"
+        return 1
+    fi
+    
+    log "INFO" "Parsing manifest file: $manifest_file"
+    
+    # Use xmllint if available, otherwise fall back to grep/sed
+    if command -v xmllint >/dev/null 2>&1; then
+        # Extract project elements using xmllint
+        xmllint --format "$manifest_file" | grep '<project ' | while IFS= read -r line; do
+            # Extract name and path attributes
+            local name=$(echo "$line" | sed -n 's/.*name="\([^"]*\)".*/\1/p')
+            local path=$(echo "$line" | sed -n 's/.*path="\([^"]*\)".*/\1/p')
+            
+            # If path is empty, use name as path (e.g., opensource:opensource)
+            if [ -n "$name" ]; then
+                if [ -z "$path" ]; then
+                    path="$name"
+                fi
+                echo "$name:$path"
+            fi
+        done > "$output_file"
+    else
+        # Fallback to grep/sed for systems without xmllint
+        grep '<project ' "$manifest_file" | while IFS= read -r line; do
+            # Extract name and path attributes using sed
+            local name=$(echo "$line" | sed -n 's/.*name="\([^"]*\)".*/\1/p')
+            local path=$(echo "$line" | sed -n 's/.*path="\([^"]*\)".*/\1/p')
+            
+            # If path is empty, use name as path (e.g., opensource:opensource)
+            if [ -n "$name" ]; then
+                if [ -z "$path" ]; then
+                    path="$name"
+                fi
+                echo "$name:$path"
+            fi
+        done > "$output_file"
+    fi
+    
+    if [ ! -s "$output_file" ]; then
+        echo -e "${RED}Error: Failed to parse manifest or no projects found${NC}"
+        log "ERROR" "Failed to parse manifest: $manifest_file"
+        return 1
+    fi
+    
+    local repo_count=$(wc -l < "$output_file")
+    echo -e "${GREEN}Generated repo_map with $repo_count repositories${NC}"
+    log "INFO" "Generated repo_map: $output_file ($repo_count repositories)"
+    return 0
+}
+
+# Generate profile metadata
+generate_profile_metadata() {
+    local profile_name="$1"
+    local manifest_file="$2"
+    local repo_map_file="$3"
+    local metadata_file="$4"
+    
+    local repo_count=$(wc -l < "$repo_map_file" 2>/dev/null || echo "0")
+    local creation_date=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+    
+    # Extract common upstream branch from manifest if available
+    local upstream_branch=""
+    if [ -f "$manifest_file" ]; then
+        upstream_branch=$(grep 'upstream=' "$manifest_file" | head -1 | sed -n 's/.*upstream="\([^"]*\)".*/\1/p')
+    fi
+    
+    # Generate metadata JSON
+    cat > "$metadata_file" << EOF
+{
+  "profile_name": "$profile_name",
+  "created_date": "$creation_date",
+  "source_manifest": "$(basename "$manifest_file")",
+  "repository_count": $repo_count,
+  "upstream_branch": "$upstream_branch"
+}
+EOF
+    
+    log "INFO" "Generated profile metadata: $metadata_file"
+    return 0
+}
+
+# Create profile from manifest
+profile_create() {
+    local profile_path="$1"
+    
+    if [ -z "$profile_path" ]; then
+        echo -e "${RED}Usage: $0 profile create <release>/<name>${NC}"
+        echo -e "${YELLOW}Example: $0 profile create unleashed_200.19/openwrt_common${NC}"
+        return 1
+    fi
+    
+    # Parse release and name from profile_path
+    local release=$(dirname "$profile_path")
+    local profile_name=$(basename "$profile_path")
+    
+    if [ "$release" = "." ] || [ -z "$profile_name" ]; then
+        echo -e "${RED}Error: Invalid profile path. Use format: <release>/<name>${NC}"
+        return 1
+    fi
+    
+    if ! init_profiles_dir; then
+        return 1
+    fi
+    
+    local profile_dir="$profiles_dir/$profile_path"
+    local manifest_file="$profile_dir/manifest.xml"
+    local repo_map_file="$profile_dir/repo_map.txt"
+    local metadata_file="$profile_dir/metadata.json"
+    
+    # Check if manifest.xml exists in the target directory
+    if [ ! -f "$manifest_file" ]; then
+        echo -e "${RED}Error: Manifest file not found: $manifest_file${NC}"
+        echo -e "${YELLOW}Please copy your manifest.xml to: $profile_dir/${NC}"
+        echo -e "${CYAN}mkdir -p $profile_dir${NC}"
+        echo -e "${CYAN}cp your_manifest.xml $manifest_file${NC}"
+        return 1
+    fi
+    
+    # Check if profile already exists
+    if [ -f "$repo_map_file" ]; then
+        echo -e "${YELLOW}Profile '$profile_path' already exists${NC}"
+        echo -e "${CYAN}Regenerating from manifest...${NC}"
+    fi
+    
+    # Parse manifest and generate repo_map
+    if ! parse_manifest_xml "$manifest_file" "$repo_map_file"; then
+        return 1
+    fi
+    
+    # Generate metadata
+    if ! generate_profile_metadata "$profile_name" "$manifest_file" "$repo_map_file" "$metadata_file"; then
+        return 1
+    fi
+    
+    echo -e "${GREEN}Profile '$profile_path' created successfully${NC}"
+    echo -e "${CYAN}Profile directory: $profile_dir${NC}"
+    echo -e "${CYAN}Repository count: $(wc -l < "$repo_map_file")${NC}"
+    
+    return 0
+}
+
+# List available profiles
+profile_list() {
+    if ! init_profiles_dir; then
+        return 1
+    fi
+    
+    if [ ! -d "$profiles_dir" ] || [ -z "$(ls -A "$profiles_dir" 2>/dev/null)" ]; then
+        echo -e "${YELLOW}No profiles found.${NC}"
+        echo -e "${CYAN}Create a profile with: $0 profile create <release>/<name>${NC}"
+        return 0
+    fi
+    
+    echo -e "${CYAN}Available profiles:${NC}"
+    
+    # Group by release
+    for release_dir in "$profiles_dir"/*; do
+        if [ -d "$release_dir" ]; then
+            local release_name=$(basename "$release_dir")
+            echo -e "${GREEN}Release: $release_name${NC}"
+            
+            for profile_dir in "$release_dir"/*; do
+                if [ -d "$profile_dir" ]; then
+                    local profile_name=$(basename "$profile_dir")
+                    local metadata_file="$profile_dir/metadata.json"
+                    local repo_count="?"
+                    
+                    if [ -f "$metadata_file" ]; then
+                        repo_count=$(grep '"repository_count"' "$metadata_file" | sed 's/.*: *\([0-9]*\).*/\1/')
+                    fi
+                    
+                    echo -e "  - ${YELLOW}$profile_name${NC} ($repo_count repositories)"
+                fi
+            done
+            echo
+        fi
+    done
+}
+
+# Show profile details
+profile_show() {
+    local profile_path="$1"
+    
+    if [ -z "$profile_path" ]; then
+        echo -e "${RED}Usage: $0 profile show <release>/<name>${NC}"
+        return 1
+    fi
+    
+    local profile_dir="$profiles_dir/$profile_path"
+    local manifest_file="$profile_dir/manifest.xml"
+    local repo_map_file="$profile_dir/repo_map.txt"
+    local metadata_file="$profile_dir/metadata.json"
+    
+    if [ ! -d "$profile_dir" ]; then
+        echo -e "${RED}Error: Profile '$profile_path' not found${NC}"
+        echo -e "${YELLOW}Available profiles:${NC}"
+        profile_list
+        return 1
+    fi
+    
+    echo -e "${CYAN}Profile: $profile_path${NC}"
+    echo
+    
+    # Show metadata if available
+    if [ -f "$metadata_file" ]; then
+        echo -e "${GREEN}Metadata:${NC}"
+        if command -v jq >/dev/null 2>&1; then
+            jq . "$metadata_file"
+        else
+            cat "$metadata_file"
+        fi
+        echo
+    fi
+    
+    # Show repository mappings
+    if [ -f "$repo_map_file" ]; then
+        echo -e "${GREEN}Repository mappings:${NC}"
+        cat "$repo_map_file"
+        echo
+    fi
+    
+    # Show files in profile directory
+    echo -e "${GREEN}Profile files:${NC}"
+    ls -la "$profile_dir"
+}
+
+# ------------------------------------------------------------------
 # NEW: Show help / usage information
 # ------------------------------------------------------------------
 show_help() {
@@ -2064,6 +2318,21 @@ Usage:
 
   ./git_sh1.sh show_repos
       List every repository key configured in this script.
+
+  ./git_sh1.sh profile create <release>/<name>
+      Create a profile from a manifest.xml file. The manifest.xml must already exist in the profile directory.
+      Examples:
+        ./git_sh1.sh profile create unleashed_200.19/openwrt_common
+        ./git_sh1.sh profile create unleashed_200.19/openwrt_r370
+
+  ./git_sh1.sh profile list
+      List all available profiles grouped by release.
+
+  ./git_sh1.sh profile show <release>/<name>
+      Show detailed information about a specific profile.
+      Examples:
+        ./git_sh1.sh profile show unleashed_200.19/openwrt_common
+        ./git_sh1.sh profile show unleashed_200.19/openwrt_r370
 
   ./git_sh1.sh feature create [-w <worktree>] <feature_name> <repo1> [repo2] ...
       Create or switch to feature branches across multiple repositories.
@@ -2277,6 +2546,41 @@ main() {
         show_repos)
             show_repos
             ;;
+        profile)
+            case "$2" in
+                create)
+                    if [ -n "$3" ]; then
+                        if ! profile_create "$3"; then
+                            exit_code=$?
+                        fi
+                    else
+                        echo -e "${RED}Invalid arguments for profile create command${NC}"
+                        echo "Usage: $0 profile create <release>/<name>"
+                        return 1
+                    fi
+                    ;;
+                list)
+                    if ! profile_list; then
+                        exit_code=$?
+                    fi
+                    ;;
+                show)
+                    if [ -n "$3" ]; then
+                        if ! profile_show "$3"; then
+                            exit_code=$?
+                        fi
+                    else
+                        echo -e "${RED}Invalid arguments for profile show command${NC}"
+                        echo "Usage: $0 profile show <release>/<name>"
+                        return 1
+                    fi
+                    ;;
+                *)
+                    echo -e "${RED}Invalid profile command. Usage: $0 profile {create|list|show}${NC}"
+                    return 1
+                    ;;
+            esac
+            ;;
         feature)
             case "$2" in
                 create)
@@ -2421,6 +2725,32 @@ case "$1" in
         ;;
     show_repos)
         show_repos
+        ;;
+    profile)
+        case "$2" in
+            create)
+                if [ -n "$3" ]; then
+                    profile_create "$3"
+                else
+                    echo -e "${RED}Invalid arguments for profile create command${NC}"
+                    echo "Usage: $0 profile create <release>/<name>"
+                fi
+                ;;
+            list)
+                profile_list
+                ;;
+            show)
+                if [ -n "$3" ]; then
+                    profile_show "$3"
+                else
+                    echo -e "${RED}Invalid arguments for profile show command${NC}"
+                    echo "Usage: $0 profile show <release>/<name>"
+                fi
+                ;;
+            *)
+                echo -e "${RED}Invalid profile command. Usage: $0 profile {create|list|show}${NC}"
+                ;;
+        esac
         ;;
     feature)
         case "$2" in
