@@ -13,9 +13,10 @@
 #   Example: ./git_sh1.sh worktree add ap_zd_controller -lb local5 -rb origin/release/unleashed_200.17
 
 # Step 3: Pull and rebase worktree
-#   ./git_sh1.sh worktree pull-rebase <repo_name> <local_branch_name>
-#   Example: ./git_sh1.sh worktree pull-rebase controller local5
-#   Example: ./git_sh1.sh worktree pull-rebase all local5
+#   ./git_sh1.sh worktree pull-rebase -repo <repo_name> -lb <local_branch_name>
+#   Example: ./git_sh1.sh worktree pull-rebase -repo controller -lb local5
+#   Example: ./git_sh1.sh worktree pull-rebase -repo all -lb local5
+#   Legacy: ./git_sh1.sh worktree pull-rebase controller local5  (backward compatibility)
 #   Note : the parameter <local_branch_name> is only the designation of local path, not the branch name of local repository.
 
 # Repository map (repository name:local folder):
@@ -127,19 +128,89 @@ validate_path() {
         path="$base_path/$path"
     fi
     
-    # Normalize path (remove .. and .)
-    path=$(cd "$(dirname "$path")" 2>/dev/null && pwd)/$(basename "$path") || {
-        log "ERROR" "Invalid path: $1"
-        return 1
-    }
+    # Normalize path manually without requiring directory to exist
+    # This is safer than using cd which requires the directory to exist
+    local normalized_path=""
+    IFS='/' read -ra PATH_PARTS <<< "$path"
+    local path_components=()
+    
+    for part in "${PATH_PARTS[@]}"; do
+        if [[ "$part" == "." ]] || [[ -z "$part" ]]; then
+            continue
+        elif [[ "$part" == ".." ]]; then
+            if [[ ${#path_components[@]} -gt 0 ]]; then
+                unset 'path_components[-1]'
+            fi
+        else
+            path_components+=("$part")
+        fi
+    done
+    
+    # Rebuild the path
+    normalized_path="/"
+    for component in "${path_components[@]}"; do
+        normalized_path="$normalized_path$component/"
+    done
+    # Remove trailing slash except for root
+    if [[ "$normalized_path" != "/" ]]; then
+        normalized_path="${normalized_path%/}"
+    fi
     
     # Check if path is within allowed boundaries
-    if [[ "$path" != "$base_path"* ]]; then
-        log "ERROR" "Path outside allowed boundaries: $path"
+    if [[ "$normalized_path" != "$base_path"* ]]; then
+        log "ERROR" "Path outside allowed boundaries: $normalized_path (base: $base_path)"
         return 1
     fi
     
-    echo "$path"
+    echo "$normalized_path"
+    return 0
+}
+
+# Worktree path validation - doesn't require path to exist
+validate_worktree_path() {
+    local path="$1"
+    local base_path="$2"
+    
+    # Convert to absolute path
+    if [[ "$path" != /* ]]; then
+        path="$base_path/$path"
+    fi
+    
+    # Normalize path manually (remove .. and . components)
+    # Convert to canonical form without requiring directory to exist
+    local normalized_path=""
+    IFS='/' read -ra PATH_PARTS <<< "$path"
+    local path_components=()
+    
+    for part in "${PATH_PARTS[@]}"; do
+        if [[ "$part" == "." ]] || [[ -z "$part" ]]; then
+            continue
+        elif [[ "$part" == ".." ]]; then
+            if [[ ${#path_components[@]} -gt 0 ]]; then
+                unset 'path_components[-1]'
+            fi
+        else
+            path_components+=("$part")
+        fi
+    done
+    
+    # Rebuild the path
+    normalized_path="/"
+    for component in "${path_components[@]}"; do
+        normalized_path="$normalized_path$component/"
+    done
+    # Remove trailing slash except for root
+    if [[ "$normalized_path" != "/" ]]; then
+        normalized_path="${normalized_path%/}"
+    fi
+    
+    # Check if path is within allowed boundaries
+    if [[ "$normalized_path" != "$base_path"* ]]; then
+        log "ERROR" "Worktree path outside allowed boundaries: $normalized_path"
+        return 1
+    fi
+    
+    echo "$normalized_path"
     return 0
 }
 
@@ -171,6 +242,34 @@ show_progress() {
     if [ "$current" -eq "$total" ]; then
         echo
     fi
+}
+
+# Sort the global repo_map in place by path depth (shallowest first)
+sort_repo_map_once() {
+    local sorted_entries=()
+    
+    # Parse repo_map and sort by depth
+    for pair in $repo_map; do
+        IFS=':' read -r repo_name local_folder <<< "$pair"
+        if [ -n "$repo_name" ] && [ -n "$local_folder" ]; then
+            local depth=$(echo "$local_folder" | tr -cd '/' | wc -c)
+            sorted_entries+=("${depth}:${pair}")
+        fi
+    done
+    
+    # Sort by depth (numeric sort) and reconstruct repo_map
+    repo_map=""
+    while IFS= read -r entry; do
+        # Remove the depth prefix
+        local pair="${entry#*:}"
+        if [ -n "$repo_map" ]; then
+            repo_map="$repo_map $pair"
+        else
+            repo_map="$pair"
+        fi
+    done < <(printf '%s\n' "${sorted_entries[@]}" | sort -n)
+    
+    log "DEBUG" "Sorted repo_map by depth (shallowest first)"
 }
 
 # Determine the script's directory
@@ -217,18 +316,30 @@ find_repo_base() {
     local git_depot="$1"
     local repo_base_candidates=()
     
+    echo -e "${CYAN}DEBUG: Searching for repo_base directories in: $git_depot${NC}" >&2
+    
     # Look for directories containing "repo_base" in their name
     while IFS= read -r -d '' dir; do
         repo_base_candidates+=("$dir")
+        echo -e "${CYAN}DEBUG: Found repo_base candidate: $dir${NC}" >&2
     done < <(find "$git_depot" -maxdepth 2 -type d -name "*repo_base*" -print0 2>/dev/null)
     
+    echo -e "${CYAN}DEBUG: Total repo_base candidates found: ${#repo_base_candidates[@]}${NC}" >&2
+    
     if [ ${#repo_base_candidates[@]} -eq 0 ]; then
+        echo -e "${RED}DEBUG: No repo_base directories found. Listing top-level directories:${NC}" >&2
+        ls -la "$git_depot" 2>/dev/null >&2 || echo "Cannot list git_depot directory" >&2
         log "ERROR" "No directories containing 'repo_base' found in $git_depot"
         return 1
     elif [ ${#repo_base_candidates[@]} -eq 1 ]; then
+        echo -e "${GREEN}DEBUG: Using single repo_base candidate: ${repo_base_candidates[0]}${NC}" >&2
         echo "${repo_base_candidates[0]}"
         return 0
     else
+        echo -e "${YELLOW}DEBUG: Multiple repo_base candidates found:${NC}" >&2
+        for candidate in "${repo_base_candidates[@]}"; do
+            echo -e "${YELLOW}  - $candidate${NC}" >&2
+        done
         log "WARN" "Multiple repo_base candidates found, using first: ${repo_base_candidates[0]}"
         echo "${repo_base_candidates[0]}"
         return 0
@@ -249,6 +360,9 @@ worktree_base_path="$git_depot_dir"
 log "INFO" "Using worktree_base_path: $worktree_base_path"
 
 ssh_base="ssh://tdc-mirror-git@ruckus-git.ruckuswireless.com:7999/wrls/"
+
+# Sort the default repo_map by depth to ensure correct processing order
+sort_repo_map_once
 
 # Repository validation
 validate_repo_name() {
@@ -405,12 +519,12 @@ fetch_repos() {
         echo -e "${CYAN}Fetching all repositories...${NC}"
         
         # Count total repositories first
-        for pair in $repo_map; do
+        for pair in $(sort_repo_map_by_depth); do
             ((total_count++))
         done
         
         local current=0
-        for pair in $repo_map; do
+        for pair in $(sort_repo_map_by_depth); do
             IFS=':' read -r repo local_folder <<< "$pair"
             ((current++))
             show_progress "$current" "$total_count" "Fetching $repo"
@@ -536,6 +650,44 @@ fetch_repo() {
     echo -e "${CYAN}Completed processing repository: ${YELLOW}${repo}${NC}\n"
 }
 
+# Sort repo_map entries by path depth (shallowest first) to avoid directory conflicts
+sort_repo_map_by_depth() {
+    # Create temporary arrays to hold repo entries with their depths
+    local entries=()
+    local depths=()
+    
+    # Parse repo_map and calculate depth for each entry
+    for pair in $repo_map; do
+        IFS=':' read -r repo_name local_folder <<< "$pair"
+        # Count the number of '/' characters to determine depth
+        local depth=$(echo "$local_folder" | tr -cd '/' | wc -c)
+        entries+=("$pair")
+        depths+=("$depth")
+    done
+    
+    # Sort entries by depth in ascending order (shallowest first)
+    # This ensures parent directories are created before child directories
+    local n=${#entries[@]}
+    for ((i = 0; i < n - 1; i++)); do
+        for ((j = 0; j < n - i - 1; j++)); do
+            if [[ ${depths[j]} -gt ${depths[j+1]} ]]; then
+                # Swap entries
+                local temp_entry="${entries[j]}"
+                local temp_depth="${depths[j]}"
+                entries[j]="${entries[j+1]}"
+                depths[j]="${depths[j+1]}"
+                entries[j+1]="$temp_entry"
+                depths[j+1]="$temp_depth"
+            fi
+        done
+    done
+    
+    # Output sorted entries
+    for entry in "${entries[@]}"; do
+        echo "$entry"
+    done
+}
+
 # Add a worktree for a specific branch
 add_worktree() {
     repo=$1
@@ -543,7 +695,7 @@ add_worktree() {
     remote_branch=$3
 
     if [ "$repo" == "all" ]; then
-        for pair in $repo_map; do
+        for pair in $(sort_repo_map_by_depth); do
             IFS=':' read -r repo_name local_folder <<< "$pair"
             add_worktree_for_repo "$repo_name" "$local_folder" "$local_branch" "$remote_branch"
         done
@@ -560,6 +712,60 @@ add_worktree() {
         if ! $repo_found; then
             echo -e "${RED}Repository $repo not found in repo_map${NC}"
         fi
+    fi
+}
+
+# Enhanced add_worktree function with profile-aware upstream detection
+add_worktree_with_profile() {
+    local repo="$1"
+    local local_branch="$2"
+    local remote_branch="$3"
+    local profile_name="$4"
+    
+    if [ "$repo" == "all" ]; then
+        echo -e "${CYAN}Creating worktrees for all repositories...${NC}"
+        for pair in $(sort_repo_map_by_depth); do
+            IFS=':' read -r repo_name local_folder <<< "$pair"
+            local individual_remote_branch="$remote_branch"
+            
+            # Auto-detect upstream for this specific repository if profile specified and no explicit -rb
+            if [ -n "$profile_name" ] && [ -z "$remote_branch" ]; then
+                if upstream=$(get_upstream_from_profile "$profile_name" "$repo_name"); then
+                    individual_remote_branch="origin/$upstream"
+                    echo -e "${CYAN}Auto-detected upstream for $repo_name: $individual_remote_branch${NC}"
+                else
+                    echo -e "${YELLOW}Warning: No upstream found for $repo_name in profile $profile_name${NC}"
+                    echo -e "${RED}Error: Cannot create worktree for $repo_name - upstream not available${NC}"
+                    continue
+                fi
+            elif [ -z "$remote_branch" ]; then
+                echo -e "${RED}Error: -rb parameter required for $repo_name when not using --profile${NC}"
+                continue
+            fi
+            
+            add_worktree_for_repo "$repo_name" "$local_folder" "$local_branch" "$individual_remote_branch"
+        done
+    else
+        # Handle specific repository
+        local specific_remote_branch="$remote_branch"
+        
+        # Auto-detect upstream for specific repository if profile specified and no explicit -rb
+        if [ -n "$profile_name" ] && [ -z "$remote_branch" ]; then
+            if upstream=$(get_upstream_from_profile "$profile_name" "$repo"); then
+                specific_remote_branch="origin/$upstream"
+                echo -e "${CYAN}Auto-detected upstream for $repo: $specific_remote_branch${NC}"
+            else
+                echo -e "${YELLOW}Warning: No upstream found for $repo in profile $profile_name${NC}"
+                echo -e "${RED}Error: -rb parameter required when upstream not available in profile${NC}"
+                return 1
+            fi
+        elif [ -z "$remote_branch" ]; then
+            echo -e "${RED}Error: -rb parameter required when not using --profile${NC}"
+            return 1
+        fi
+        
+        # Use existing add_worktree function for specific repository
+        add_worktree "$repo" "$local_branch" "$specific_remote_branch"
     fi
 }
 
@@ -587,7 +793,7 @@ add_worktree_for_repo() {
         return 1
     fi
     
-    if ! worktree_dir=$(validate_path "$worktree_base_path/$local_branch/$local_folder" "$worktree_base_path"); then
+    if ! worktree_dir=$(validate_worktree_path "$worktree_base_path/$local_branch/$local_folder" "$worktree_base_path"); then
         echo -e "${RED}Invalid worktree path for: $repo${NC}"
         return 1
     fi
@@ -656,7 +862,7 @@ add_worktree_for_repo() {
         log "INFO" "Reusing existing branch $local_branch for $repo"
         
         # If the branch exists, just add the worktree with the existing branch
-        if ! git worktree add -f "$worktree_dir" "$local_branch" 2>/dev/null; then
+        if ! git worktree add -f "$worktree_dir" "$local_branch"; then
             echo -e "${RED}Failed to add worktree for existing branch $local_branch${NC}"
             log "ERROR" "Failed to add worktree for existing branch $local_branch in $repo"
             return 1
@@ -666,7 +872,7 @@ add_worktree_for_repo() {
         log "INFO" "Creating new branch $local_branch from $remote_branch for $repo"
         
         # If the branch doesn't exist, create it and add it as a worktree
-        if ! git worktree add --checkout -b "$local_branch" "$worktree_dir" "$remote_branch" 2>/dev/null; then
+        if ! git worktree add --checkout -b "$local_branch" "$worktree_dir" "$remote_branch"; then
             echo -e "${RED}Failed to create worktree with new branch $local_branch${NC}"
             log "ERROR" "Failed to create worktree with new branch $local_branch in $repo"
             return 1
@@ -691,7 +897,7 @@ pull_rebase_worktree() {
     local_branch=$2
 
     if [ "$repo" == "all" ]; then
-        for pair in $repo_map; do
+        for pair in $(sort_repo_map_by_depth); do
             IFS=':' read -r repo_name local_folder <<< "$pair"
             pull_rebase_repo "$repo_name" "$local_folder" "$local_branch"
         done
@@ -2060,6 +2266,7 @@ init_profiles_dir() {
 parse_manifest_xml() {
     local manifest_file="$1"
     local output_file="$2"
+    local upstream_file="${output_file%.*}_upstream.txt"  # Create upstream file alongside repo_map
     
     if [ ! -f "$manifest_file" ]; then
         echo -e "${RED}Error: Manifest file not found: $manifest_file${NC}"
@@ -2068,13 +2275,17 @@ parse_manifest_xml() {
     
     log "INFO" "Parsing manifest file: $manifest_file"
     
+    # Clear the upstream file before regenerating
+    > "$upstream_file"
+    
     # Use xmllint if available, otherwise fall back to grep/sed
     if command -v xmllint >/dev/null 2>&1; then
         # Extract project elements using xmllint
         xmllint --format "$manifest_file" | grep '<project ' | while IFS= read -r line; do
-            # Extract name and path attributes
+            # Extract name, path, and upstream attributes
             local name=$(echo "$line" | sed -n 's/.*name="\([^"]*\)".*/\1/p')
             local path=$(echo "$line" | sed -n 's/.*path="\([^"]*\)".*/\1/p')
+            local upstream=$(echo "$line" | sed -n 's/.*upstream="\([^"]*\)".*/\1/p')
             
             # If path is empty, use name as path (e.g., opensource:opensource)
             if [ -n "$name" ]; then
@@ -2082,14 +2293,20 @@ parse_manifest_xml() {
                     path="$name"
                 fi
                 echo "$name:$path"
+                
+                # Store upstream information if available
+                if [ -n "$upstream" ]; then
+                    echo "$name:$upstream" >> "$upstream_file"
+                fi
             fi
         done > "$output_file"
     else
         # Fallback to grep/sed for systems without xmllint
         grep '<project ' "$manifest_file" | while IFS= read -r line; do
-            # Extract name and path attributes using sed
+            # Extract name, path, and upstream attributes using sed
             local name=$(echo "$line" | sed -n 's/.*name="\([^"]*\)".*/\1/p')
             local path=$(echo "$line" | sed -n 's/.*path="\([^"]*\)".*/\1/p')
+            local upstream=$(echo "$line" | sed -n 's/.*upstream="\([^"]*\)".*/\1/p')
             
             # If path is empty, use name as path (e.g., opensource:opensource)
             if [ -n "$name" ]; then
@@ -2097,6 +2314,11 @@ parse_manifest_xml() {
                     path="$name"
                 fi
                 echo "$name:$path"
+                
+                # Store upstream information if available
+                if [ -n "$upstream" ]; then
+                    echo "$name:$upstream" >> "$upstream_file"
+                fi
             fi
         done > "$output_file"
     fi
@@ -2108,7 +2330,16 @@ parse_manifest_xml() {
     fi
     
     local repo_count=$(wc -l < "$output_file")
+    local upstream_count=0
+    if [ -f "$upstream_file" ]; then
+        upstream_count=$(wc -l < "$upstream_file")
+    fi
+    
     echo -e "${GREEN}Generated repo_map with $repo_count repositories${NC}"
+    if [ $upstream_count -gt 0 ]; then
+        echo -e "${GREEN}Generated upstream mappings for $upstream_count repositories${NC}"
+        log "INFO" "Generated upstream_map: $upstream_file ($upstream_count repositories)"
+    fi
     log "INFO" "Generated repo_map: $output_file ($repo_count repositories)"
     return 0
 }
@@ -2289,6 +2520,94 @@ profile_show() {
     ls -la "$profile_dir"
 }
 
+# Load profile repo_map for profile-aware operations
+load_profile_repo_map() {
+    local profile_path="$1"
+    
+    if [ -z "$profile_path" ]; then
+        echo -e "${RED}Error: Profile path required${NC}"
+        log "ERROR" "load_profile_repo_map called without profile_path"
+        return 1
+    fi
+    
+    local profile_dir="$profiles_dir/$profile_path"
+    local repo_map_file="$profile_dir/repo_map.txt"
+    
+    if [ ! -d "$profile_dir" ]; then
+        echo -e "${RED}Error: Profile '$profile_path' not found${NC}"
+        echo -e "${YELLOW}Available profiles:${NC}"
+        profile_list
+        log "ERROR" "Profile not found: $profile_path"
+        return 1
+    fi
+    
+    if [ ! -f "$repo_map_file" ]; then
+        echo -e "${RED}Error: Profile repo_map not found: $repo_map_file${NC}"
+        echo -e "${YELLOW}Try recreating the profile with: ./git_sh1.sh profile create $profile_path${NC}"
+        log "ERROR" "Profile repo_map file not found: $repo_map_file"
+        return 1
+    fi
+    
+    # Load repo_map from file, filtering out empty lines and comments
+    local profile_repo_map=""
+    while IFS= read -r line; do
+        # Skip empty lines and lines starting with #
+        if [[ -n "$line" && ! "$line" =~ ^[[:space:]]*# ]]; then
+            if [ -n "$profile_repo_map" ]; then
+                profile_repo_map="$profile_repo_map $line"
+            else
+                profile_repo_map="$line"
+            fi
+        fi
+    done < "$repo_map_file"
+    
+    if [ -z "$profile_repo_map" ]; then
+        echo -e "${RED}Error: Profile repo_map is empty: $repo_map_file${NC}"
+        log "ERROR" "Profile repo_map is empty: $repo_map_file"
+        return 1
+    fi
+    
+    # Set the global repo_map to the profile's repo_map
+    repo_map="$profile_repo_map"
+    
+    # Sort repo_map by depth to ensure correct processing order
+    sort_repo_map_once
+    
+    log "INFO" "Loaded and sorted profile repo_map: $profile_path ($(echo $repo_map | wc -w) repositories)"
+    return 0
+}
+
+# Get upstream branch for a repository from profile
+get_upstream_from_profile() {
+    local profile_path="$1"
+    local repo_name="$2"
+    
+    if [ -z "$profile_path" ] || [ -z "$repo_name" ]; then
+        log "ERROR" "get_upstream_from_profile called with missing parameters"
+        return 1
+    fi
+    
+    local profile_dir="$profiles_dir/$profile_path"
+    local upstream_file="$profile_dir/repo_map_upstream.txt"
+    
+    if [ ! -f "$upstream_file" ]; then
+        log "WARN" "No upstream file found for profile: $profile_path"
+        return 1
+    fi
+    
+    # Search for repository upstream mapping (head -1 to handle potential duplicates)
+    local upstream=$(grep "^$repo_name:" "$upstream_file" | head -1 | cut -d':' -f2)
+    
+    if [ -n "$upstream" ]; then
+        echo "$upstream"
+        log "INFO" "Found upstream for $repo_name in profile $profile_path: $upstream"
+        return 0
+    else
+        log "WARN" "No upstream found for repository $repo_name in profile $profile_path"
+        return 1
+    fi
+}
+
 # ------------------------------------------------------------------
 # NEW: Show help / usage information
 # ------------------------------------------------------------------
@@ -2298,23 +2617,40 @@ Usage:
   ./git_sh1.sh verify
       Verify that all local repositories exist.
 
-  ./git_sh1.sh fetch <repo_name|all>
-      Fetch repository metadata.
+  ./git_sh1.sh fetch [--profile <release>/<name>] <repo_name|all>
+      Fetch repository metadata. Use --profile to fetch only repositories defined in a specific profile.
       Examples:
-        ./git_sh1.sh fetch all
-        ./git_sh1.sh fetch controller
+        ./git_sh1.sh fetch all                                          (fetch all hardcoded repositories)
+        ./git_sh1.sh fetch controller                                   (fetch specific repository)
+        ./git_sh1.sh fetch --profile unleashed_200.19/openwrt_common all   (fetch all repositories in profile)
+        ./git_sh1.sh fetch --profile unleashed_200.19/openwrt_r370 controller (fetch specific repository using profile)
 
-  ./git_sh1.sh worktree add <repo_name|all> -lb <local_branch_name> -rb <remote_branch_name>
-      Add a git worktree for the specified repository and branch.
-      Examples:
-        ./git_sh1.sh worktree add all -lb local5 -rb origin/master
-        ./git_sh1.sh worktree add ap_zd_controller -lb local5 -rb origin/release/unleashed_200.17
+  ./git_sh1.sh worktree add [--profile <release>/<name>] -repo <repo_name|all> -lb <local_branch_name> [-rb <remote_branch_name>]
+      Add a git worktree for the specified repository and branch. Use --profile to create worktrees for repositories in a specific profile.
+      When using --profile, the -rb parameter is optional and will auto-detect upstream branch from manifest.xml.
+      
+      Recommended Syntax (New):
+        ./git_sh1.sh worktree add -repo all -lb local5 -rb origin/master                              (create worktrees for hardcoded repositories)
+        ./git_sh1.sh worktree add -repo controller -lb local5 -rb origin/release/unleashed_200.17     (create worktree for specific repository)
+        ./git_sh1.sh worktree add --profile unleashed_200.19/openwrt_common -repo controller -lb local5     (auto-detect upstream: origin/release/unleashed_200.19.7.11_r370_t)
+        ./git_sh1.sh worktree add --profile unleashed_200.19/openwrt_common -repo all -lb local5            (auto-detect upstream for all repositories in profile)
+        ./git_sh1.sh worktree add --profile unleashed_200.19/openwrt_common -repo controller -lb local5 -rb origin/master  (override auto-detection with explicit branch)
+      
+      Legacy Syntax (Supported):
+        ./git_sh1.sh worktree add all -lb local5 -rb origin/master                                    (backward compatibility)
+        ./git_sh1.sh worktree add --profile unleashed_200.19/openwrt_common controller -lb local5     (backward compatibility)
 
-  ./git_sh1.sh worktree pull-rebase <repo_name|all> <local_branch_name>
-      Pull and rebase the given worktree branch.
+  ./git_sh1.sh worktree pull-rebase [--profile <release>/<name>] -repo <repo_name|all> -lb <local_branch_name>
+      Pull and rebase the given worktree branch. Use --profile to pull-rebase repositories in a specific profile.
       Examples:
-        ./git_sh1.sh worktree pull-rebase controller local5
-        ./git_sh1.sh worktree pull-rebase all local5
+        ./git_sh1.sh worktree pull-rebase -repo controller -lb local5                                (pull-rebase specific repository)
+        ./git_sh1.sh worktree pull-rebase -repo all -lb local5                                       (pull-rebase all hardcoded repositories)
+        ./git_sh1.sh worktree pull-rebase --profile unleashed_200.19/openwrt_common -repo all -lb local5         (pull-rebase all repositories in profile)
+        ./git_sh1.sh worktree pull-rebase --profile unleashed_200.19/openwrt_common -repo controller -lb local5  (pull-rebase specific repository using profile)
+      
+      Legacy Syntax (Supported):
+        ./git_sh1.sh worktree pull-rebase controller local5                                          (backward compatibility)
+        ./git_sh1.sh worktree pull-rebase --profile unleashed_200.19/openwrt_common all local5      (backward compatibility)
 
   ./git_sh1.sh show_repos
       List every repository key configured in this script.
@@ -2504,37 +2840,253 @@ main() {
             fi
             ;;
         fetch)
-            if [ -z "$2" ]; then
+            # Parse fetch command arguments
+            local fetch_repo=""
+            local profile_name=""
+            local arg_index=2
+            
+            # Parse arguments for --profile parameter
+            while [ $arg_index -le $# ]; do
+                case "${!arg_index}" in
+                    --profile)
+                        ((arg_index++))
+                        if [ $arg_index -le $# ]; then
+                            profile_name="${!arg_index}"
+                        else
+                            echo -e "${RED}Error: --profile requires a profile name${NC}"
+                            echo "Usage: $0 fetch [--profile <release>/<name>] <repo_name|all>"
+                            return 1
+                        fi
+                        ;;
+                    *)
+                        if [ -z "$fetch_repo" ]; then
+                            fetch_repo="${!arg_index}"
+                        else
+                            echo -e "${RED}Error: Multiple repository names specified${NC}"
+                            echo "Usage: $0 fetch [--profile <release>/<name>] <repo_name|all>"
+                            return 1
+                        fi
+                        ;;
+                esac
+                ((arg_index++))
+            done
+            
+            # Validate required repository name
+            if [ -z "$fetch_repo" ]; then
                 echo -e "${RED}Error: Repository name required for fetch command${NC}"
-                echo "Usage: $0 fetch <repo_name|all>"
+                echo "Usage: $0 fetch [--profile <release>/<name>] <repo_name|all>"
                 return 1
             fi
-            if ! fetch_repos "$2"; then
+            
+            # Load profile repo_map if profile specified
+            if [ -n "$profile_name" ]; then
+                if ! load_profile_repo_map "$profile_name"; then
+                    exit_code=$?
+                    return $exit_code
+                fi
+                echo -e "${CYAN}Using profile: $profile_name${NC}"
+            fi
+            
+            if ! fetch_repos "$fetch_repo"; then
                 exit_code=$?
             fi
             ;;
         worktree)
             case "$2" in
                 add)
-                    if [ "$4" == "-lb" ] && [ "$6" == "-rb" ] && [ -n "$3" ] && [ -n "$5" ] && [ -n "$7" ]; then
-                        if ! add_worktree "$3" "$5" "$7"; then
-                            exit_code=$?
+                    # Parse worktree add arguments with enhanced -repo syntax and backward compatibility
+                    local worktree_repo=""
+                    local profile_name=""
+                    local local_branch=""
+                    local remote_branch=""
+                    local arg_index=3
+                    local new_syntax=false
+                    
+                    # Parse arguments supporting both new (-repo) and legacy (positional) syntax
+                    while [ $arg_index -le $# ]; do
+                        case "${!arg_index}" in
+                            --profile)
+                                ((arg_index++))
+                                if [ $arg_index -le $# ]; then
+                                    profile_name="${!arg_index}"
+                                else
+                                    echo -e "${RED}Error: --profile requires a profile name${NC}"
+                                    echo "Usage: $0 worktree add [--profile <release>/<name>] -repo <repo_name|all> -lb <local-branch-name> [-rb <remote-branch-name>]"
+                                    return 1
+                                fi
+                                ;;
+                            -repo)
+                                ((arg_index++))
+                                if [ $arg_index -le $# ]; then
+                                    worktree_repo="${!arg_index}"
+                                    new_syntax=true
+                                else
+                                    echo -e "${RED}Error: -repo requires a repository name${NC}"
+                                    echo "Usage: $0 worktree add [--profile <release>/<name>] -repo <repo_name|all> -lb <local-branch-name> [-rb <remote-branch-name>]"
+                                    return 1
+                                fi
+                                ;;
+                            -lb)
+                                ((arg_index++))
+                                if [ $arg_index -le $# ]; then
+                                    local_branch="${!arg_index}"
+                                else
+                                    echo -e "${RED}Error: -lb requires a local branch name${NC}"
+                                    if [ "$new_syntax" = true ]; then
+                                        echo "Usage: $0 worktree add [--profile <release>/<name>] -repo <repo_name|all> -lb <local-branch-name> [-rb <remote-branch-name>]"
+                                    else
+                                        echo "Usage: $0 worktree add [--profile <release>/<name>] <repo_name> -lb <local-branch-name> [-rb <remote-branch-name>]"
+                                    fi
+                                    return 1
+                                fi
+                                ;;
+                            -rb)
+                                ((arg_index++))
+                                if [ $arg_index -le $# ]; then
+                                    remote_branch="${!arg_index}"
+                                else
+                                    echo -e "${RED}Error: -rb requires a remote branch name${NC}"
+                                    if [ "$new_syntax" = true ]; then
+                                        echo "Usage: $0 worktree add [--profile <release>/<name>] -repo <repo_name|all> -lb <local-branch-name> [-rb <remote-branch-name>]"
+                                    else
+                                        echo "Usage: $0 worktree add [--profile <release>/<name>] <repo_name> -lb <local-branch-name> [-rb <remote-branch-name>]"
+                                    fi
+                                    return 1
+                                fi
+                                ;;
+                            *)
+                                # Legacy positional argument (only if new syntax not detected)
+                                if [ "$new_syntax" = false ] && [ -z "$worktree_repo" ]; then
+                                    worktree_repo="${!arg_index}"
+                                else
+                                    echo -e "${RED}Error: Unexpected argument: ${!arg_index}${NC}"
+                                    if [ "$new_syntax" = true ]; then
+                                        echo "Usage: $0 worktree add [--profile <release>/<name>] -repo <repo_name|all> -lb <local-branch-name> [-rb <remote-branch-name>]"
+                                    else
+                                        echo "Usage: $0 worktree add [--profile <release>/<name>] <repo_name> -lb <local-branch-name> [-rb <remote-branch-name>]"
+                                    fi
+                                    return 1
+                                fi
+                                ;;
+                        esac
+                        ((arg_index++))
+                    done
+                    
+                    # Validate required parameters
+                    if [ -z "$worktree_repo" ] || [ -z "$local_branch" ]; then
+                        echo -e "${RED}Error: Missing required parameters for worktree add${NC}"
+                        if [ "$new_syntax" = true ]; then
+                            echo "Usage: $0 worktree add [--profile <release>/<name>] -repo <repo_name|all> -lb <local-branch-name> [-rb <remote-branch-name>]"
+                        else
+                            echo "Usage: $0 worktree add [--profile <release>/<name>] <repo_name> -lb <local-branch-name> [-rb <remote-branch-name>]"
                         fi
-                    else
-                        echo -e "${RED}Invalid arguments for worktree add command${NC}"
-                        echo "Usage: $0 worktree add <repo_name> -lb <local-branch-name> -rb <remote-branch-name>"
                         return 1
+                    fi
+                    
+                    # Load profile repo_map if profile specified
+                    if [ -n "$profile_name" ]; then
+                        if ! load_profile_repo_map "$profile_name"; then
+                            exit_code=$?
+                            return $exit_code
+                        fi
+                        echo -e "${CYAN}Using profile: $profile_name${NC}"
+                    fi
+                    
+                    # Enhanced worktree creation with per-repository upstream detection
+                    if ! add_worktree_with_profile "$worktree_repo" "$local_branch" "$remote_branch" "$profile_name"; then
+                        exit_code=$?
                     fi
                     ;;
                 pull-rebase)
-                    if [ -n "$3" ] && [ -n "$4" ]; then
-                        if ! pull_rebase_worktree "$3" "$4"; then
-                            exit_code=$?
+                    # Parse worktree pull-rebase arguments with enhanced -repo/-lb syntax and backward compatibility
+                    local worktree_repo=""
+                    local profile_name=""
+                    local local_branch=""
+                    local arg_index=3
+                    local new_syntax=false
+                    
+                    # Parse arguments supporting both new (-repo/-lb) and legacy (positional) syntax
+                    while [ $arg_index -le $# ]; do
+                        case "${!arg_index}" in
+                            --profile)
+                                ((arg_index++))
+                                if [ $arg_index -le $# ]; then
+                                    profile_name="${!arg_index}"
+                                else
+                                    echo -e "${RED}Error: --profile requires a profile name${NC}"
+                                    if [ "$new_syntax" = true ]; then
+                                        echo "Usage: $0 worktree pull-rebase [--profile <release>/<name>] -repo <repo_name|all> -lb <local-branch-name>"
+                                    else
+                                        echo "Usage: $0 worktree pull-rebase [--profile <release>/<name>] <repo_name> <local-branch-name>"
+                                    fi
+                                    return 1
+                                fi
+                                ;;
+                            -repo)
+                                ((arg_index++))
+                                if [ $arg_index -le $# ]; then
+                                    worktree_repo="${!arg_index}"
+                                    new_syntax=true
+                                else
+                                    echo -e "${RED}Error: -repo requires a repository name${NC}"
+                                    echo "Usage: $0 worktree pull-rebase [--profile <release>/<name>] -repo <repo_name|all> -lb <local-branch-name>"
+                                    return 1
+                                fi
+                                ;;
+                            -lb)
+                                ((arg_index++))
+                                if [ $arg_index -le $# ]; then
+                                    local_branch="${!arg_index}"
+                                else
+                                    echo -e "${RED}Error: -lb requires a local branch name${NC}"
+                                    echo "Usage: $0 worktree pull-rebase [--profile <release>/<name>] -repo <repo_name|all> -lb <local-branch-name>"
+                                    return 1
+                                fi
+                                ;;
+                            *)
+                                # Legacy positional argument support for backward compatibility
+                                if [ "$new_syntax" = false ]; then
+                                    if [ -z "$worktree_repo" ]; then
+                                        worktree_repo="${!arg_index}"
+                                    elif [ -z "$local_branch" ]; then
+                                        local_branch="${!arg_index}"
+                                    else
+                                        echo -e "${RED}Error: Too many arguments specified${NC}"
+                                        echo "Usage: $0 worktree pull-rebase [--profile <release>/<name>] <repo_name> <local-branch-name>"
+                                        return 1
+                                    fi
+                                else
+                                    echo -e "${RED}Error: Unexpected argument '${!arg_index}' when using flag syntax${NC}"
+                                    echo "Usage: $0 worktree pull-rebase [--profile <release>/<name>] -repo <repo_name|all> -lb <local-branch-name>"
+                                    return 1
+                                fi
+                                ;;
+                        esac
+                        ((arg_index++))
+                    done
+                    
+                    # Validate required parameters
+                    if [ -z "$worktree_repo" ] || [ -z "$local_branch" ]; then
+                        echo -e "${RED}Error: Missing required parameters for worktree pull-rebase${NC}"
+                        if [ "$new_syntax" = true ]; then
+                            echo "Usage: $0 worktree pull-rebase [--profile <release>/<name>] -repo <repo_name|all> -lb <local-branch-name>"
+                        else
+                            echo "Usage: $0 worktree pull-rebase [--profile <release>/<name>] <repo_name> <local-branch-name>"
                         fi
-                    else
-                        echo -e "${RED}Invalid arguments for worktree pull-rebase command${NC}"
-                        echo "Usage: $0 worktree pull-rebase <repo_name> <local-branch-name>"
                         return 1
+                    fi
+                    
+                    # Load profile repo_map if profile specified
+                    if [ -n "$profile_name" ]; then
+                        if ! load_profile_repo_map "$profile_name"; then
+                            exit_code=$?
+                            return $exit_code
+                        fi
+                        echo -e "${CYAN}Using profile: $profile_name${NC}"
+                    fi
+                    
+                    if ! pull_rebase_worktree "$worktree_repo" "$local_branch"; then
+                        exit_code=$?
                     fi
                     ;;
                 *)
@@ -2699,29 +3251,6 @@ case "$1" in
         ;;
     fetch)
         fetch_repos "$2"
-        ;;
-    worktree)
-        case "$2" in
-            add)
-                if [ "$4" == "-lb" ] && [ "$6" == "-rb" ]; then
-                    add_worktree "$3" "$5" "$7"
-                else
-                    echo -e "${RED}Invalid arguments for worktree add command${NC}"
-                    echo "Usage: $0 worktree add <repo_name> -lb <local-branch-name> -rb <remote-branch-name>"
-                fi
-                ;;
-            pull-rebase)
-                if [ -n "$3" ]; then
-                    pull_rebase_worktree "$3" "$4"
-                else
-                    echo -e "${RED}Invalid arguments for worktree pull-rebase command${NC}"
-                    echo "Usage: $0 worktree pull-rebase <repo_name> <local-branch-name>"
-                fi
-                ;;
-            *)
-                echo -e "${RED}Invalid worktree command. Usage: $0 worktree {add|pull-rebase}${NC}"
-                ;;
-        esac
         ;;
     show_repos)
         show_repos
