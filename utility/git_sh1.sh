@@ -724,9 +724,20 @@ add_worktree_with_profile() {
     
     if [ "$repo" == "all" ]; then
         echo -e "${CYAN}Creating worktrees for all repositories...${NC}"
+        
+        # Count total repositories first
+        local total_count=0
+        for pair in $(sort_repo_map_by_depth); do
+            ((total_count++))
+        done
+        
+        local current=0
         for pair in $(sort_repo_map_by_depth); do
             IFS=':' read -r repo_name local_folder <<< "$pair"
+            ((current++))
             local individual_remote_branch="$remote_branch"
+            
+            show_progress "$current" "$total_count" "Creating worktree for $repo_name"
             
             # Auto-detect upstream for this specific repository if profile specified and no explicit -rb
             if [ -n "$profile_name" ] && [ -z "$remote_branch" ]; then
@@ -888,6 +899,7 @@ add_worktree_for_repo() {
 
     echo -e "${GREEN}Successfully added worktree for $repo at $worktree_dir${NC}"
     log "INFO" "Successfully created worktree for $repo at $worktree_dir"
+    echo -e "${CYAN}Completed processing repository: ${YELLOW}${repo}${NC}\n"
     return 0
 }
 
@@ -897,8 +909,19 @@ pull_rebase_worktree() {
     local_branch=$2
 
     if [ "$repo" == "all" ]; then
+        echo -e "${CYAN}Pull-rebasing all repositories...${NC}"
+        
+        # Count total repositories first
+        local total_count=0
+        for pair in $(sort_repo_map_by_depth); do
+            ((total_count++))
+        done
+        
+        local current=0
         for pair in $(sort_repo_map_by_depth); do
             IFS=':' read -r repo_name local_folder <<< "$pair"
+            ((current++))
+            show_progress "$current" "$total_count" "Pull-rebasing $repo_name"
             pull_rebase_repo "$repo_name" "$local_folder" "$local_branch"
         done
     else
@@ -933,7 +956,8 @@ pull_rebase_repo() {
     current_branch=$(git rev-parse --abbrev-ref HEAD)
     echo -e "${CYAN}Pulling and rebasing $repo in $local_branch (current branch: $current_branch)${NC}"
     git pull --rebase --autostash
-    echo -e "${CYAN}Completed pull-rebase for $repo in $local_branch (current branch: $current_branch)${NC}"
+    echo -e "${GREEN}Completed pull-rebase for $repo in $local_branch (current branch: $current_branch)${NC}"
+    echo -e "${CYAN}Completed processing repository: ${YELLOW}${repo}${NC}\n"
 }
 
 # Function to show all repository names
