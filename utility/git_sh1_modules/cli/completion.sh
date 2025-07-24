@@ -132,7 +132,7 @@ _git_sh1_clear_cache() {
 # Install completion system
 _git_sh1_install_completion() {
     local completion_file=""
-    local script_dir="$(dirname "${BASH_SOURCE[0]}")"
+    local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
     
     # Determine completion installation location
     if [[ -d ~/.bash_completion.d ]]; then
@@ -145,18 +145,24 @@ _git_sh1_install_completion() {
         completion_file=~/.git_sh1_modular_completion
     fi
     
-    # Create completion script
-    cat > "$completion_file" << 'EOF'
+    # Create completion script with absolute path
+    cat > "$completion_file" << EOF
 #!/bin/bash
 # Auto-generated completion for git_sh1_modular.sh
 
-# Source the modular completion system
-if [[ -f "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/utility/git_sh1_modules/cli/completion.sh" ]]; then
-    source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/utility/git_sh1_modules/cli/completion.sh"
+# Source the modular completion system with absolute path
+if [[ -f "${script_dir}/cli/completion.sh" ]]; then
+    source "${script_dir}/cli/completion.sh"
     
-    # Register completion
+    # Register completion for various script names
     complete -F _git_sh1_modular_completion git_sh1_modular.sh 2>/dev/null
     complete -F _git_sh1_modular_completion ./git_sh1_modular.sh 2>/dev/null
+    complete -F _git_sh1_modular_completion git_sh1_main.sh 2>/dev/null
+    complete -F _git_sh1_modular_completion ./git_sh1_main.sh 2>/dev/null
+    
+    # Also register for git_sh1.sh if used as legacy
+    complete -F _git_sh1_modular_completion git_sh1.sh 2>/dev/null
+    complete -F _git_sh1_modular_completion ./git_sh1.sh 2>/dev/null
 fi
 EOF
     
@@ -199,13 +205,21 @@ _git_sh1_modular_completion() {
     case "$command" in
         verify|fetch)
             if [[ $cword -eq 2 ]]; then
+                # At position 2, offer both repositories and --profile option
                 local repos=$(_git_sh1_get_repos)
-                COMPREPLY=($(compgen -W "$repos" -- "$cur"))
+                local options="--profile"
+                COMPREPLY=($(compgen -W "$repos $options" -- "$cur"))
             elif [[ "$prev" == "--profile" ]]; then
+                # After --profile, offer profile names
                 local profiles=$(_git_sh1_get_profiles)
                 COMPREPLY=($(compgen -W "$profiles" -- "$cur"))
             elif [[ $cword -eq 3 && "${COMP_WORDS[2]}" != "--profile" ]]; then
+                # After repository name, offer --profile option
                 COMPREPLY=($(compgen -W "--profile" -- "$cur"))
+            elif [[ $cword -eq 4 && "${COMP_WORDS[2]}" == "--profile" ]]; then
+                # After --profile <profile_name>, offer repositories
+                local repos=$(_git_sh1_get_repos)
+                COMPREPLY=($(compgen -W "$repos" -- "$cur"))
             fi
             ;;
             
