@@ -13,18 +13,18 @@ check_usage() {
     return 0
 }
 
-# Install bash completion (placeholder for now)
+# Install bash completion
 install_bash_completion() {
-    echo -e "${YELLOW}Bash completion installation not yet implemented in modular version${NC}"
-    echo -e "This feature will be available in a future update"
-    return 0
+    load_module "cli/completion.sh"
+    _git_sh1_install_completion
+    return $?
 }
 
-# Clear completion cache (placeholder for now)
+# Clear completion cache
 clear_completion_cache() {
-    echo -e "${YELLOW}Completion cache clearing not yet implemented in modular version${NC}"
-    echo -e "This feature will be available in a future update"
-    return 0
+    load_module "cli/completion.sh"
+    _git_sh1_clear_cache
+    return $?
 }
 
 # Repository command implementations
@@ -140,7 +140,17 @@ dispatch_command() {
     case "$1" in
         -h|--help)
             if [[ -n "$2" ]]; then
-                show_command_help "$2"
+                case "$2" in
+                    examples)
+                        show_usage_examples
+                        ;;
+                    environment|configuration|troubleshooting)
+                        show_advanced_help "$2"
+                        ;;
+                    *)
+                        show_command_help "$2"
+                        ;;
+                esac
             else
                 show_help
             fi

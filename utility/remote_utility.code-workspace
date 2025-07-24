@@ -1,0 +1,8 @@
+{
+	"folders": [
+		{
+			"uri": "vscode-remote://ssh-remote+10.223.45.169/home/hubo/workspace/git-depot/github_repo/vim-configure/utility"
+		}
+	],
+	"remoteAuthority": "ssh-remote+10.223.45.169"
+}

@@ -1,0 +1,5 @@
+[2025-07-21 17:06:48] [INFO] Starting git_sh1.sh from directory: /Users/hubo/workspace/git-depot/vim-configure/utility
+[2025-07-21 17:06:48] [INFO] Acquired lock with PID: 6569
+[2025-07-21 17:06:48] [INFO] Found git-depot directory: /Users/hubo/workspace/git-depot
+[2025-07-21 17:06:48] [ERROR] No directories containing 'repo_base' found in /Users/hubo/workspace/git-depot
+[2025-07-21 17:06:48] [INFO] Removed lock file: /tmp/git_sh1_6569.lock
