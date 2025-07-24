@@ -233,12 +233,16 @@ _git_sh1_modular_completion() {
                             # Branch name completion (could be enhanced)
                             COMPREPLY=()
                         elif [[ "$prev" == "--profile" ]]; then
+                            # After --profile, offer profile names
                             local profiles=$(_git_sh1_get_profiles)
                             COMPREPLY=($(compgen -W "$profiles" -- "$cur"))
                         elif [[ $cword -eq 3 ]]; then
+                            # At position 3, offer repositories AND --profile option
                             local repos=$(_git_sh1_get_repos)
-                            COMPREPLY=($(compgen -W "$repos" -- "$cur"))
+                            local options="--profile"
+                            COMPREPLY=($(compgen -W "$repos $options" -- "$cur"))
                         else
+                            # For other positions, offer all available options
                             COMPREPLY=($(compgen -W "-lb -rb --profile" -- "$cur"))
                         fi
                         ;;
