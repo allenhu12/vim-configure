@@ -27,35 +27,104 @@ clear_completion_cache() {
     return 0
 }
 
-# Placeholder functions for commands not yet implemented
+# Repository command implementations
 cmd_verify() {
-    echo -e "${YELLOW}verify command not yet implemented in modular version${NC}"
-    echo -e "Will be available after repository modules are fully integrated"
-    return 1
+    # Delegate to repository manager
+    cmd_verify_repos "$@"
+    return $?
 }
 
 cmd_fetch() {
-    echo -e "${YELLOW}fetch command not yet implemented in modular version${NC}"
-    echo -e "Will be available after repository modules are fully integrated"
-    return 1
+    # Delegate to repository manager
+    cmd_fetch_repos "$@"
+    return $?
 }
 
 cmd_worktree() {
-    echo -e "${YELLOW}worktree commands not yet implemented in modular version${NC}"
-    echo -e "Will be available after worktree modules are fully integrated"
-    return 1
+    # Delegate to worktree operations module
+    handle_worktree_command "$@"
+    return $?
 }
 
 cmd_feature() {
-    echo -e "${YELLOW}feature commands not yet implemented in modular version${NC}"
-    echo -e "Will be available after feature modules are fully integrated"
-    return 1
+    load_module "features/operations.sh"
+    load_module "features/metadata.sh"
+    
+    if [ $# -eq 0 ]; then
+        echo -e "${RED}Error: No feature subcommand specified${NC}"
+        echo "Usage: $0 feature <subcommand> [options]"
+        echo "Subcommands:"
+        echo "  create    - Create a new feature"
+        echo "  list      - List all features"
+        echo "  show      - Show feature details"
+        echo "  add       - Add repository to feature"
+        echo "  switch    - Switch to feature branches"
+        echo "  comment   - Add comment to feature"
+        return 1
+    fi
+    
+    local subcommand="$1"
+    shift
+    
+    case "$subcommand" in
+        create)
+            feature_create "$@"
+            ;;
+        list)
+            feature_list "$@"
+            ;;
+        show)
+            feature_show "$@"
+            ;;
+        add)
+            feature_add "$@"
+            ;;
+        switch)
+            feature_switch "$@"
+            ;;
+        comment)
+            feature_comment "$@"
+            ;;
+        *)
+            echo -e "${RED}Error: Unknown feature subcommand '$subcommand'${NC}"
+            echo "Use 'git_sh1.sh feature' to see available subcommands"
+            return 1
+            ;;
+    esac
 }
 
 cmd_profile() {
-    echo -e "${YELLOW}profile commands not yet implemented in modular version${NC}"
-    echo -e "Will be available after profile modules are fully integrated"
-    return 1
+    load_module "profiles/manager.sh"
+    
+    if [ $# -eq 0 ]; then
+        echo -e "${RED}Error: No profile subcommand specified${NC}"
+        echo "Usage: $0 profile <subcommand> [options]"
+        echo "Subcommands:"
+        echo "  create    - Create a new profile from manifest.xml"
+        echo "  list      - List all available profiles"
+        echo "  show      - Show profile details"
+        return 1
+    fi
+    
+    local subcommand="$1"
+    shift
+    
+    case "$subcommand" in
+        create)
+            profile_create "$@"
+            ;;
+        list)
+            profile_list "$@"
+            ;;
+        show)
+            profile_show "$@"
+            ;;
+        *)
+            echo -e "${RED}Error: Unknown profile subcommand '$subcommand'${NC}"
+            echo "Use 'git_sh1.sh profile' to see available subcommands"
+            return 1
+            ;;
+    esac
 }
 
 # Main command dispatcher
@@ -109,14 +178,25 @@ dispatch_command() {
             cmd_profile "${@:2}"
             exit_code=$?
             ;;
+        repos)
+            # List available repositories
+            cmd_show_repos
+            exit_code=$?
+            ;;
         test)
             # Hidden test command for development
             echo -e "${GREEN}✓ Modular system is working!${NC}"
+            echo ""
             echo "Core modules loaded successfully:"
             echo "  - config.sh: Repository map and global variables"
             echo "  - logging.sh: Logging system and cleanup"
             echo "  - validation.sh: Input sanitization and path validation"
             echo "  - utils.sh: Common utilities"
+            echo ""
+            echo "Repository modules loaded successfully:"
+            echo "  - repo/discovery.sh: Repository discovery and path resolution"
+            echo "  - repo/operations.sh: Repository operations and SSH connectivity"
+            echo "  - repo/manager.sh: High-level repository management"
             echo ""
             echo "Available colors:"
             echo -e "  ${RED}RED${NC}, ${GREEN}GREEN${NC}, ${YELLOW}YELLOW${NC}, ${CYAN}CYAN${NC}"
@@ -127,6 +207,13 @@ dispatch_command() {
             echo "  Log file: $LOG_FILE"
             echo "  DRY_RUN mode: $DRY_RUN"
             echo "  VERBOSE mode: $VERBOSE"
+            echo ""
+            echo "Repository system test:"
+            if check_repo_system_health > /dev/null 2>&1; then
+                echo -e "  ${GREEN}✓ Repository system ready${NC}"
+            else
+                echo -e "  ${YELLOW}⚠ Repository system needs initialization${NC}"
+            fi
             return 0
             ;;
         *)

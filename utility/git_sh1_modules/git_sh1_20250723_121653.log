@@ -1,0 +1,17 @@
+[2025-07-23 12:16:53] [INFO] Logging initialized: /Users/hubo/workspace/git-depot/vim-configure/utility/git_sh1_modules/git_sh1_20250723_121653.log
+[2025-07-23 12:16:53] [INFO] Starting git_sh1_main.sh from directory: /Users/hubo/workspace/git-depot/vim-configure/utility/git_sh1_modules
+[2025-07-23 12:16:53] [INFO] Acquired lock with PID: 28554
+[2025-07-23 12:16:53] [INFO] Initializing repository management system
+[2025-07-23 12:16:53] [INFO] Found git-depot directory: /Users/hubo/workspace/git-depot
+[2025-07-23 12:16:53] [INFO] Using repo_base directory: /Users/hubo/workspace/git-depot/repo_base
+[2025-07-23 12:16:53] [INFO] Using worktree_base_path: /Users/hubo/workspace/git-depot
+[2025-07-23 12:16:53] [INFO] Repository management system initialized successfully
+[2025-07-23 12:16:53] [INFO] Git depot: /Users/hubo/workspace/git-depot
+[2025-07-23 12:16:53] [INFO] Repo base: /Users/hubo/workspace/git-depot/repo_base
+[2025-07-23 12:16:53] [INFO] Worktree base: /Users/hubo/workspace/git-depot
+[2025-07-23 12:16:53] [INFO] Features directory: /Users/hubo/workspace/git-depot/vim-configure/utility/git_sh1_modules/.git_sh1_features
+[2025-07-23 12:16:53] [INFO] Profiles directory: /Users/hubo/workspace/git-depot/.git_sh1_profiles
+[2025-07-23 12:16:53] [INFO] Worktree pull-rebase: repo=all, local_branch=unleashed_200.19_openwrt_common, profile=unleashed_200.19/openwrt_common
+[0;36m[11/23] (47%) Pull-rebasing vendor_qca_tools...[0m[2025-07-23 12:16:53
+[0;36m[11/23] (47%) Pull-rebasing vendor_qca_tools...[0m] [INFO] Removed lock file: /tmp/git_sh1_28554.lock
+[2025-07-23 12:16:53] [INFO] Script cleanup completed

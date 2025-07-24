@@ -1,0 +1,16 @@
+[2025-07-24 11:05:01] [INFO] Logging initialized: /Users/hubo/workspace/git-depot/vim-configure/utility/git_sh1_modules/git_sh1_20250724_110501.log
+[2025-07-24 11:05:01] [INFO] Starting git_sh1_main.sh from directory: /Users/hubo/workspace/git-depot/vim-configure/utility/git_sh1_modules
+[2025-07-24 11:05:01] [INFO] Acquired lock with PID: 78570
+[2025-07-24 11:05:01] [INFO] Initializing repository management system
+[2025-07-24 11:05:01] [INFO] Found git-depot directory: /Users/hubo/workspace/git-depot
+[2025-07-24 11:05:02] [INFO] Using repo_base directory: /Users/hubo/workspace/git-depot/repo_base
+[2025-07-24 11:05:02] [INFO] Using worktree_base_path: /Users/hubo/workspace/git-depot
+[2025-07-24 11:05:02] [INFO] Repository management system initialized successfully
+[2025-07-24 11:05:02] [INFO] Git depot: /Users/hubo/workspace/git-depot
+[2025-07-24 11:05:02] [INFO] Repo base: /Users/hubo/workspace/git-depot/repo_base
+[2025-07-24 11:05:02] [INFO] Worktree base: /Users/hubo/workspace/git-depot
+[2025-07-24 11:05:02] [INFO] Features directory: /Users/hubo/workspace/git-depot/vim-configure/utility/git_sh1_modules/.git_sh1_features
+[2025-07-24 11:05:02] [INFO] Profiles directory: /Users/hubo/workspace/git-depot/.git_sh1_profiles
+[2025-07-24 11:05:02] [INFO] Initialized profiles directory: /Users/hubo/workspace/git-depot/.git_sh1_profiles
+[2025-07-24 11:05:02] [INFO] Removed lock file: /tmp/git_sh1_78570.lock
+[2025-07-24 11:05:02] [INFO] Script cleanup completed

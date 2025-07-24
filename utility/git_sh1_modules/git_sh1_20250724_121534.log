@@ -1,0 +1,17 @@
+[2025-07-24 12:15:34] [INFO] Logging initialized: /Users/hubo/workspace/git-depot/vim-configure/utility/git_sh1_modules/git_sh1_20250724_121534.log
+[2025-07-24 12:15:34] [INFO] Starting git_sh1_main.sh from directory: /Users/hubo/workspace/git-depot/vim-configure/utility/git_sh1_modules
+[2025-07-24 12:15:34] [INFO] Acquired lock with PID: 84724
+[2025-07-24 12:15:34] [INFO] Initializing repository management system
+[2025-07-24 12:15:34] [INFO] Found git-depot directory: /Users/hubo/workspace/git-depot
+[2025-07-24 12:15:34] [INFO] Using repo_base directory: /Users/hubo/workspace/git-depot/repo_base
+[2025-07-24 12:15:34] [INFO] Using worktree_base_path: /Users/hubo/workspace/git-depot
+[2025-07-24 12:15:34] [INFO] Repository management system initialized successfully
+[2025-07-24 12:15:34] [INFO] Git depot: /Users/hubo/workspace/git-depot
+[2025-07-24 12:15:34] [INFO] Repo base: /Users/hubo/workspace/git-depot/repo_base
+[2025-07-24 12:15:34] [INFO] Worktree base: /Users/hubo/workspace/git-depot
+[2025-07-24 12:15:34] [INFO] Features directory: /Users/hubo/workspace/git-depot/vim-configure/utility/git_sh1_modules/.git_sh1_features
+[2025-07-24 12:15:34] [INFO] Profiles directory: /Users/hubo/workspace/git-depot/.git_sh1_profiles
+[2025-07-24 12:15:34] [INFO] Worktree pull-rebase: repo=all, local_branch=test_branch, profile=test_release/test_profile
+[2025-07-24 12:15:34] [INFO] Loaded and sorted profile repo_map: test_release/test_profile (       3 repositories)
+[2025-07-24 12:15:35] [INFO] Removed lock file: /tmp/git_sh1_84724.lock
+[2025-07-24 12:15:35] [INFO] Script cleanup completed

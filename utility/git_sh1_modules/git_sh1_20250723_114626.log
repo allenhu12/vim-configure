@@ -1,0 +1,39 @@
+[2025-07-23 11:46:26] [INFO] Logging initialized: /Users/hubo/workspace/git-depot/vim-configure/utility/git_sh1_modules/git_sh1_20250723_114626.log
+[2025-07-23 11:46:26] [INFO] Starting git_sh1_main.sh from directory: /Users/hubo/workspace/git-depot/vim-configure/utility/git_sh1_modules
+[2025-07-23 11:46:26] [INFO] Acquired lock with PID: 24026
+[2025-07-23 11:46:26] [INFO] Initializing repository management system
+[2025-07-23 11:46:26] [INFO] Found git-depot directory: /Users/hubo/workspace/git-depot
+[2025-07-23 11:46:26] [INFO] Using repo_base directory: /Users/hubo/workspace/git-depot/repo_base
+[2025-07-23 11:46:26] [INFO] Using worktree_base_path: /Users/hubo/workspace/git-depot
+[2025-07-23 11:46:26] [INFO] Repository management system initialized successfully
+[2025-07-23 11:46:26] [INFO] Git depot: /Users/hubo/workspace/git-depot
+[2025-07-23 11:46:26] [INFO] Repo base: /Users/hubo/workspace/git-depot/repo_base
+[2025-07-23 11:46:26] [INFO] Worktree base: /Users/hubo/workspace/git-depot
+[2025-07-23 11:46:26] [INFO] Features directory: /Users/hubo/workspace/git-depot/vim-configure/utility/git_sh1_modules/.git_sh1_features
+[2025-07-23 11:46:26] [INFO] Profiles directory: /Users/hubo/workspace/git-depot/.git_sh1_profiles
+[2025-07-23 11:46:26] [INFO] Starting repository verification
+[2025-07-23 11:46:26] [INFO] Repository missing: dl at /Users/hubo/workspace/git-depot/repo_base/dl
+[2025-07-23 11:46:26] [INFO] Repository missing: linux_5_4_mtk at /Users/hubo/workspace/git-depot/repo_base/linux_5_4_mtk
+[2025-07-23 11:46:26] [INFO] Repository missing: opensource at /Users/hubo/workspace/git-depot/repo_base/opensource
+[2025-07-23 11:46:26] [INFO] Repository missing: rks_ap at /Users/hubo/workspace/git-depot/repo_base/rks_ap
+[2025-07-23 11:46:26] [INFO] Repository missing: rksiot_hpkg at /Users/hubo/workspace/git-depot/repo_base/rksiot_hpkg
+[2025-07-23 11:46:26] [INFO] Repository missing: rksiot at /Users/hubo/workspace/git-depot/repo_base/rksiot
+[2025-07-23 11:46:26] [INFO] Repository missing: rpoint_handler at /Users/hubo/workspace/git-depot/repo_base/rpoint_handler
+[2025-07-23 11:46:26] [INFO] Repository missing: rtty at /Users/hubo/workspace/git-depot/repo_base/rtty
+[2025-07-23 11:46:26] [INFO] Repository missing: ruckus-spark at /Users/hubo/workspace/git-depot/repo_base/ruckus-spark
+[2025-07-23 11:46:26] [INFO] Repository missing: vendor_mtk_11be at /Users/hubo/workspace/git-depot/repo_base/vendor_mtk_11be
+[2025-07-23 11:46:26] [INFO] Repository missing: vendor_qca_tools at /Users/hubo/workspace/git-depot/repo_base/vendor_qca_tools
+[2025-07-23 11:46:26] [INFO] Repository missing: ap_scg_common at /Users/hubo/workspace/git-depot/repo_base/rks_ap/ap_scg_common
+[2025-07-23 11:46:26] [INFO] Repository missing: controller at /Users/hubo/workspace/git-depot/repo_base/rks_ap/controller
+[2025-07-23 11:46:26] [INFO] Repository missing: ap_scg_rcli at /Users/hubo/workspace/git-depot/repo_base/rks_ap/controller/rcli
+[2025-07-23 11:46:26] [INFO] Repository missing: ap_zd_controller at /Users/hubo/workspace/git-depot/repo_base/rks_ap/controller/common
+[2025-07-23 11:46:26] [INFO] Repository missing: linux_3_14 at /Users/hubo/workspace/git-depot/repo_base/opensource/linux/kernels/linux-3.14.43
+[2025-07-23 11:46:26] [INFO] Repository missing: linux_4_4 at /Users/hubo/workspace/git-depot/repo_base/opensource/linux/kernels/linux-4.4.60
+[2025-07-23 11:46:26] [INFO] Repository missing: linux_5_4 at /Users/hubo/workspace/git-depot/repo_base/opensource/linux/kernels/linux-5.4
+[2025-07-23 11:46:26] [INFO] Repository missing: vendor_qca_11ac at /Users/hubo/workspace/git-depot/repo_base/rks_ap/platform_dp/linux/driver/vendor_qca_11ac
+[2025-07-23 11:46:26] [INFO] Repository missing: vendor_qca_11ax at /Users/hubo/workspace/git-depot/repo_base/rks_ap/platform_dp/linux/driver/vendor_qca_11ax
+[2025-07-23 11:46:26] [INFO] Repository missing: vendor_qca_11ax6e at /Users/hubo/workspace/git-depot/repo_base/rks_ap/platform_dp/linux/driver/vendor_qca_11ax6e
+[2025-07-23 11:46:26] [INFO] Repository missing: vendor_qca_11be at /Users/hubo/workspace/git-depot/repo_base/rks_ap/platform_dp/linux/driver/vendor_qca_11be
+[2025-07-23 11:46:26] [INFO] Repository missing: vendor_qca_ref at /Users/hubo/workspace/git-depot/repo_base/rks_ap/platform_dp/linux/driver/vendor_qca_ref
+[2025-07-23 11:46:26] [INFO] Removed lock file: /tmp/git_sh1_24026.lock
+[2025-07-23 11:46:26] [INFO] Script cleanup completed

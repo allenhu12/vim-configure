@@ -62,8 +62,13 @@ handle_worktree_add() {
     
     log "INFO" "Worktree add: repo=$repo, local_branch=$local_branch, remote_branch=$remote_branch, profile=$profile"
     
-    # Call appropriate function based on whether profile is specified
+    # Load profile-specific repository mapping if profile is specified
     if [ -n "$profile" ]; then
+        echo -e "${CYAN}Using profile: $profile${NC}"
+        if ! load_profile_repo_map "$profile"; then
+            echo -e "${RED}Error: Failed to load profile repo_map${NC}"
+            return 1
+        fi
         add_worktree_with_profile "$repo" "$local_branch" "$remote_branch" "$profile"
     else
         if [ -z "$remote_branch" ]; then
@@ -124,8 +129,13 @@ handle_worktree_pull_rebase() {
     
     log "INFO" "Worktree pull-rebase: repo=$repo, local_branch=$local_branch, profile=$profile"
     
-    # Call appropriate function based on whether profile is specified
+    # Load profile-specific repository mapping if profile is specified
     if [ -n "$profile" ]; then
+        echo -e "${CYAN}Using profile: $profile${NC}"
+        if ! load_profile_repo_map "$profile"; then
+            echo -e "${RED}Error: Failed to load profile repo_map${NC}"
+            return 1
+        fi
         pull_rebase_worktree_with_profile "$repo" "$local_branch" "$profile"
     else
         pull_rebase_worktree "$repo" "$local_branch"

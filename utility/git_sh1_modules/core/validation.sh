@@ -258,3 +258,28 @@ validate_directory_accessible() {
         return 1
     fi
 }
+
+# Configuration validation
+validate_configuration() {
+    log "INFO" "Validating configuration"
+    
+    # Check required tools
+    local missing_tools=()
+    for tool in git; do
+        if ! command -v "$tool" >/dev/null 2>&1; then
+            missing_tools+=("$tool")
+        fi
+    done
+    
+    if [ ${#missing_tools[@]} -gt 0 ]; then
+        echo -e "${RED}Error: Missing required tools:${NC}"
+        for tool in "${missing_tools[@]}"; do
+            echo -e "  - ${YELLOW}$tool${NC}"
+        done
+        echo -e "\nPlease install missing tools and try again."
+        return 1
+    fi
+    
+    # Basic validation passes
+    return 0
+}

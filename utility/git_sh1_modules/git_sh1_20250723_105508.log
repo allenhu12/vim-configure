@@ -1,0 +1,5 @@
+[2025-07-23 10:55:08] [INFO] Logging initialized: /Users/hubo/workspace/git-depot/vim-configure/utility/git_sh1_modules/git_sh1_20250723_105508.log
+[2025-07-23 10:55:08] [INFO] Starting git_sh1_main.sh from directory: /Users/hubo/workspace/git-depot/vim-configure/utility/git_sh1_modules
+[2025-07-23 10:55:08] [INFO] Acquired lock with PID: 21598
+[2025-07-23 10:55:08] [INFO] Removed lock file: /tmp/git_sh1_21598.lock
+[2025-07-23 10:55:08] [INFO] Script cleanup completed

@@ -1,0 +1,102 @@
+[2025-07-23 12:44:36] [INFO] Logging initialized: /Users/hubo/workspace/git-depot/vim-configure/utility/git_sh1_modules/git_sh1_20250723_124436.log
+[2025-07-23 12:44:36] [INFO] Starting git_sh1_main.sh from directory: /Users/hubo/workspace/git-depot/vim-configure/utility/git_sh1_modules
+[2025-07-23 12:44:36] [INFO] Acquired lock with PID: 33127
+[2025-07-23 12:44:36] [INFO] Initializing repository management system
+[2025-07-23 12:44:36] [INFO] Using working area override: /Volumes/BackupT7/workspace_t7/git-depot
+[2025-07-23 12:44:36] [INFO] Using current directory as git-depot: /Volumes/BackupT7/workspace_t7/git-depot
+[2025-07-23 12:44:36] [INFO] Found git-depot directory: /Volumes/BackupT7/workspace_t7/git-depot
+[2025-07-23 12:44:36] [INFO] Using repo_base directory: /Volumes/BackupT7/workspace_t7/git-depot/repo_base
+[2025-07-23 12:44:36] [INFO] Using worktree_base_path: /Volumes/BackupT7/workspace_t7/git-depot
+[2025-07-23 12:44:36] [INFO] Repository management system initialized successfully
+[2025-07-23 12:44:36] [INFO] Git depot: /Volumes/BackupT7/workspace_t7/git-depot
+[2025-07-23 12:44:36] [INFO] Repo base: /Volumes/BackupT7/workspace_t7/git-depot/repo_base
+[2025-07-23 12:44:36] [INFO] Worktree base: /Volumes/BackupT7/workspace_t7/git-depot
+[2025-07-23 12:44:36] [INFO] Features directory: /Users/hubo/workspace/git-depot/vim-configure/utility/git_sh1_modules/.git_sh1_features
+[2025-07-23 12:44:36] [INFO] Profiles directory: /Volumes/BackupT7/workspace_t7/git-depot/.git_sh1_profiles
+[2025-07-23 12:44:36] [INFO] Worktree add: repo=all, local_branch=unleashed_200.19_openwrt_common, remote_branch=, profile=unleashed_200.19/openwrt_common
+[2025-07-23 12:44:36] [INFO] Loaded and sorted profile repo_map: unleashed_200.19/openwrt_common (      15 repositories)
+[2025-07-23 12:44:36] [INFO] Found upstream for dl in profile unleashed_200.19/openwrt_common: release/unleashed_200.19.7.11
+[2025-07-23 12:44:36] [INFO] Pruning stale worktree entries for dl
+[2025-07-23 12:44:36] [INFO] Removing existing worktree: /Volumes/BackupT7/workspace_t7/git-depot/unleashed_200.19_openwrt_common/dl
+[2025-07-23 12:44:36] [INFO] Creating worktree for dl: unleashed_200.19_openwrt_common from origin/release/unleashed_200.19.7.11
+[2025-07-23 12:44:36] [INFO] Reusing existing branch unleashed_200.19_openwrt_common for dl
+[2025-07-23 12:44:46] [INFO] Successfully created worktree for dl at /Volumes/BackupT7/workspace_t7/git-depot/unleashed_200.19_openwrt_common/dl
+[2025-07-23 12:44:46] [INFO] Found upstream for opensource in profile unleashed_200.19/openwrt_common: release/unleashed_200.19.7.11
+[2025-07-23 12:44:46] [INFO] Pruning stale worktree entries for opensource
+[2025-07-23 12:44:46] [INFO] Removing existing worktree: /Volumes/BackupT7/workspace_t7/git-depot/unleashed_200.19_openwrt_common/opensource
+[2025-07-23 12:44:58] [INFO] Creating worktree for opensource: unleashed_200.19_openwrt_common from origin/release/unleashed_200.19.7.11
+[2025-07-23 12:44:58] [INFO] Reusing existing branch unleashed_200.19_openwrt_common for opensource
+[2025-07-23 12:45:25] [INFO] Successfully created worktree for opensource at /Volumes/BackupT7/workspace_t7/git-depot/unleashed_200.19_openwrt_common/opensource
+[2025-07-23 12:45:25] [INFO] Found upstream for rks_ap in profile unleashed_200.19/openwrt_common: release/unleashed_200.19.7.11
+[2025-07-23 12:45:25] [INFO] Pruning stale worktree entries for rks_ap
+[2025-07-23 12:45:25] [INFO] Removing existing worktree: /Volumes/BackupT7/workspace_t7/git-depot/unleashed_200.19_openwrt_common/rks_ap
+[2025-07-23 12:45:55] [INFO] Creating worktree for rks_ap: unleashed_200.19_openwrt_common from origin/release/unleashed_200.19.7.11
+[2025-07-23 12:45:55] [INFO] Reusing existing branch unleashed_200.19_openwrt_common for rks_ap
+[2025-07-23 12:46:18] [INFO] Successfully created worktree for rks_ap at /Volumes/BackupT7/workspace_t7/git-depot/unleashed_200.19_openwrt_common/rks_ap
+[2025-07-23 12:46:18] [INFO] Found upstream for rksiot_hpkg in profile unleashed_200.19/openwrt_common: release/unleashed_200.19.7.11
+[2025-07-23 12:46:18] [INFO] Pruning stale worktree entries for rksiot_hpkg
+[2025-07-23 12:46:18] [INFO] Removing existing worktree: /Volumes/BackupT7/workspace_t7/git-depot/unleashed_200.19_openwrt_common/rksiot_hpkg
+[2025-07-23 12:46:18] [INFO] Creating worktree for rksiot_hpkg: unleashed_200.19_openwrt_common from origin/release/unleashed_200.19.7.11
+[2025-07-23 12:46:18] [INFO] Reusing existing branch unleashed_200.19_openwrt_common for rksiot_hpkg
+[2025-07-23 12:46:19] [INFO] Successfully created worktree for rksiot_hpkg at /Volumes/BackupT7/workspace_t7/git-depot/unleashed_200.19_openwrt_common/rksiot_hpkg
+[2025-07-23 12:46:19] [INFO] Found upstream for rksiot in profile unleashed_200.19/openwrt_common: release/unleashed_200.19.7.11
+[2025-07-23 12:46:19] [INFO] Pruning stale worktree entries for rksiot
+[2025-07-23 12:46:19] [INFO] Removing existing worktree: /Volumes/BackupT7/workspace_t7/git-depot/unleashed_200.19_openwrt_common/rksiot
+[2025-07-23 12:46:19] [INFO] Creating worktree for rksiot: unleashed_200.19_openwrt_common from origin/release/unleashed_200.19.7.11
+[2025-07-23 12:46:20] [INFO] Reusing existing branch unleashed_200.19_openwrt_common for rksiot
+[2025-07-23 12:46:21] [INFO] Successfully created worktree for rksiot at /Volumes/BackupT7/workspace_t7/git-depot/unleashed_200.19_openwrt_common/rksiot
+[2025-07-23 12:46:21] [INFO] Found upstream for rpoint_handler in profile unleashed_200.19/openwrt_common: release/unleashed_200.19.7.11
+[2025-07-23 12:46:21] [INFO] Pruning stale worktree entries for rpoint_handler
+[2025-07-23 12:46:21] [INFO] Removing existing worktree: /Volumes/BackupT7/workspace_t7/git-depot/unleashed_200.19_openwrt_common/rpoint_handler
+[2025-07-23 12:46:21] [INFO] Creating worktree for rpoint_handler: unleashed_200.19_openwrt_common from origin/release/unleashed_200.19.7.11
+[2025-07-23 12:46:21] [INFO] Reusing existing branch unleashed_200.19_openwrt_common for rpoint_handler
+[2025-07-23 12:46:22] [INFO] Successfully created worktree for rpoint_handler at /Volumes/BackupT7/workspace_t7/git-depot/unleashed_200.19_openwrt_common/rpoint_handler
+[2025-07-23 12:46:22] [INFO] Found upstream for rtty in profile unleashed_200.19/openwrt_common: release/unleashed_200.19.7.11
+[2025-07-23 12:46:22] [INFO] Pruning stale worktree entries for rtty
+[2025-07-23 12:46:22] [INFO] Removing existing worktree: /Volumes/BackupT7/workspace_t7/git-depot/unleashed_200.19_openwrt_common/rtty
+[2025-07-23 12:46:22] [INFO] Creating worktree for rtty: unleashed_200.19_openwrt_common from origin/release/unleashed_200.19.7.11
+[2025-07-23 12:46:22] [INFO] Reusing existing branch unleashed_200.19_openwrt_common for rtty
+[2025-07-23 12:46:22] [INFO] Successfully created worktree for rtty at /Volumes/BackupT7/workspace_t7/git-depot/unleashed_200.19_openwrt_common/rtty
+[2025-07-23 12:46:22] [INFO] Found upstream for vendor_qca_tools in profile unleashed_200.19/openwrt_common: release/unleashed_200.19.7.11
+[2025-07-23 12:46:22] [INFO] Pruning stale worktree entries for vendor_qca_tools
+[2025-07-23 12:46:22] [INFO] Removing existing worktree: /Volumes/BackupT7/workspace_t7/git-depot/unleashed_200.19_openwrt_common/vendor_qca_tools
+[2025-07-23 12:46:26] [INFO] Creating worktree for vendor_qca_tools: unleashed_200.19_openwrt_common from origin/release/unleashed_200.19.7.11
+[2025-07-23 12:46:26] [INFO] Reusing existing branch unleashed_200.19_openwrt_common for vendor_qca_tools
+[2025-07-23 12:47:26] [INFO] Successfully created worktree for vendor_qca_tools at /Volumes/BackupT7/workspace_t7/git-depot/unleashed_200.19_openwrt_common/vendor_qca_tools
+[2025-07-23 12:47:26] [INFO] Found upstream for ap_scg_common in profile unleashed_200.19/openwrt_common: release/unleashed_200.19.7.11
+[2025-07-23 12:47:26] [INFO] Pruning stale worktree entries for ap_scg_common
+[2025-07-23 12:47:26] [INFO] Creating worktree for ap_scg_common: unleashed_200.19_openwrt_common from origin/release/unleashed_200.19.7.11
+[2025-07-23 12:47:26] [INFO] Reusing existing branch unleashed_200.19_openwrt_common for ap_scg_common
+[2025-07-23 12:47:28] [INFO] Successfully created worktree for ap_scg_common at /Volumes/BackupT7/workspace_t7/git-depot/unleashed_200.19_openwrt_common/rks_ap/ap_scg_common
+[2025-07-23 12:47:28] [INFO] Found upstream for controller in profile unleashed_200.19/openwrt_common: release/unleashed_200.19.7.11_r370_t
+[2025-07-23 12:47:28] [INFO] Pruning stale worktree entries for controller
+[2025-07-23 12:47:28] [INFO] Creating worktree for controller: unleashed_200.19_openwrt_common from origin/release/unleashed_200.19.7.11_r370_t
+[2025-07-23 12:47:28] [INFO] Reusing existing branch unleashed_200.19_openwrt_common for controller
+[2025-07-23 12:47:32] [INFO] Successfully created worktree for controller at /Volumes/BackupT7/workspace_t7/git-depot/unleashed_200.19_openwrt_common/rks_ap/controller
+[2025-07-23 12:47:32] [INFO] Found upstream for ap_scg_rcli in profile unleashed_200.19/openwrt_common: release/unleashed_200.19.7.11
+[2025-07-23 12:47:32] [INFO] Pruning stale worktree entries for ap_scg_rcli
+[2025-07-23 12:47:32] [INFO] Creating worktree for ap_scg_rcli: unleashed_200.19_openwrt_common from origin/release/unleashed_200.19.7.11
+[2025-07-23 12:47:32] [INFO] Reusing existing branch unleashed_200.19_openwrt_common for ap_scg_rcli
+[2025-07-23 12:47:32] [INFO] Successfully created worktree for ap_scg_rcli at /Volumes/BackupT7/workspace_t7/git-depot/unleashed_200.19_openwrt_common/rks_ap/controller/rcli
+[2025-07-23 12:47:32] [INFO] Found upstream for ap_zd_controller in profile unleashed_200.19/openwrt_common: release/unleashed_200.19.7.11_r370_t
+[2025-07-23 12:47:32] [INFO] Pruning stale worktree entries for ap_zd_controller
+[2025-07-23 12:47:32] [INFO] Creating worktree for ap_zd_controller: unleashed_200.19_openwrt_common from origin/release/unleashed_200.19.7.11_r370_t
+[2025-07-23 12:47:32] [INFO] Reusing existing branch unleashed_200.19_openwrt_common for ap_zd_controller
+[2025-07-23 12:47:33] [INFO] Successfully created worktree for ap_zd_controller at /Volumes/BackupT7/workspace_t7/git-depot/unleashed_200.19_openwrt_common/rks_ap/controller/common
+[2025-07-23 12:47:33] [INFO] Found upstream for linux_5_4_12_5 in profile unleashed_200.19/openwrt_common: release/unleashed_200.19.7.11
+[2025-07-23 12:47:33] [INFO] Pruning stale worktree entries for linux_5_4_12_5
+[2025-07-23 12:47:33] [INFO] Creating worktree for linux_5_4_12_5: unleashed_200.19_openwrt_common from origin/release/unleashed_200.19.7.11
+[2025-07-23 12:47:33] [INFO] Reusing existing branch unleashed_200.19_openwrt_common for linux_5_4_12_5
+[2025-07-23 12:47:44] [INFO] Successfully created worktree for linux_5_4_12_5 at /Volumes/BackupT7/workspace_t7/git-depot/unleashed_200.19_openwrt_common/opensource/linux/kernels/linux-5.4_12_5
+[2025-07-23 12:47:44] [INFO] Found upstream for vendor_qca_11be_12_5 in profile unleashed_200.19/openwrt_common: release/unleashed_200.19.7.11
+[2025-07-23 12:47:44] [INFO] Pruning stale worktree entries for vendor_qca_11be_12_5
+[2025-07-23 12:47:44] [INFO] Creating worktree for vendor_qca_11be_12_5: unleashed_200.19_openwrt_common from origin/release/unleashed_200.19.7.11
+[2025-07-23 12:47:44] [INFO] Reusing existing branch unleashed_200.19_openwrt_common for vendor_qca_11be_12_5
+[2025-07-23 12:48:43] [INFO] Successfully created worktree for vendor_qca_11be_12_5 at /Volumes/BackupT7/workspace_t7/git-depot/unleashed_200.19_openwrt_common/rks_ap/platform_dp/linux/driver/vendor_qca_11be_12_5
+[2025-07-23 12:48:43] [INFO] Found upstream for vendor_qca_ref_12_5 in profile unleashed_200.19/openwrt_common: release/unleashed_200.19.7.11
+[2025-07-23 12:48:43] [INFO] Pruning stale worktree entries for vendor_qca_ref_12_5
+[2025-07-23 12:48:43] [INFO] Creating worktree for vendor_qca_ref_12_5: unleashed_200.19_openwrt_common from origin/release/unleashed_200.19.7.11
+[2025-07-23 12:48:43] [INFO] Reusing existing branch unleashed_200.19_openwrt_common for vendor_qca_ref_12_5
+[2025-07-23 12:50:12] [INFO] Successfully created worktree for vendor_qca_ref_12_5 at /Volumes/BackupT7/workspace_t7/git-depot/unleashed_200.19_openwrt_common/rks_ap/platform_dp/linux/driver/vendor_qca_ref_12_5
+[2025-07-23 12:50:12] [INFO] Removed lock file: /tmp/git_sh1_33127.lock
+[2025-07-23 12:50:12] [INFO] Script cleanup completed

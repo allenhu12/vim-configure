@@ -1,0 +1,18 @@
+[2025-07-23 12:28:56] [INFO] Logging initialized: /Users/hubo/workspace/git-depot/vim-configure/utility/git_sh1_modules/git_sh1_20250723_122856.log
+[2025-07-23 12:28:56] [INFO] Starting git_sh1_main.sh from directory: /Users/hubo/workspace/git-depot/vim-configure/utility/git_sh1_modules
+[2025-07-23 12:28:56] [INFO] Acquired lock with PID: 31143
+[2025-07-23 12:28:56] [INFO] Initializing repository management system
+[2025-07-23 12:28:56] [INFO] Using working area override: /Volumes/BackupT7/workspace_t7/git-depot
+[2025-07-23 12:28:56] [INFO] Using current directory as git-depot: /Volumes/BackupT7/workspace_t7/git-depot
+[2025-07-23 12:28:56] [INFO] Found git-depot directory: /Volumes/BackupT7/workspace_t7/git-depot
+[2025-07-23 12:28:56] [INFO] Using repo_base directory: /Volumes/BackupT7/workspace_t7/git-depot/repo_base
+[2025-07-23 12:28:56] [INFO] Using worktree_base_path: /Volumes/BackupT7/workspace_t7/git-depot
+[2025-07-23 12:28:56] [INFO] Repository management system initialized successfully
+[2025-07-23 12:28:56] [INFO] Git depot: /Volumes/BackupT7/workspace_t7/git-depot
+[2025-07-23 12:28:56] [INFO] Repo base: /Volumes/BackupT7/workspace_t7/git-depot/repo_base
+[2025-07-23 12:28:56] [INFO] Worktree base: /Volumes/BackupT7/workspace_t7/git-depot
+[2025-07-23 12:28:56] [INFO] Features directory: /Users/hubo/workspace/git-depot/vim-configure/utility/git_sh1_modules/.git_sh1_features
+[2025-07-23 12:28:56] [INFO] Profiles directory: /Volumes/BackupT7/workspace_t7/git-depot/.git_sh1_profiles
+[2025-07-23 12:28:56] [INFO] Worktree pull-rebase: repo=all, local_branch=unleashed_200.19_openwrt_common, profile=unleashed_200.19/openwrt_common
+[2025-07-23 12:30:32] [INFO] Removed lock file: /tmp/git_sh1_31143.lock
+[2025-07-23 12:30:32] [INFO] Script cleanup completed

@@ -73,8 +73,8 @@ load_repo_modules() {
 # Load worktree modules
 load_worktree_modules() {
     load_repo_modules || return 1
-    load_module "worktree/validator.sh" || return 1
     load_module "worktree/manager.sh" || return 1
+    load_module "worktree/operations.sh" || return 1
     return 0
 }
 
