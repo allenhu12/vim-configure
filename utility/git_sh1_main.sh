@@ -103,7 +103,7 @@ initialize_system() {
     fi
     
     # Initialize logging system
-    if ! initialize_logging; then
+    if ! init_logging; then
         echo -e "${RED}Warning: Logging system initialization failed${NC}" >&2
     fi
     

@@ -1,0 +1,14 @@
+[2025-07-25 10:45:09] [INFO] Logging initialized: /Users/hubo/workspace/git-depot/vim-configure/utility/git_sh1_20250725_104509.log
+[2025-07-25 10:45:10] [INFO] Initializing repository management system
+[2025-07-25 10:45:10] [INFO] Found git-depot directory: /Users/hubo/workspace/git-depot
+[2025-07-25 10:45:10] [INFO] Using repo_base directory: /Users/hubo/workspace/git-depot/repo_base
+[2025-07-25 10:45:10] [INFO] Using worktree_base_path: /Users/hubo/workspace/git-depot
+[2025-07-25 10:45:10] [INFO] Repository management system initialized successfully
+[2025-07-25 10:45:10] [INFO] Git depot: /Users/hubo/workspace/git-depot
+[2025-07-25 10:45:10] [INFO] Repo base: /Users/hubo/workspace/git-depot/repo_base
+[2025-07-25 10:45:10] [INFO] Worktree base: /Users/hubo/workspace/git-depot
+[2025-07-25 10:45:10] [INFO] Features directory: /Users/hubo/workspace/git-depot/vim-configure/utility/git_sh1_modules/.git_sh1_features
+[2025-07-25 10:45:10] [INFO] Profiles directory: /Users/hubo/workspace/git-depot/.git_sh1_profiles
+[2025-07-25 10:45:10] [INFO] Starting repository verification
+[2025-07-25 10:45:10] [INFO] Repository missing: controller at /Users/hubo/workspace/git-depot/repo_base/rks_ap/controller
+[2025-07-25 10:45:10] [INFO] Script cleanup completed

@@ -15,9 +15,14 @@ telescope.setup({
         -- 窗口内快捷键
         --mappings = require("keybindings").telescopeList,
         file_ignore_patterns = {"tags", "build/"},
+        -- mappings = {
+        --     i = { ["<c-t>"] = trouble.open_with_trouble },
+        --     n = { ["<c-t>"] = trouble.open_with_trouble },
+        -- },
         mappings = {
-            i = { ["<c-t>"] = trouble.open_with_trouble },
-            n = { ["<c-t>"] = trouble.open_with_trouble },
+            -- Replace deprecated function with the new one
+            i = { ["<c-t>"] = require("trouble.sources.telescope").open },
+            n = { ["<c-t>"] = require("trouble.sources.telescope").open },
         },
   },
   pickers = {

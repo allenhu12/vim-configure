@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(find:*)",
+      "Bash(/Volumes/BackupT7/workspace_t7/git-depot/git_sh1.sh profile list)",
+      "Bash(/Volumes/BackupT7/workspace_t7/git-depot/git_sh1.sh profile show test/simple)",
+      "Bash(grep:*)",
+      "mcp__filesystem__create_directory",
+      "mcp__filesystem__write_file",
+      "Bash(chmod:*)",
+      "Bash(./git_sh1_main.sh test)",
+      "Bash(./git_sh1_main.sh --help)",
+      "Bash(./git_sh1_main.sh --version)",
+      "Bash(./git_sh1_main.sh fetch all)",
+      "Bash(./git_sh1_modular.sh test:*)",
+      "Bash(./tests/test_runner.sh:*)",
+      "Bash(git add:*)",
+      "Bash(ls:*)",
+      "Bash(git reset:*)",
+      "Bash(git commit:*)",
+      "Bash(./git_sh1_main.sh verify all)",
+      "mcp__filesystem__list_directory",
+      "mcp__filesystem__search_files",
+      "mcp__filesystem__read_file",
+      "Bash(./git_sh1_main.sh feature list)",
+      "Bash(./git_sh1_modular.sh --debug-paths)",
+      "Bash(./git_sh1_main.sh --help examples)",
+      "Bash(DEBUG=true ./git_sh1_main.sh:*)",
+      "Bash(./git_sh1_main.sh --install-completion)",
+      "Bash(bash:*)",
+      "Bash(source:*)"
+    ],
+    "deny": []
+  },
+  "enabledMcpjsonServers": [
+    "filesystem"
+  ]
+}

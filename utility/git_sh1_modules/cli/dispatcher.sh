@@ -29,12 +29,22 @@ clear_completion_cache() {
 
 # Repository command implementations
 cmd_verify() {
+    # Load repository modules first
+    load_module "repo/discovery.sh" || return 1
+    load_module "repo/operations.sh" || return 1
+    load_module "repo/manager.sh" || return 1
+    
     # Delegate to repository manager
     cmd_verify_repos "$@"
     return $?
 }
 
 cmd_fetch() {
+    # Load repository modules first
+    load_module "repo/discovery.sh" || return 1
+    load_module "repo/operations.sh" || return 1
+    load_module "repo/manager.sh" || return 1
+    
     # Delegate to repository manager
     cmd_fetch_repos "$@"
     return $?
@@ -190,6 +200,10 @@ dispatch_command() {
             ;;
         repos)
             # List available repositories
+            # Load repository modules first
+            load_module "repo/discovery.sh" || return 1
+            load_module "repo/operations.sh" || return 1
+            load_module "repo/manager.sh" || return 1
             cmd_show_repos
             exit_code=$?
             ;;

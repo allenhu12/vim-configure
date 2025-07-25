@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/Users/hubo/workspace/git-depot",
+        "/Users/hubo/obsidian_files",
+        "/Volumes/BackupT7/workspace_t7/git-depot"
+      ]
+    }
+  }
+}

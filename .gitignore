@@ -1,0 +1,19 @@
+# Virtual Environment
+venv/
+env/
+.env/
+.venv/
+ENV/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# debug files
+debug/
+
+test_report.txt
+main_original.py
+jina_augmented_report.txt
+augmented_report.txt

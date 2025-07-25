@@ -9,8 +9,17 @@ packer.startup(
         use ( "EdenEast/nightfox.nvim" )
         use {"savq/melange"}
         -- others
-        use({ "kyazdani42/nvim-tree.lua", requires = "kyazdani42/nvim-web-devicons", tag = 'nightly' })
-        use({ "akinsho/bufferline.nvim", tag = "v2.*",requires = { "kyazdani42/nvim-web-devicons", "moll/vim-bbye" }})
+        -- use({ "kyazdani42/nvim-tree.lua", requires = "kyazdani42/nvim-web-devicons", tag = 'nightly' })
+        -- use({ "akinsho/bufferline.nvim", tag = "v2.*",requires = { "kyazdani42/nvim-web-devicons", "moll/vim-bbye" }})
+        use {
+            'kyazdani42/nvim-tree.lua',
+            requires = {
+                'kyazdani42/nvim-web-devicons', -- optional, for file icons
+            },
+            config = function() require'nvim-tree'.setup {} end
+        }
+
+        use {'akinsho/bufferline.nvim', tag = "*", requires = 'nvim-tree/nvim-web-devicons'}
         use({ "nvim-lualine/lualine.nvim",  requires = { "kyazdani42/nvim-web-devicons" } })
         use("arkav/lualine-lsp-progress")
         use { 'nvim-telescope/telescope.nvim', requires = { "nvim-lua/plenary.nvim" } }
@@ -47,6 +56,7 @@ packer.startup(
                     -- or leave it empty to use the default settings
                     -- refer to the configuration section below
                 }
+
             end
         }
         -- for quick fix window 

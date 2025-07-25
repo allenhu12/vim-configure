@@ -106,7 +106,7 @@ execute_via_modules() {
     source "${modules_dir}/cli/dispatcher.sh" || return 1
     
     # Initialize logging
-    initialize_logging
+    init_logging
     
     # Dispatch command
     dispatch_command "$@"
