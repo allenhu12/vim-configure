@@ -228,6 +228,13 @@ feature_create() {
 
 # List all features
 feature_list() {
+    # Ensure repository system is initialized (for features_dir)
+    if [[ -z "$features_dir" ]]; then
+        if command -v init_repository_system > /dev/null 2>&1; then
+            init_repository_system
+        fi
+    fi
+    
     init_features_dir
     
     if [ ! -d "$features_dir" ] || [ -z "$(ls -A "$features_dir" 2>/dev/null)" ]; then

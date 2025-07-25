@@ -65,8 +65,8 @@ init_config() {
         script_dir="$(dirname "$config_dir")"
     fi
     
-    # Initialize features directory
-    features_dir="$script_dir/.git_sh1_features"
+    # Note: features_dir is initialized by repository discovery functions in repo/discovery.sh
+    # This avoids circular dependencies and allows flexible directory discovery
     
     # Note: git_depot_dir, repo_base, worktree_base_path, and profiles_dir 
     # are initialized by repository discovery functions in repo/discovery.sh

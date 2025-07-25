@@ -3,8 +3,14 @@
 # git_sh1_modular.sh - Legacy compatibility wrapper for modular git_sh1 system
 # Provides backward compatibility and enhanced error handling
 
-# Determine script directory
-script_dir="$(dirname "${BASH_SOURCE[0]}")"
+# Determine script directory (handle symlinks properly)
+if [[ -L "${BASH_SOURCE[0]}" ]]; then
+    # Resolve symlink to actual script location
+    script_dir="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+else
+    # Regular script path
+    script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
 
 # Legacy compatibility mode detection
 LEGACY_MODE=false
@@ -33,13 +39,14 @@ elif [[ -d "${script_dir}/git_sh1_modules" ]]; then
 fi
 
 # Working directory context detection
-CURRENT_DIR="$(pwd)"
+# Use preserved user directory if available (from global wrapper)
+CURRENT_DIR="${GIT_SH1_USER_PWD:-$(pwd)}"
 GIT_DEPOT_CONTEXT=""
 
-# Detect git-depot context
-if [[ "$(basename "$CURRENT_DIR")" == "git-depot" || -d "repo_base" ]]; then
+# Detect git-depot context based on user's actual working directory
+if [[ "$(basename "$CURRENT_DIR")" == "git-depot" || -d "$CURRENT_DIR/repo_base" ]]; then
     GIT_DEPOT_CONTEXT="$CURRENT_DIR"
-elif [[ -d "git-depot" ]]; then
+elif [[ -d "$CURRENT_DIR/git-depot" ]]; then
     GIT_DEPOT_CONTEXT="$CURRENT_DIR/git-depot"
 fi
 

@@ -86,13 +86,15 @@ find_repo_base() {
 
 # Find profiles directory with flexible search order
 find_profiles_directory() {
-    local current_dir="$(pwd)"
+    # Use working area override if set, otherwise preserved user directory, otherwise current pwd
+    local current_dir="${WORKING_AREA_OVERRIDE:-${GIT_SH1_USER_PWD:-$(pwd)}}"
     local global_profiles_dir="$HOME/workspace/git-depot/.git_sh1_profiles"
     local local_profiles_dir="$current_dir/.git_sh1_profiles"
     
+    
     # First priority: Check current working directory
     if [[ -d "$local_profiles_dir" ]]; then
-        if [[ "$VERBOSE" == "true" ]]; then
+        if [[ "$VERBOSE" == "true" || "$DEBUG" == "true" ]]; then
             echo -e "${GREEN}DEBUG: Found local profiles directory: $local_profiles_dir${NC}" >&2
         fi
         log "INFO" "Using local profiles directory: $local_profiles_dir"
@@ -127,6 +129,53 @@ find_profiles_directory() {
     fi
     log "INFO" "No existing profiles directory found, defaulting to local: $local_profiles_dir"
     echo "$local_profiles_dir"
+    return 0
+}
+
+# Find features directory with flexible search order (similar to profiles)
+find_features_directory() {
+    # Use working area override if set, otherwise preserved user directory, otherwise current pwd
+    local current_dir="${WORKING_AREA_OVERRIDE:-${GIT_SH1_USER_PWD:-$(pwd)}}"
+    local global_features_dir="$HOME/workspace/git-depot/.git_sh1_features"
+    local local_features_dir="$current_dir/.git_sh1_features"
+    
+    # First priority: Check current working directory
+    if [[ -d "$local_features_dir" ]]; then
+        if [[ "$VERBOSE" == "true" || "$DEBUG" == "true" ]]; then
+            echo -e "${GREEN}DEBUG: Found local features directory: $local_features_dir${NC}" >&2
+        fi
+        log "INFO" "Using local features directory: $local_features_dir"
+        echo "$local_features_dir"
+        return 0
+    fi
+    
+    # Second priority: Check global workspace location
+    if [[ -d "$global_features_dir" ]]; then
+        if [[ "$VERBOSE" == "true" ]]; then
+            echo -e "${GREEN}DEBUG: Found global features directory: $global_features_dir${NC}" >&2
+        fi
+        log "INFO" "Using global features directory: $global_features_dir"
+        echo "$global_features_dir"
+        return 0
+    fi
+    
+    # Third priority: Fall back to git-depot location if available
+    if [[ -n "$git_depot_dir" && -d "$git_depot_dir/.git_sh1_features" ]]; then
+        local git_depot_features="$git_depot_dir/.git_sh1_features"
+        if [[ "$VERBOSE" == "true" ]]; then
+            echo -e "${YELLOW}DEBUG: Using git-depot features directory: $git_depot_features${NC}" >&2
+        fi
+        log "INFO" "Using git-depot features directory: $git_depot_features"
+        echo "$git_depot_features"
+        return 0
+    fi
+    
+    # Default: Use local current directory (will be created if needed)
+    if [[ "$VERBOSE" == "true" ]]; then
+        echo -e "${YELLOW}DEBUG: No existing features directory found, will use local: $local_features_dir${NC}" >&2
+    fi
+    log "INFO" "No existing features directory found, defaulting to local: $local_features_dir"
+    echo "$local_features_dir"
     return 0
 }
 
@@ -179,6 +228,10 @@ init_repo_paths() {
     # Initialize profiles directory with flexible discovery
     profiles_dir=$(find_profiles_directory)
     log "INFO" "Using profiles directory: $profiles_dir"
+    
+    # Initialize features directory with flexible discovery
+    features_dir=$(find_features_directory)
+    log "INFO" "Using features directory: $features_dir"
     
     # Sort the default repo_map by depth to ensure correct processing order
     if command -v sort_repo_map_once > /dev/null 2>&1; then

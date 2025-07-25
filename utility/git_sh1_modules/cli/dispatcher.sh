@@ -57,6 +57,18 @@ cmd_worktree() {
 }
 
 cmd_feature() {
+    # Load repository modules first to ensure features_dir is initialized
+    load_module "repo/discovery.sh" || return 1
+    load_module "repo/operations.sh" || return 1
+    load_module "repo/manager.sh" || return 1
+    
+    # Initialize repository system if not already done
+    if [[ -z "$features_dir" ]]; then
+        if ! init_repository_system; then
+            return 1
+        fi
+    fi
+    
     load_module "features/operations.sh"
     load_module "features/metadata.sh"
     
