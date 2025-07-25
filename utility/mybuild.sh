@@ -12,10 +12,11 @@ REWRITE_SCRIPT="/home/hubo/workspace/git-depot/github_repo/vim-configure/utility
 
 # --- Flags ---
 SHOULD_UPDATE_DB=0 # Default: Do not update the DB
+DEBUG_MODE=0 # Default: Clean up temporary files
 
 # --- Usage/Help Function ---
 print_usage() {
-    echo "Usage: $0 [module_path] [make_options...] [update_db=true] [-h|--help]"
+    echo "Usage: $0 [module_path] [make_options...] [update_db=true] [debug=true] [-h|--help]"
     echo ""
     echo "Builds the OpenWrt project and optionally generates/updates compile_commands.json."
     echo ""
@@ -34,16 +35,72 @@ print_usage() {
     echo "                    and integrate the results."
     echo "                    If omitted (default), these database steps are skipped."
     echo ""
+    echo "  debug=true        (Optional) If present, preserves temporary files for debugging"
+    echo "                    and provides detailed JSON validation information."
+    echo "                    Temporary files will have timestamps to avoid conflicts."
+    echo ""
     echo "  -h, --help        Display this help message and exit."
     echo ""
     echo "Examples:"
     echo "  $0                              # Full build, skip DB update"
     echo "  $0 update_db=true               # Full build, update DB"
+    echo "  $0 update_db=true debug=true    # Full build, update DB with debug info"
     echo "  $0 -j8 V=sc                     # Full build with options, skip DB update"
     echo "  $0 -j8 V=sc update_db=true      # Full build with options, update DB"
     echo "  $0 package/feeds/ruckus/librsm  # Build only librsm, skip DB update"
-    echo "  $0 package/feeds/ruckus/librsm update_db=true # Build only librsm, update DB"
+    echo "  $0 package/feeds/ruckus/librsm update_db=true debug=true # Build librsm, update DB with debug"
 
+}
+
+# --- JSON Validation Function ---
+validate_json_file() {
+    local json_file="$1"
+    local file_description="$2"
+    
+    echo "--- Validating JSON file: $json_file ($file_description) ---"
+    
+    if [ ! -f "$json_file" ]; then
+        echo "ERROR: File does not exist: $json_file"
+        return 1
+    fi
+    
+    # Check file size
+    local file_size=$(stat -f%z "$json_file" 2>/dev/null || stat -c%s "$json_file" 2>/dev/null || echo "unknown")
+    echo "File size: $file_size bytes"
+    
+    # Try to validate with jq and capture detailed error
+    local jq_output
+    local jq_exit_code
+    jq_output=$(jq '.' "$json_file" 2>&1)
+    jq_exit_code=$?
+    
+    if [ $jq_exit_code -eq 0 ]; then
+        local entry_count=$(echo "$jq_output" | jq 'length' 2>/dev/null || echo "unknown")
+        echo "JSON validation: PASSED ($entry_count entries)"
+        
+        if [ "$DEBUG_MODE" -eq 1 ] && [ "$entry_count" != "unknown" ] && [ "$entry_count" -gt 0 ]; then
+            echo "Sample entry (first):"
+            echo "$jq_output" | jq '.[0]' 2>/dev/null || echo "Could not extract sample entry"
+            if [ "$entry_count" -gt 1 ]; then
+                echo "Sample entry (last):"
+                echo "$jq_output" | jq '.[-1]' 2>/dev/null || echo "Could not extract sample entry"
+            fi
+        fi
+        return 0
+    else
+        echo "JSON validation: FAILED"
+        echo "JQ Error output:"
+        echo "$jq_output"
+        
+        if [ "$DEBUG_MODE" -eq 1 ]; then
+            echo "First 200 characters of file:"
+            head -c 200 "$json_file" 2>/dev/null || echo "Could not read file beginning"
+            echo
+            echo "Last 200 characters of file:"
+            tail -c 200 "$json_file" 2>/dev/null || echo "Could not read file end"
+        fi
+        return 1
+    fi
 }
 
 # --- Argument Processing ---
@@ -51,7 +108,7 @@ MODULE_PATH=""
 ARGS_ARRAY=()
 FILTERED_ARGS=()
 
-# Check for help flag first, then separate update_db flag and filter other arguments
+# Check for help flag first, then separate update_db and debug flags and filter other arguments
 for arg in "$@"; do
   case "$arg" in
     -h|--help)
@@ -60,6 +117,9 @@ for arg in "$@"; do
       ;;
     update_db=true)
       SHOULD_UPDATE_DB=1
+      ;;
+    debug=true)
+      DEBUG_MODE=1
       ;;
     *)
       FILTERED_ARGS+=("$arg")
@@ -83,8 +143,13 @@ if [[ ${#FILTERED_ARGS[@]} -gt 0 ]]; then
         echo "=== Module build requested for: $MODULE_PATH ==="
         # Generate temporary filenames based on module path (replace / with _)
         MODULE_PATH_SAFE=$(echo "$MODULE_PATH" | tr '/' '_')
-        TMP_LOG_FILE="compile_${MODULE_PATH_SAFE}.log"
-        TMP_DB_FILE="compile_commands_${MODULE_PATH_SAFE}.json"
+        if [ "$DEBUG_MODE" -eq 1 ]; then
+            TMP_LOG_FILE="compile_${MODULE_PATH_SAFE}_${TIMESTAMP}.log"
+            TMP_DB_FILE="compile_commands_${MODULE_PATH_SAFE}_${TIMESTAMP}.json"
+        else
+            TMP_LOG_FILE="compile_${MODULE_PATH_SAFE}.log"
+            TMP_DB_FILE="compile_commands_${MODULE_PATH_SAFE}.json"
+        fi
     else
          echo "=== Full build requested with arguments: ${ARGS_ARRAY[@]} ==="
     fi
@@ -97,6 +162,13 @@ echo # Blank line
 # --- Get Current Directory ---
 BUILD_DIR=$(pwd)
 echo "=== Build script starting in directory: $BUILD_DIR ==="
+
+# --- Generate timestamp for debug files ---
+if [ "$DEBUG_MODE" -eq 1 ]; then
+    TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+    echo "=== Debug mode enabled - temporary files will be preserved with timestamp: $TIMESTAMP ==="
+fi
+
 echo # Blank line
 
 # --- Variables for results ---
@@ -152,8 +224,23 @@ if [ -n "$MODULE_PATH" ]; then
             echo "Error: Log file '$TMP_LOG_FILE' not found. Cannot generate compile database."
             COMPILEDB_EXIT_CODE=1 # Mark as failed
         else
-            LC_ALL=C.UTF-8 compiledb -S -v -f -p "$TMP_LOG_FILE" -o "$TMP_DB_FILE"
-            COMPILEDB_EXIT_CODE=$?
+            echo "Running compiledb command..."
+            # Capture compiledb output to analyze parsing errors
+            if [ "$DEBUG_MODE" -eq 1 ]; then
+                COMPILEDB_OUTPUT=$(LC_ALL=C.UTF-8 compiledb -S -v -f -p "$TMP_LOG_FILE" -o "$TMP_DB_FILE" 2>&1)
+                COMPILEDB_EXIT_CODE=$?
+                echo "Compiledb output:"
+                echo "$COMPILEDB_OUTPUT"
+                
+                # Count parsing errors
+                PARSE_ERROR_COUNT=$(echo "$COMPILEDB_OUTPUT" | grep -c "Failed to parse build command" || echo "0")
+                if [ "$PARSE_ERROR_COUNT" -gt 0 ]; then
+                    echo "WARNING: compiledb reported $PARSE_ERROR_COUNT parsing errors"
+                fi
+            else
+                LC_ALL=C.UTF-8 compiledb -S -v -f -p "$TMP_LOG_FILE" -o "$TMP_DB_FILE"
+                COMPILEDB_EXIT_CODE=$?
+            fi
 
             if [ $COMPILEDB_EXIT_CODE -ne 0 ]; then
                 echo "Error: compiledb failed to generate $TMP_DB_FILE (Exit code: $COMPILEDB_EXIT_CODE)."
@@ -162,6 +249,11 @@ if [ -n "$MODULE_PATH" ]; then
                 COMPILEDB_EXIT_CODE=1 # Mark as failed if file is empty
             else
                 echo "--- Temporary $TMP_DB_FILE generated successfully ---"
+                # Validate JSON immediately after compiledb generation
+                if ! validate_json_file "$TMP_DB_FILE" "post-compiledb module build"; then
+                    echo "Error: compiledb generated invalid JSON despite reporting success."
+                    COMPILEDB_EXIT_CODE=1
+                fi
             fi
         fi
         echo # Blank line
@@ -175,6 +267,11 @@ if [ -n "$MODULE_PATH" ]; then
                 echo "Error: Path rewriting failed for $TMP_DB_FILE (Exit code $REWRITE_EXIT_CODE)."
             else
                 echo "--- Path rewriting complete for $TMP_DB_FILE ---"
+                # Validate JSON after rewrite step
+                if ! validate_json_file "$TMP_DB_FILE" "post-rewrite module build"; then
+                    echo "Error: Rewrite script corrupted the JSON file."
+                    REWRITE_EXIT_CODE=1
+                fi
             fi
         else
              echo "--- Skipping rewrite due to compiledb errors ---"
@@ -185,7 +282,7 @@ if [ -n "$MODULE_PATH" ]; then
         if [ $COMPILEDB_EXIT_CODE -eq 0 ] && [ $REWRITE_EXIT_CODE -eq 0 ]; then
             echo "--- Step 5: Integrating $TMP_DB_FILE into $MAIN_DB_FILE ---"
             # Check if temp file is valid JSON before proceeding
-            if ! jq '.' "$TMP_DB_FILE" > /dev/null 2>&1; then
+            if ! validate_json_file "$TMP_DB_FILE" "pre-integration module build"; then
                  echo "Error: Temporary file $TMP_DB_FILE is not valid JSON. Skipping integration."
                  INTEGRATE_EXIT_CODE=1
             else
@@ -235,18 +332,26 @@ if [ -n "$MODULE_PATH" ]; then
                 fi
             fi
             # Clean up temporary files only if DB update was enabled and attempted
-            echo "Cleaning up temporary DB files: $TMP_LOG_FILE, $TMP_DB_FILE"
-            rm -f "$TMP_LOG_FILE" "$TMP_DB_FILE"
+            if [ "$DEBUG_MODE" -eq 1 ]; then
+                echo "Debug mode: Preserving temporary files: $TMP_LOG_FILE, $TMP_DB_FILE"
+            else
+                echo "Cleaning up temporary DB files: $TMP_LOG_FILE, $TMP_DB_FILE"
+                rm -f "$TMP_LOG_FILE" "$TMP_DB_FILE"
+            fi
         else
             echo "--- Skipping integration due to previous errors ---"
             # Clean up potentially invalid temp db file if rewrite didn't run or failed
-            if [ -f "$TMP_DB_FILE" ]; then
-                 echo "Cleaning up potentially invalid temporary file: $TMP_DB_FILE"
-                 rm -f "$TMP_DB_FILE"
-            fi
-             # Also remove the log file if DB update was intended but failed early
-            if [ -f "$TMP_LOG_FILE" ]; then
-                 rm -f "$TMP_LOG_FILE"
+            if [ "$DEBUG_MODE" -eq 1 ]; then
+                echo "Debug mode: Preserving error temp files for analysis: $TMP_LOG_FILE, $TMP_DB_FILE"
+            else
+                if [ -f "$TMP_DB_FILE" ]; then
+                     echo "Cleaning up potentially invalid temporary file: $TMP_DB_FILE"
+                     rm -f "$TMP_DB_FILE"
+                fi
+                 # Also remove the log file if DB update was intended but failed early
+                if [ -f "$TMP_LOG_FILE" ]; then
+                     rm -f "$TMP_LOG_FILE"
+                fi
             fi
             INTEGRATE_EXIT_CODE=1
         fi
@@ -298,15 +403,34 @@ else
 
     # --- DB Update Steps (Conditional) ---
     if [ "$SHOULD_UPDATE_DB" -eq 1 ]; then
-        TMP_DB_FILE="${MAIN_DB_FILE}.latest" # Define temp file name for full build
+        if [ "$DEBUG_MODE" -eq 1 ]; then
+            TMP_DB_FILE="${MAIN_DB_FILE}_${TIMESTAMP}.latest" # Debug temp file name for full build
+        else
+            TMP_DB_FILE="${MAIN_DB_FILE}.latest" # Define temp file name for full build
+        fi
         echo "--- Step 3: Generate temporary DB ($TMP_DB_FILE) from $MAIN_LOG_FILE ---"
 
         if [ ! -f "$MAIN_LOG_FILE" ]; then
             echo "Error: Log file '$MAIN_LOG_FILE' not found. Cannot generate DB."
             COMPILEDB_EXIT_CODE=1
         else
-            LC_ALL=C.UTF-8 compiledb -S -v -f -p "$MAIN_LOG_FILE" -o "$TMP_DB_FILE"
-            COMPILEDB_EXIT_CODE=$?
+            echo "Running compiledb command..."
+            # Capture compiledb output to analyze parsing errors
+            if [ "$DEBUG_MODE" -eq 1 ]; then
+                COMPILEDB_OUTPUT=$(LC_ALL=C.UTF-8 compiledb -S -v -f -p "$MAIN_LOG_FILE" -o "$TMP_DB_FILE" 2>&1)
+                COMPILEDB_EXIT_CODE=$?
+                echo "Compiledb output:"
+                echo "$COMPILEDB_OUTPUT"
+                
+                # Count parsing errors
+                PARSE_ERROR_COUNT=$(echo "$COMPILEDB_OUTPUT" | grep -c "Failed to parse build command" || echo "0")
+                if [ "$PARSE_ERROR_COUNT" -gt 0 ]; then
+                    echo "WARNING: compiledb reported $PARSE_ERROR_COUNT parsing errors"
+                fi
+            else
+                LC_ALL=C.UTF-8 compiledb -S -v -f -p "$MAIN_LOG_FILE" -o "$TMP_DB_FILE"
+                COMPILEDB_EXIT_CODE=$?
+            fi
 
             if [ $COMPILEDB_EXIT_CODE -ne 0 ]; then
                 echo "Error: compiledb failed to generate temporary DB $TMP_DB_FILE (Exit code: $COMPILEDB_EXIT_CODE)."
@@ -315,6 +439,11 @@ else
                  COMPILEDB_EXIT_CODE=1
             else
                 echo "--- Temporary DB $TMP_DB_FILE generated successfully ---"
+                # Validate JSON immediately after compiledb generation
+                if ! validate_json_file "$TMP_DB_FILE" "post-compiledb full build"; then
+                    echo "Error: compiledb generated invalid JSON despite reporting success."
+                    COMPILEDB_EXIT_CODE=1
+                fi
             fi
         fi
         echo # Blank line
@@ -328,6 +457,11 @@ else
                 echo "Error: Path rewriting failed for $TMP_DB_FILE (Exit code $REWRITE_EXIT_CODE)."
             else
                 echo "--- Path rewriting complete for $TMP_DB_FILE ---"
+                # Validate JSON after rewrite step
+                if ! validate_json_file "$TMP_DB_FILE" "post-rewrite full build"; then
+                    echo "Error: Rewrite script corrupted the JSON file."
+                    REWRITE_EXIT_CODE=1
+                fi
             fi
         else
              echo "--- Skipping rewrite due to compiledb errors ---"
@@ -338,7 +472,7 @@ else
         if [ $COMPILEDB_EXIT_CODE -eq 0 ] && [ $REWRITE_EXIT_CODE -eq 0 ]; then
             echo "--- Step 5: Integrating $TMP_DB_FILE into $MAIN_DB_FILE ---"
             # Check if temp file is valid JSON before proceeding
-            if ! jq '.' "$TMP_DB_FILE" > /dev/null 2>&1; then
+            if ! validate_json_file "$TMP_DB_FILE" "pre-integration full build"; then
                  echo "Error: Temporary file $TMP_DB_FILE is not valid JSON. Skipping integration."
                  INTEGRATE_EXIT_CODE=1
             else
@@ -388,18 +522,26 @@ else
                 fi
             fi
             # Clean up temporary files for full build DB update
-            echo "Cleaning up temporary DB files: $MAIN_LOG_FILE, $TMP_DB_FILE"
-            rm -f "$MAIN_LOG_FILE" "$TMP_DB_FILE"
+            if [ "$DEBUG_MODE" -eq 1 ]; then
+                echo "Debug mode: Preserving temporary files: $MAIN_LOG_FILE, $TMP_DB_FILE"
+            else
+                echo "Cleaning up temporary DB files: $MAIN_LOG_FILE, $TMP_DB_FILE"
+                rm -f "$MAIN_LOG_FILE" "$TMP_DB_FILE"
+            fi
         else
             echo "--- Skipping integration due to previous errors ---"
             # Clean up potentially invalid temp db file
-            if [ -f "$TMP_DB_FILE" ]; then
-                 echo "Cleaning up potentially invalid temporary file: $TMP_DB_FILE"
-                 rm -f "$TMP_DB_FILE"
-            fi
-             # Also remove the log file if DB update was intended but failed early
-            if [ -f "$MAIN_LOG_FILE" ]; then
-                 rm -f "$MAIN_LOG_FILE"
+            if [ "$DEBUG_MODE" -eq 1 ]; then
+                echo "Debug mode: Preserving error temp files for analysis: $MAIN_LOG_FILE, $TMP_DB_FILE"
+            else
+                if [ -f "$TMP_DB_FILE" ]; then
+                     echo "Cleaning up potentially invalid temporary file: $TMP_DB_FILE"
+                     rm -f "$TMP_DB_FILE"
+                fi
+                 # Also remove the log file if DB update was intended but failed early
+                if [ -f "$MAIN_LOG_FILE" ]; then
+                     rm -f "$MAIN_LOG_FILE"
+                fi
             fi
             INTEGRATE_EXIT_CODE=1
         fi
@@ -447,6 +589,25 @@ if [ $FINAL_EXIT_CODE -eq 0 ]; then
     fi
 else
     echo "Result: FAILED (Exit Code: $FINAL_EXIT_CODE)"
+fi
+
+# --- Debug Summary ---
+if [ "$DEBUG_MODE" -eq 1 ] && [ "$SHOULD_UPDATE_DB" -eq 1 ]; then
+    echo # Blank line
+    echo "=== DEBUG SUMMARY ==="
+    echo "Debug mode was enabled. Temporary files have been preserved:"
+    if [ -n "$MODULE_PATH" ]; then
+        echo "  Log file: $TMP_LOG_FILE"
+        echo "  JSON file: $TMP_DB_FILE"
+    else
+        echo "  Log file: $MAIN_LOG_FILE"
+        echo "  JSON file: $TMP_DB_FILE"
+    fi
+    echo "Use these files to investigate compilation database issues."
+    echo "Example commands:"
+    echo "  jq . [json_file] | head -20  # View first 20 lines of JSON"
+    echo "  jq length [json_file]        # Count entries"
+    echo "  grep 'Failed to parse' [log] # Count parsing errors"
 fi
 
 exit $FINAL_EXIT_CODE 
