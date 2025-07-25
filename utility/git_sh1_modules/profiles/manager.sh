@@ -13,6 +13,8 @@ load_module "core/config.sh"
 load_module "core/logging.sh"
 load_module "core/validation.sh"
 load_module "core/utils.sh"
+load_module "repo/discovery.sh"
+load_module "repo/operations.sh" 
 load_module "repo/manager.sh"
 load_module "profiles/parser.sh"
 

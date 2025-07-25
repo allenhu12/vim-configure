@@ -1,0 +1,14 @@
+[2025-07-25 11:38:10] [INFO] Logging initialized: /Users/hubo/workspace/git-depot/vim-configure/utility/git_sh1_20250725_113810.log
+[2025-07-25 11:38:10] [INFO] Initializing repository management system
+[2025-07-25 11:38:10] [INFO] Found git-depot directory: /Users/hubo/workspace/git-depot
+[2025-07-25 11:38:10] [INFO] Using repo_base directory: /Users/hubo/workspace/git-depot/repo_base
+[2025-07-25 11:38:10] [INFO] Using worktree_base_path: /Users/hubo/workspace/git-depot
+[2025-07-25 11:38:10] [INFO] Repository management system initialized successfully
+[2025-07-25 11:38:10] [INFO] Git depot: /Users/hubo/workspace/git-depot
+[2025-07-25 11:38:10] [INFO] Repo base: /Users/hubo/workspace/git-depot/repo_base
+[2025-07-25 11:38:10] [INFO] Worktree base: /Users/hubo/workspace/git-depot
+[2025-07-25 11:38:10] [INFO] Features directory: /Users/hubo/workspace/git-depot/vim-configure/utility/git_sh1_modules/.git_sh1_features
+[2025-07-25 11:38:10] [INFO] Profiles directory: /Users/hubo/workspace/git-depot/.git_sh1_profiles
+  [0;32mrksiot[0m -> rksiot
+[2025-07-25 11:38:10
+  [0;32mrksiot[0m -> rksiot] [INFO] Script cleanup completed
