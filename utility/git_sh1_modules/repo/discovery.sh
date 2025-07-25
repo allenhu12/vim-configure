@@ -84,6 +84,52 @@ find_repo_base() {
     fi
 }
 
+# Find profiles directory with flexible search order
+find_profiles_directory() {
+    local current_dir="$(pwd)"
+    local global_profiles_dir="$HOME/workspace/git-depot/.git_sh1_profiles"
+    local local_profiles_dir="$current_dir/.git_sh1_profiles"
+    
+    # First priority: Check current working directory
+    if [[ -d "$local_profiles_dir" ]]; then
+        if [[ "$VERBOSE" == "true" ]]; then
+            echo -e "${GREEN}DEBUG: Found local profiles directory: $local_profiles_dir${NC}" >&2
+        fi
+        log "INFO" "Using local profiles directory: $local_profiles_dir"
+        echo "$local_profiles_dir"
+        return 0
+    fi
+    
+    # Second priority: Check global workspace location
+    if [[ -d "$global_profiles_dir" ]]; then
+        if [[ "$VERBOSE" == "true" ]]; then
+            echo -e "${GREEN}DEBUG: Found global profiles directory: $global_profiles_dir${NC}" >&2
+        fi
+        log "INFO" "Using global profiles directory: $global_profiles_dir"
+        echo "$global_profiles_dir"
+        return 0
+    fi
+    
+    # Third priority: Fall back to git-depot location if available
+    if [[ -n "$git_depot_dir" && -d "$git_depot_dir/.git_sh1_profiles" ]]; then
+        local git_depot_profiles="$git_depot_dir/.git_sh1_profiles"
+        if [[ "$VERBOSE" == "true" ]]; then
+            echo -e "${YELLOW}DEBUG: Using git-depot profiles directory: $git_depot_profiles${NC}" >&2
+        fi
+        log "INFO" "Using git-depot profiles directory: $git_depot_profiles"
+        echo "$git_depot_profiles"
+        return 0
+    fi
+    
+    # Default: Use local current directory (will be created if needed)
+    if [[ "$VERBOSE" == "true" ]]; then
+        echo -e "${YELLOW}DEBUG: No existing profiles directory found, will use local: $local_profiles_dir${NC}" >&2
+    fi
+    log "INFO" "No existing profiles directory found, defaulting to local: $local_profiles_dir"
+    echo "$local_profiles_dir"
+    return 0
+}
+
 # Initialize repository paths and validate configuration
 init_repo_paths() {
     # Initialize global path variables used by other modules
@@ -130,8 +176,9 @@ init_repo_paths() {
     worktree_base_path="$git_depot_dir"
     log "INFO" "Using worktree_base_path: $worktree_base_path"
     
-    # Initialize profiles directory  
-    profiles_dir="$git_depot_dir/.git_sh1_profiles"
+    # Initialize profiles directory with flexible discovery
+    profiles_dir=$(find_profiles_directory)
+    log "INFO" "Using profiles directory: $profiles_dir"
     
     # Sort the default repo_map by depth to ensure correct processing order
     if command -v sort_repo_map_once > /dev/null 2>&1; then
