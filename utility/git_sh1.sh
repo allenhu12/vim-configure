@@ -2233,8 +2233,50 @@ feature_pick() {
             fi
         fi
         
-        # Find commits that are only on the feature branch
-        local merge_base=$(git merge-base "$target_branch" "$feature_branch")
+        # Determine the original base branch for comparison
+        local base_branch=""
+        
+        # First try to get from branches.json if available
+        if [ -f "$feature_dir/branches.json" ] && command -v jq >/dev/null 2>&1; then
+            local original_branch
+            if original_branch=$(jq -r ".[\"$repo\"].branch" "$feature_dir/branches.json" 2>/dev/null) && [ "$original_branch" != "null" ] && [ -n "$original_branch" ]; then
+                base_branch="$original_branch"
+                echo -e "${CYAN}Using original branch from branches.json: $base_branch${NC}"
+            fi
+        fi
+        
+        # If not found in branches.json, try to determine from worktree name
+        if [ -z "$base_branch" ] && [ -n "$worktree" ]; then
+            # The worktree name is typically the original branch name
+            base_branch="$worktree"
+            echo -e "${CYAN}Using worktree name as base branch: $base_branch${NC}"
+        fi
+        
+        # If still not found, try common branch names
+        if [ -z "$base_branch" ]; then
+            for common_branch in "master" "main" "develop" "dev"; do
+                if git show-ref --verify --quiet "refs/heads/$common_branch"; then
+                    base_branch="$common_branch"
+                    echo -e "${CYAN}Using common branch as base: $base_branch${NC}"
+                    break
+                fi
+            done
+        fi
+        
+        if [ -z "$base_branch" ]; then
+            echo -e "${RED}Error: Could not determine base branch for comparison in $repo${NC}"
+            echo -e "${YELLOW}Please ensure the feature was created with proper branch tracking${NC}"
+            continue
+        fi
+        
+        # Verify the base branch exists
+        if ! git show-ref --verify --quiet "refs/heads/$base_branch"; then
+            echo -e "${RED}Error: Base branch '$base_branch' does not exist in $repo${NC}"
+            continue
+        fi
+        
+        # Find commits that are only on the feature branch compared to the base branch
+        local merge_base=$(git merge-base "$base_branch" "$feature_branch")
         local commits=$(git rev-list --reverse "$merge_base".."$feature_branch")
         
         if [ -z "$commits" ]; then
@@ -2243,13 +2285,13 @@ feature_pick() {
         fi
         
         if [ "$dry_run" = true ]; then
-            echo -e "${CYAN}Would cherry-pick the following commits in $repo:${NC}"
+            echo -e "${CYAN}Would cherry-pick the following commits in $repo (comparing $feature_branch vs $base_branch):${NC}"
             for commit in $commits; do
                 echo -e "  $(git log --oneline -1 $commit)"
             done
             echo -e "${CYAN}Would switch to branch: $target_branch${NC}"
         else
-            echo -e "${CYAN}Cherry-picking commits...${NC}"
+            echo -e "${CYAN}Cherry-picking commits (comparing $feature_branch vs $base_branch)...${NC}"
             for commit in $commits; do
                 echo -e "  Picking: $(git log --oneline -1 $commit)"
                 if ! git cherry-pick "$commit"; then

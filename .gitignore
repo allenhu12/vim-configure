@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 # Virtual Environment
 venv/
 env/
@@ -17,3 +18,12 @@ test_report.txt
 main_original.py
 jina_augmented_report.txt
 augmented_report.txt
+||||||| Stash base
+=======
+.claude/
+*.log
+.git_sh1_features/
+tags
+CLAUDE.md
+*Claude-Repository*.md
+>>>>>>> Stashed changes
