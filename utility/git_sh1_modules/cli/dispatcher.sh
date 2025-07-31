@@ -81,6 +81,7 @@ cmd_feature() {
         echo "  show      - Show feature details"
         echo "  add       - Add repository to feature"
         echo "  switch    - Switch to feature branches"
+        echo "  pick      - Cherry-pick feature commits to another branch"
         echo "  comment   - Add comment to feature"
         return 1
     fi
@@ -103,6 +104,9 @@ cmd_feature() {
             ;;
         switch)
             feature_switch "$@"
+            ;;
+        pick)
+            feature_pick "$@"
             ;;
         comment)
             feature_comment "$@"

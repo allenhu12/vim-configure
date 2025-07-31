@@ -73,6 +73,7 @@ ${YELLOW}HELP SYSTEM:${NC}
     git_sh1.sh --help examples               # Common usage examples
     git_sh1.sh --help environment            # Environment variables and configuration
     git_sh1.sh --help configuration          # File system layout and storage
+    git_sh1.sh --help autocomplete           # Tab completion setup and usage
     git_sh1.sh --help troubleshooting        # Troubleshooting guide
 
 ${YELLOW}ENVIRONMENT VARIABLES:${NC}
@@ -86,7 +87,7 @@ ${YELLOW}MORE INFORMATION:${NC}
     • Features: Stored in .git_sh1_features/ directory with metadata
     • Profiles: Stored in .git_sh1_profiles/ directory organized by release
     • Logs: Timestamped files git_sh1_YYYYMMDD_HHMMSS.log in script directory
-    • Completion: Cached in ~/.cache/git_sh1_modular/ with 5-minute expiry
+    • Tab completion: Install with '--install-completion', see '--help autocomplete'
     
     For detailed documentation: git_sh1.sh --help <topic>
 
@@ -564,9 +565,104 @@ ${YELLOW}LOG ANALYSIS:${NC}
 
 EOF
             ;;
+        autocomplete)
+            cat << EOF
+${CYAN}git_sh1.sh - Tab Completion Setup and Usage${NC}
+
+${YELLOW}INSTALLATION:${NC}
+
+${GREEN}1. Install the completion system:${NC}
+    ./git_sh1_main.sh --install-completion
+    
+    This installs completion files to:
+    • /etc/bash_completion.d/ (system-wide)
+    • ~/.local/share/bash-completion/completions/ (user-specific)
+
+${GREEN}2. Reload your shell:${NC}
+    # Option 1: Restart terminal
+    # Option 2: Source completion manually
+    source ~/.local/share/bash-completion/completions/git_sh1_main.sh
+    # Option 3: Reload bash completion system
+    source /etc/bash_completion
+
+${GREEN}3. Test autocomplete:${NC}
+    ./git_sh1_main.sh <TAB><TAB>
+
+${YELLOW}AUTOCOMPLETE FEATURES:${NC}
+
+${GREEN}Command Completion:${NC}
+    ./git_sh1_main.sh <TAB><TAB>
+    Shows: feature, fetch, profile, repos, verify, worktree
+
+${GREEN}Subcommand Completion:${NC}
+    ./git_sh1_main.sh feature <TAB><TAB>
+    Shows: add, comment, create, list, pick, show, switch
+
+${GREEN}Repository Name Completion:${NC}
+    ./git_sh1_main.sh fetch <TAB><TAB>
+    Shows: all, controller, dl, opensource, rks_ap, etc.
+
+${GREEN}Feature Name Completion:${NC}
+    ./git_sh1_main.sh feature show <TAB><TAB>
+    Shows: Available feature names (dynamically loaded)
+
+${GREEN}Profile Completion:${NC}
+    ./git_sh1_main.sh --profile <TAB><TAB>
+    Shows: Available profile names
+
+${GREEN}Option Completion:${NC}
+    ./git_sh1_main.sh feature pick --<TAB><TAB>
+    Shows: --dry-run, --profile, -w
+
+${YELLOW}SETUP ALIAS (OPTIONAL):${NC}
+    # Add to ~/.bashrc or ~/.bash_profile:
+    alias git_sh1='./git_sh1_main.sh'
+    
+    # Reload shell, then use:
+    git_sh1 <TAB><TAB>
+    git_sh1 feature <TAB><TAB>
+
+${YELLOW}TROUBLESHOOTING:${NC}
+
+${GREEN}Check Installation:${NC}
+    ./git_sh1_main.sh --install-completion
+    # Should show: "Completion already installed"
+
+${GREEN}Clear Cache:${NC}
+    ./git_sh1_main.sh --clear-cache
+    # Refreshes completion cache (5-minute expiry)
+
+${GREEN}Debug Mode:${NC}
+    GIT_SH1_DEBUG=1 ./git_sh1_main.sh feature <TAB><TAB>
+    # Shows debug output for completion system
+
+${GREEN}Manual Source:${NC}
+    # Find completion file:
+    find ~/.local/share/bash-completion/completions/ -name "*git_sh1*"
+    find /etc/bash_completion.d/ -name "*git_sh1*"
+    
+    # Source manually:
+    source [path_to_completion_file]
+
+${YELLOW}CACHE SYSTEM:${NC}
+    • Location: ~/.cache/git_sh1_modular/
+    • Duration: 5 minutes auto-refresh
+    • Cached items: Repository names, feature names, profile names
+    • Performance: Fast completion with intelligent caching
+
+${YELLOW}COMPLETION CONTEXTS:${NC}
+    The system provides context-aware completion:
+    • Commands show subcommands and global options
+    • Repository operations show repository names
+    • Feature operations show feature names
+    • Profile operations show profile names
+    • Worktree operations show branch-specific options
+
+EOF
+            ;;
         *)
             echo -e "${RED}Unknown help topic: $topic${NC}"
-            echo "Available topics: environment, configuration, troubleshooting"
+            echo "Available topics: environment, configuration, autocomplete, troubleshooting"
             return 1
             ;;
     esac

@@ -32,11 +32,11 @@ repo_map="
 "
 
 # ANSI color codes for console output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-CYAN='\033[0;36m'
-NC='\033[0m' # No Color
+RED=$'\033[0;31m'
+GREEN=$'\033[0;32m'
+YELLOW=$'\033[1;33m'
+CYAN=$'\033[0;36m'
+NC=$'\033[0m' # No Color
 
 # Global configuration variables
 DRY_RUN=${DRY_RUN:-false}
