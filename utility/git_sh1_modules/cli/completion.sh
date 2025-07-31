@@ -134,19 +134,40 @@ _git_sh1_install_completion() {
     local completion_file=""
     local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
     
-    # Determine completion installation location
-    if [[ -d ~/.bash_completion.d ]]; then
+    # Function to test write permissions
+    test_write_permission() {
+        local test_file="$1/.git_sh1_test_$$"
+        if touch "$test_file" 2>/dev/null; then
+            rm -f "$test_file" 2>/dev/null
+            return 0
+        else
+            return 1
+        fi
+    }
+    
+    # Determine completion installation location with permission checking
+    if [[ -d ~/.bash_completion.d ]] && test_write_permission ~/.bash_completion.d; then
         completion_file=~/.bash_completion.d/git_sh1_modular
-    elif [[ -d /usr/local/etc/bash_completion.d ]]; then
+    elif [[ -d ~/.local/share/bash-completion/completions ]] && test_write_permission ~/.local/share/bash-completion/completions; then
+        completion_file=~/.local/share/bash-completion/completions/git_sh1_modular
+    elif [[ -d /usr/local/etc/bash_completion.d ]] && test_write_permission /usr/local/etc/bash_completion.d; then
         completion_file=/usr/local/etc/bash_completion.d/git_sh1_modular
-    elif [[ -d /etc/bash_completion.d ]]; then
+    elif [[ -d /etc/bash_completion.d ]] && test_write_permission /etc/bash_completion.d; then
         completion_file=/etc/bash_completion.d/git_sh1_modular
     else
-        completion_file=~/.git_sh1_modular_completion
+        # Fallback: create user-specific completion directory
+        mkdir -p ~/.local/share/bash-completion/completions 2>/dev/null || mkdir -p ~/.bash_completion.d 2>/dev/null
+        if [[ -d ~/.local/share/bash-completion/completions ]]; then
+            completion_file=~/.local/share/bash-completion/completions/git_sh1_modular
+        elif [[ -d ~/.bash_completion.d ]]; then
+            completion_file=~/.bash_completion.d/git_sh1_modular
+        else
+            completion_file=~/.git_sh1_modular_completion
+        fi
     fi
     
     # Create completion script with absolute path
-    cat > "$completion_file" << EOF
+    if cat > "$completion_file" << EOF
 #!/bin/bash
 # Auto-generated completion for git_sh1_modular.sh
 
@@ -154,7 +175,7 @@ _git_sh1_install_completion() {
 if [[ -f "${script_dir}/cli/completion.sh" ]]; then
     source "${script_dir}/cli/completion.sh"
     
-    # Register completion for various script names
+    # Register completion for various script names  
     complete -F _git_sh1_modular_completion git_sh1_modular.sh 2>/dev/null
     complete -F _git_sh1_modular_completion ./git_sh1_modular.sh 2>/dev/null
     complete -F _git_sh1_modular_completion git_sh1_main.sh 2>/dev/null
@@ -165,10 +186,15 @@ if [[ -f "${script_dir}/cli/completion.sh" ]]; then
     complete -F _git_sh1_modular_completion ./git_sh1.sh 2>/dev/null
 fi
 EOF
-    
-    echo -e "${GREEN}✓ Completion installed to: $completion_file${NC}"
-    echo -e "Restart your shell or run: ${CYAN}source $completion_file${NC}"
-    return 0
+    then
+        echo -e "${GREEN}✓ Completion installed to: $completion_file${NC}"
+        echo -e "Restart your shell or run: ${CYAN}source $completion_file${NC}"
+        return 0
+    else
+        echo -e "${RED}✗ Failed to write completion file: $completion_file${NC}"
+        echo -e "${YELLOW}Try running with sudo for system-wide installation, or check permissions${NC}"
+        return 1
+    fi
 }
 
 # Main completion function for modular system

@@ -544,7 +544,13 @@ ${GREEN}4. Worktree operations fail:${NC}
     • Ensure branch names are valid
     • Run with VERBOSE=true for detailed output
 
-${GREEN}5. Completion not working:${NC}
+${GREEN}5. Completion installation fails (Permission denied):${NC}
+    • Error: "Permission denied" writing to /etc/bash_completion.d/
+    • Solution 1: Run with sudo for system-wide installation
+    • Solution 2: Script auto-falls back to user directory
+    • User locations: ~/.local/share/bash-completion/completions/
+    
+${GREEN}6. Completion not working:${NC}
     • Install: git_sh1.sh --install-completion
     • Restart shell or source completion file
     • Clear cache: git_sh1.sh --clear-cache
@@ -627,6 +633,11 @@ ${YELLOW}TROUBLESHOOTING:${NC}
 ${GREEN}Check Installation:${NC}
     ./git_sh1_main.sh --install-completion
     # Should show: "Completion already installed"
+    
+${GREEN}Permission Issues:${NC}
+    # If you get "Permission denied" for /etc/bash_completion.d/:
+    sudo ./git_sh1_main.sh --install-completion  # System-wide install
+    # OR let it auto-fallback to user directory (~/.local/share/bash-completion/completions/)
 
 ${GREEN}Clear Cache:${NC}
     ./git_sh1_main.sh --clear-cache
