@@ -93,13 +93,13 @@ add_worktree_with_profile() {
         # Count total repositories first
         local total_count=0
         for pair in $(sort_repo_map_by_depth); do
-            ((total_count++))
+            total_count=$((total_count + 1))
         done
         
         local current=0
         for pair in $(sort_repo_map_by_depth); do
             IFS=':' read -r repo_name local_folder <<< "$pair"
-            ((current++))
+            current=$((current + 1))
             local individual_remote_branch="$remote_branch"
             
             show_progress "$current" "$total_count" "Creating worktree for $repo_name"
@@ -280,13 +280,13 @@ pull_rebase_worktree() {
         # Count total repositories first
         local total_count=0
         for pair in $(sort_repo_map_by_depth); do
-            ((total_count++))
+            total_count=$((total_count + 1))
         done
         
         local current=0
         for pair in $(sort_repo_map_by_depth); do
             IFS=':' read -r repo_name local_folder <<< "$pair"
-            ((current++))
+            current=$((current + 1))
             show_progress "$current" "$total_count" "Pull-rebasing $repo_name"
             pull_rebase_repo "$repo_name" "$local_folder" "$local_branch"
         done
@@ -339,13 +339,13 @@ pull_rebase_worktree_with_profile() {
         # Count total repositories first
         local total_count=0
         for pair in $(sort_repo_map_by_depth); do
-            ((total_count++))
+            total_count=$((total_count + 1))
         done
         
         local current=0
         for pair in $(sort_repo_map_by_depth); do
             IFS=':' read -r repo_name local_folder <<< "$pair"
-            ((current++))
+            current=$((current + 1))
             show_progress "$current" "$total_count" "Pull-rebasing $repo_name"
             pull_rebase_repo "$repo_name" "$local_folder" "$local_branch"
         done

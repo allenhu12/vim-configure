@@ -106,12 +106,12 @@ verify_repos() {
         fi
         
         if verify_single_repo "$repo" "$local_folder"; then
-            ((existing_repos++))
+            existing_repos=$((existing_repos + 1))
         else
-            ((missing_repos++))
+            missing_repos=$((missing_repos + 1))
             failed_repos+=("$repo")
         fi
-        ((total_repos++))
+        total_repos=$((total_repos + 1))
         
         show_progress $((existing_repos + missing_repos)) "$total_repos" "Verifying $repo"
     done
@@ -236,19 +236,19 @@ fetch_repos() {
         
         # Count total repositories first
         for pair in $(sort_repo_map_by_depth); do
-            ((total_count++))
+            total_count=$((total_count + 1))
         done
         
         local current=0
         for pair in $(sort_repo_map_by_depth); do
             IFS=':' read -r repo local_folder <<< "$pair"
-            ((current++))
+            current=$((current + 1))
             show_progress "$current" "$total_count" "Fetching $repo"
             
             if fetch_repo "$repo" "$local_folder"; then
-                ((success_count++))
+                success_count=$((success_count + 1))
             else
-                ((fail_count++))
+                fail_count=$((fail_count + 1))
                 log "ERROR" "Failed to fetch repository: $repo"
             fi
         done
@@ -264,9 +264,9 @@ fetch_repos() {
             if [ "$repo" == "$target_repo" ]; then
                 repo_found=true
                 if fetch_repo "$repo" "$local_folder"; then
-                    ((success_count++))
+                    success_count=$((success_count + 1))
                 else
-                    ((fail_count++))
+                    fail_count=$((fail_count + 1))
                 fi
                 break
             fi
