@@ -30,3 +30,10 @@ unbind U
 if-shell 'command -v urlview >/dev/null 2>&1' 'bind U run "cut -c3- ~/.tmux.conf | sh -s _urlview #{pane_id}"' 'bind U display-message "urlview not installed"'
 unbind F
 if-shell 'command -v fpp >/dev/null 2>&1' 'bind F run "cut -c3- ~/.tmux.conf | sh -s _fpp #{pane_id} #{pane_current_path}"' 'bind F display-message "fpp not installed"'
+
+# Session autosave/restore (TPM + resurrect + continuum)
+set -g @plugin 'tmux-plugins/tpm'
+set -g @plugin 'tmux-plugins/tmux-resurrect'
+set -g @plugin 'tmux-plugins/tmux-continuum'
+set -g @continuum-save-interval '15'
+set -g @continuum-restore 'on'
