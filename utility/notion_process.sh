@@ -28,11 +28,28 @@ extract_export() {
         debug_log "EXTRACT: Extraction completed successfully"
     else
         debug_log "EXTRACT: ERROR - Zip file not found: $zip_path"
-        exit 1
+        return 1
     fi
     
     debug_log "EXTRACT: Extraction directory contents:"
     ls -la "$extract_dir" >> ~/Downloads/hazel_log2.txt
+    
+    # Handle nested zip (Notion sometimes wraps export in another zip)
+    local md_files=("$extract_dir"/*.md)
+    if [ ! -f "${md_files[0]}" ]; then
+        local nested_zips=("$extract_dir"/*.zip)
+        if [ -f "${nested_zips[0]}" ]; then
+            debug_log "EXTRACT: No markdown at top-level; extracting nested zip files"
+            for nested_zip in "$extract_dir"/*.zip; do
+                [ -f "$nested_zip" ] || continue
+                unzip -q "$nested_zip" -d "$extract_dir"
+                rm -f "$nested_zip"
+            done
+            debug_log "EXTRACT: Nested extraction completed"
+            debug_log "EXTRACT: Directory contents after nested extraction:"
+            ls -la "$extract_dir" >> ~/Downloads/hazel_log2.txt
+        fi
+    fi
     
     echo "$extract_dir"
 }
@@ -74,7 +91,7 @@ clean_folders() {
         echo "$final_dir:$clean_name"
     else
         debug_log "CLEAN: ERROR - No markdown file found"
-        exit 1
+        return 1
     fi
 }
 
@@ -169,8 +186,26 @@ move_to_complete() {
     local dir_path="$1"
     local complete_dir="/Users/hubo/obsidian_files/OB_DT/projects/notion_bk"
     local target_path="$complete_dir/$(basename "$dir_path")"
+    local incoming_path="${target_path}.incoming"
+    local backup_path="${target_path}.bak"
     
     debug_log "MOVE: Starting move to complete directory"
+    
+    if [ -z "$dir_path" ] || [ "$dir_path" = "/" ] || [ ! -d "$dir_path" ]; then
+        debug_log "MOVE: ERROR - Invalid source directory: $dir_path"
+        return 1
+    fi
+    
+    # Require the source to have content and a markdown file before touching the target
+    if [ -z "$(find "$dir_path" -type f | head -n 1)" ]; then
+        debug_log "MOVE: ERROR - Source directory has no files, refusing to replace target"
+        return 1
+    fi
+    if [ -z "$(find "$dir_path" -type f -name '*.md' | head -n 1)" ]; then
+        debug_log "MOVE: ERROR - No markdown file in source, refusing to replace target"
+        return 1
+    fi
+    
     debug_log "MOVE: Source directory: $dir_path"
     debug_log "MOVE: Target directory: $target_path"
     
@@ -180,14 +215,33 @@ move_to_complete() {
         mkdir -p "$complete_dir"
     fi
     
-    # Remove existing target if it exists
-    if [ -d "$target_path" ]; then
-        debug_log "MOVE: Removing existing directory: $target_path"
-        rm -rf "$target_path"
+    # Prep incoming folder in place to avoid touching the target until the new content is ready
+    rm -rf "$incoming_path"
+    if ! mv "$dir_path" "$incoming_path"; then
+        debug_log "MOVE: ERROR - Failed moving source into incoming path"
+        return 1
     fi
     
-    mv "$dir_path" "$complete_dir/"
-    debug_log "MOVE: Directory moved successfully"
+    # Back up existing target before replacing
+    if [ -d "$target_path" ]; then
+        debug_log "MOVE: Backing up existing target to: $backup_path"
+        rm -rf "$backup_path"
+        if ! mv "$target_path" "$backup_path"; then
+            debug_log "MOVE: ERROR - Failed to back up existing target"
+            return 1
+        fi
+    fi
+    
+    if mv "$incoming_path" "$target_path"; then
+        debug_log "MOVE: Directory moved successfully"
+        # Remove backup once new content is in place
+        rm -rf "$backup_path"
+    else
+        debug_log "MOVE: ERROR - Failed to finalize move; restoring backup"
+        [ -d "$backup_path" ] && mv "$backup_path" "$target_path"
+        return 1
+    fi
+    
     debug_log "MOVE: Final location contents:"
     ls -la "$target_path" >> ~/Downloads/hazel_log2.txt
 }
@@ -208,14 +262,26 @@ main() {
     
     # Extract the zip file
     debug_log "MAIN: Calling extract_export"
-    local extract_dir=$(extract_export "$zip_path")
+    local extract_dir
+    if ! extract_dir=$(extract_export "$zip_path"); then
+        debug_log "MAIN: Extraction failed; aborting"
+        exit 1
+    fi
     debug_log "MAIN: Extraction completed, directory: $extract_dir"
     
     # Clean folder names and get paths
     debug_log "MAIN: Calling clean_folders"
-    local cleaned_info=$(clean_folders "$extract_dir")
+    local cleaned_info
+    if ! cleaned_info=$(clean_folders "$extract_dir"); then
+        debug_log "MAIN: Cleaning failed; aborting"
+        exit 1
+    fi
     local final_dir=$(echo "$cleaned_info" | cut -d: -f1)
     local clean_name=$(echo "$cleaned_info" | cut -d: -f2)
+    if [ -z "$final_dir" ] || [ -z "$clean_name" ] || [ ! -d "$final_dir" ]; then
+        debug_log "MAIN: ERROR - Invalid cleaned info: dir=$final_dir name=$clean_name"
+        exit 1
+    fi
     debug_log "MAIN: Cleaning completed, final directory: $final_dir"
     debug_log "MAIN: Clean name: $clean_name"
     
@@ -229,7 +295,10 @@ main() {
     
     # Move to completed directory
     debug_log "MAIN: Calling move_to_complete"
-    move_to_complete "$final_dir"
+    if ! move_to_complete "$final_dir"; then
+        debug_log "MAIN: ERROR - move_to_complete failed; aborting"
+        exit 1
+    fi
     
     # Cleanup
     debug_log "MAIN: Removing original zip file"

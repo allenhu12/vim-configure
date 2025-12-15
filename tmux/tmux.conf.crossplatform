@@ -1,0 +1,32 @@
+# Cross-platform overlay for macOS + Linux
+# - Intended for ~/.tmux.conf.local alongside the base gpakosz config
+# - Adds truecolor/OSC52 clipboard support
+# - Makes optional tools (urlview/fpp) graceful when missing
+
+# Prefer tmux-256color when available and enable truecolor/italics on common $TERM values
+if-shell 'infocmp -x tmux-256color >/dev/null 2>&1' 'set -g default-terminal "tmux-256color"' 'set -g default-terminal "screen-256color"'
+set -as terminal-overrides ',*:Tc'
+set -ga terminal-features ',xterm-256color:RGB'
+set -ga terminal-features ',tmux-256color:RGB'
+
+# Let tmux push selections via OSC52, and choose the best available system clipboard helper
+set -s set-clipboard on
+set -g @copy_command 'cat >/dev/null'
+if-shell 'command -v wl-copy >/dev/null 2>&1' "set -g @copy_command 'wl-copy'"
+if-shell 'command -v xclip   >/dev/null 2>&1' "set -g @copy_command 'xclip -selection clipboard'"
+if-shell 'command -v xsel    >/dev/null 2>&1' "set -g @copy_command 'xsel -b'"
+if-shell 'command -v clip.exe >/dev/null 2>&1' "set -g @copy_command 'clip.exe'"
+if-shell 'command -v pbcopy   >/dev/null 2>&1' "set -g @copy_command 'pbcopy'"
+if-shell 'command -v reattach-to-user-namespace >/dev/null 2>&1' "set -g @copy_command 'reattach-to-user-namespace pbcopy'"
+
+# Keep the same keys but unify their behavior
+unbind -T copy-mode-vi Y
+bind -T copy-mode-vi Y send-keys -X copy-pipe-and-cancel "#{@copy_command}"
+unbind y
+bind y run -b "tmux save-buffer - | #{@copy_command}"
+
+# Optional tools: only bind if present, otherwise show a friendly message
+unbind U
+if-shell 'command -v urlview >/dev/null 2>&1' 'bind U run "cut -c3- ~/.tmux.conf | sh -s _urlview #{pane_id}"' 'bind U display-message "urlview not installed"'
+unbind F
+if-shell 'command -v fpp >/dev/null 2>&1' 'bind F run "cut -c3- ~/.tmux.conf | sh -s _fpp #{pane_id} #{pane_current_path}"' 'bind F display-message "fpp not installed"'
